@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<script>
+    page = SENSOR_PAGE;
+    
+    var devices = JSON.parse('{{ devices | tojson | safe }}');
+    var sensorTriggerTimes = JSON.parse('{{ sensor_trigger_times | tojson | safe }}');
+</script>
+
+<script src="../static/js/control_sensors_page.js" defer></script>
+<link rel="stylesheet" href="../static/css/styles_tiles.css">
+
+<div class="container-form">
+    <div class="wrap-form">
+        <div id="stateContainer" class="flex"></div>
+    </div>
+</div>
+
+<div class="container-form">
+    <div class="wrap-form">
+        <table class="scrollable-table-container-table">
+            <tr>
+                <td class="scrollable-td">
+                    <table id="triggerTableHeader" class="scrollable-table-header"></table>
+                </td>
+            </tr>
+            <tr>
+                <td class="scrollable-td">
+                    <div class="scrollable-table-container">
+                        <table id="triggerTable" class="scrollable-table" style="table-layout: fixed;"></table>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+{% endblock %}

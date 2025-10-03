@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<script>
+    page = ALARM_PAGE;
+    
+    var devices = JSON.parse('{{ devices | tojson | safe }}');
+    var alarm = JSON.parse('{{ alarm | tojson | safe }}');
+    var alarmTriggerTimes = JSON.parse('{{ alarm_trigger_times | tojson | safe }}');
+</script>
+
+<script src="../static/js/alarm_page.js" defer></script>
+<link rel="stylesheet" href="../static/css/styles_tiles.css">
+
+<dialog id="deactivationDeviceModal" class="modal">
+    <i class="fa-solid fa-xmark close-modal-button clickable" target-modal="deactivationDeviceModal"></i>
+    <h3 id="deactivationDeviceModalTitle" style="margin-top: 0px;">Add deactivation device</h3>
+    <p id="errorMessageDeactivationDeviceField" class="message error" style="margin: 0px;"></p>
+
+    <div class="input-field-container">
+        <p class="input-field-title">Name</p>
+        <input id="deactivationDeviceNameTxt" class="input-field" type="text" placeholder="Name">
+    </div>
+
+    <div id="deactivationDeviceIpContainer" class="input-field-container" style="display: none;">
+        <p class="input-field-title">IP address</p>
+        <input id="deactivationDeviceIpTxt" class="input-field" type="text" placeholder="0.0.0.0">
+    </div>
+
+    <div id="searchingDevicesContainer" class="centered-flex" style="gap: 5px;">
+        <div id="" class="dot-loader"></div>
+        <p id="searchingDevicesTitle">Looking for connected devices</p>
+    </div>
+
+    <div id="networkDevicesContainer" class="flex-grid" style="justify-content: center; margin-bottom: 15px;"></div>
+
+    <p id="manuallyAddDeviceBtn" onclick="manuallyAddDeactivationDevice();" style="cursor: pointer;">My device is not shown here</p>
+
+    <button id="submitDeactivationDeviceBtn" onclick="addDeactivationDevice();">Submit</button>
+</dialog>
+
+<div class="container-form">
+    <div class="wrap-form">
+        <div id="stateContainer" class="flex"></div>
+    </div>
+</div>
+
+<div class="container-form" style="display: none;">
+    <div class="wrap-form">
+        <h3 style="margin-top: 0px;">Trusted deactivation devices</h3>
+        
+        <div id="deactivationDeviceContainer" class="flex-grid" style="justify-content: center;"></div>
+    </div>
+</div>
+
+<div class="container-form">
+    <div class="wrap-form">
+        <h3 style="margin-top: 0px;">Trigger devices</h3>
+        
+        <div id="triggerDeviceContainer" class="flex-grid" style="justify-content: center;"></div>
+    </div>
+</div>
+
+<div class="container-form">
+    <div class="wrap-form">
+        <table class="scrollable-table-container-table">
+            <tr>
+                <td class="scrollable-td">
+                    <table id="triggerTableHeader" class="scrollable-table-header"></table>
+                </td>
+            </tr>
+            <tr>
+                <td class="scrollable-td">
+                    <div class="scrollable-table-container">
+                        <table id="triggerTable" class="scrollable-table" style="table-layout: fixed;"></table>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+{% endblock %}

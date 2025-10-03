@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<script>
+    page = DASHBOARD_PAGE;
+
+    var alarm = JSON.parse('{{ alarm | tojson | safe }}');
+    var devices = JSON.parse('{{ devices | tojson | safe }}');
+    var groups = JSON.parse('{{ groups | tojson | safe }}');
+    var dashboardConfigurations = JSON.parse('{{ dashboard_configurations | tojson | safe }}');
+    var tileTypes = JSON.parse('{{ tile_types | tojson | safe }}');
+    var weather = JSON.parse('{{ weather | tojson | safe }}');
+    var weatherLocation = "{{ weather_location }}";
+    var weatherAvailable = true;
+    if (weather == null) {
+        weatherAvailable = false;
+    }
+</script>
+
+<script src="../static/js/dashboard_page.js" defer></script>
+
+<style>
+    body {
+        margin: 100px 0px;
+        width: 100%;
+    }
+</style>
+<link rel="stylesheet" href="../static/css/styles_tiles.css">
+
+<dialog id="tileModal" class="modal" style="width: 60%;">
+    <i class="fa-solid fa-xmark close-modal-button clickable" target-modal="tileModal"></i>
+    <h3 id="tileModalTitle" style="margin-top: 0px;">New tile</h3>
+    <p id="tileErrorMessageField" class="message error" style="margin: 0px;"></p>
+
+    <div class="input-field-container">
+        <p id="tileTypeTitle" class="input-field-title">Type</p>
+        <select id="tileTypeSelect" onchange="updateModalTileType();" class="input-field"></select>
+    </div>
+    <div id="tileTargetInputContainer" class="input-field-container">
+        <p id="tileTargetTitle" class="input-field-title">Target</p>
+        <select id="tileTargetSelect" onchange="generateTilePreviews();" class="input-field"></select>
+    </div>
+    
+    <div id="tilePreviewContainer" class="flex-grid"></div>
+</dialog>
+
+<dialog id="iconModal" class="modal">
+    <i class="fa-solid fa-xmark close-modal-button clickable" target-modal="iconModal"></i>
+    <h3 style="margin-top: 0px;">Pick icon</h3>
+    
+    <div id="iconPickerContainer" class="icon-grid"></div>
+</dialog>
+
+<dialog id="weatherLocationModal" class="modal">
+    <i class="fa-solid fa-xmark close-modal-button clickable" target-modal="weatherLocationModal"></i>
+    <h3 id="weatherLocationModalTitle" style="margin-top: 0px;">Update weather location</h3>
+    <p id="errorMessageWeatherLocationField" class="message error" style="margin: 0px;"></p>
+
+    <div style="text-align: center;">
+        <div class="input-field-container" style="width: 100%;">
+            <p id="weatherLocationTitle" class="input-field-title">Location</p>
+            <input id="weatherLocationTxt" class="input-field" type="text" placeholder="Location">
+        </div>
+    </div>
+
+    <button id="submitWeatherLocationBtn" onclick="updateWeatherLocation();">Submit</button>
+</dialog>
+
+<div id="topBar" class="top-bar"></div>
+
+<div id="dashboardGrid" class="flex-grid" style="width: 90%; margin: auto;"></div>
+
+
+{% endblock %}

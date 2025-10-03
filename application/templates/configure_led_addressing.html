@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<script>
+    page = CONFIGURATION_PAGE;
+
+    var strip = JSON.parse('{{ ledstrip | tojson | safe }}');
+</script>
+
+<script src="../static/js/configure_led_addressing_page.js" defer></script>
+
+<div class="container-form">
+    <div class="wrap-form">
+        <div id="toolbarContainer" style="display: flex; justify-content: space-between;">
+            <p id="instructionMessageField" class="message" style="margin-top: 0px; display: block;"></p>
+
+            <div class="input-field-container" style="width: 10%;">
+                <p id="addressTitle" class="input-field-title gradient-background">Address</p>
+                <input id="addressTxt" type="text" class="input-field" value="0"/>
+            </div>
+
+            <div class="button-message" onclick="toggleSegmentType(undefined, true);">
+                <i id="drawingElementIcon" class=""></i>
+                <p id="drawingElementField" style="margin: 0px;"></p>
+            </div>
+        </div>
+        <div style="display: flex; gap: 20px;">
+            <canvas id="ledCanvas" class="ledstrip-addressing-canvas" width="800" height="600"></canvas>
+            <div>
+                <button id="clearBtn" onclick="resetAll();">Clear</button>
+                <button id="resetBtn" onclick="loadCurrent();">Reset</button>
+                <button id="resetAddressingBtn" onclick="resetAddressing();">Reset addressing</button>
+                <button id="toggleSegmentTypeBtn" onclick="toggleSegmentType(undefined, true);">Draw inactive segment</button>
+                <button id="saveBtn" onclick="save();" style="margin-top: 40px;">Save</button>
+                <button id="cancelBtn" onclick="cancel();">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

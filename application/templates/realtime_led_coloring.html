@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<script>
+    page = LEDSTRIP_PAGE;
+    
+    var strip = JSON.parse('{{ ledstrip | tojson | safe }}');
+</script>
+
+<script src="../static/js/realtime_led_coloring_page.js" defer></script>
+
+<div id="segmentMouseMenu" class="mouse-context-menu">
+    <ul class="mouse-context-menu-options">
+        <li class="mouse-context-menu-option">
+            <div style="display: flex; align-items: baseline;" onclick="colorSegment();">
+                <i class="fa-solid fa-list-ol margin-r-5px"></i>
+                <p id="colorSegmentTitle">Color segment</p>
+            </div>
+        </li>
+    </ul>
+</div>
+
+<div class="container-form">
+    <div class="wrap-form">
+        <canvas id="ledCanvas" class=""></canvas>
+    
+        <fieldset>
+            <legend id="drawingToolsTitle">Drawing tools</legend>
+            <div style="text-align: center;">
+                <div class="input-field-container color-container">
+                    <p id="colorTitle" id="colorTitle" class="input-field-title gradient-background" style="text-align: center; margin: 0px auto;">Color</p>
+                    <input id="colorColor" type="color" class="input-field" onchange="setPencilColor();"/>
+                </div>
+                <div>
+                    <input id="colorGradientCb" type="checkbox" onclick="setGradient();">
+                    <p id="colorGradientCbTitle">Use gradient</p>
+                </div>
+
+                <button id="colorAllBtn" onclick="colorAll();">Color all</button>
+                <button id="clearColorsBtn" onclick="clearColors();">Clear</button>
+            </div>
+        </fieldset>
+        
+        <fieldset>
+            <legend id="animationModesTitle">Animation modes</legend>
+            <div style="text-align: center;">
+                <button onclick="setAnimation(NO_ANIMATION);" class="button-selected">No animation</button>
+                <button onclick="setAnimation(PROPAGATE_ANIMATION);">Propagate animation</button>
+            </div>
+        </fieldset>
+    </div>
+</div>
+
+{% endblock %}

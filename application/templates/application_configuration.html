@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block content %}
+<script>
+    page = ALARM_PAGE;
+    
+    var weatherApiKey = "{{ weather_api_key }}";
+    var telegramBotToken = "{{ telegram_bot_token }}";
+</script>
+
+<script src="../static/js/application_configuration_page.js" defer></script>
+<link rel="stylesheet" href="../static/css/styles_tiles.css">
+
+<div class="container-form">
+    <div class="wrap-form">
+        <p id="errorMessageConfigurationField" class="message error" style="margin-top: 0px;"></p>
+        <div class="flex" style="flex-direction: column;">
+            <fieldset style="margin-top: 0px;">
+                <legend id="modulesTitle">API keys</legend>
+                <div class="input-field-container">
+                    <p id="weatherApiKeyTitle" class="input-field-title gradient-background"><a href="https://www.visualcrossing.com/weather-api">VisualCrossing</a> weather API key</p>
+                    <input id="weatherApiKeyTxt" class="input-field" type="text" placeholder="API key">
+                </div>
+                <div class="input-field-container">
+                    <p id="telegramBotTokenTitle" class="input-field-title gradient-background"><a href="https://core.telegram.org/bots/tutorial">Telegram</a> Bot Token</p>
+                    <input id="telegramBotTokenTxt" class="input-field" type="text" placeholder="Telegram Bot Token">
+                </div>
+                <div class="centered-flex">
+                    <button id="submitConfigurationBtn" onclick="submitConfiguration();">Submit</button>
+                    <button id="resetConfigurationBtn" onclick="resetConfigurationConfirm();">Reset</button>
+                </div>
+            </fieldset>
+        </div>
+    </div>
+</div>
+{% endblock %}

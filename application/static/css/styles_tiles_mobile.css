@@ -1,0 +1,25 @@
+/******************************************************************************/
+/*
+ * File:    styles_tiles_mobile.css
+ * Author:  Luke de Munk
+ * Version: 0.9.0
+ * 
+ * Brief:   Additional styles for mobile version.
+ *
+ *          More information:
+ *          https://github.com/LukedeMunk/zyrax-home-main-controller
+ */
+/******************************************************************************/
+section {
+    grid-template-rows: repeat(1, 200px) !important;
+    grid-template-columns: repeat(1, 300px) !important;
+}
+
+.tile {
+    height: 60px;
+    width: 120px;
+}
+
+.flex-grid {
+    grid-template-rows: unset;
+}

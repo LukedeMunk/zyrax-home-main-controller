@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block content %}
+<script>
+    var page = AUTOMATIONS_PAGE;
+
+    var automations = JSON.parse('{{ automations | tojson | safe }}');
+    var triggers = JSON.parse('{{ triggers | tojson | safe }}');
+    var actions = JSON.parse('{{ actions | tojson | safe }}');
+    var modes = JSON.parse('{{ modes | tojson | safe }}');
+
+    var devices = JSON.parse('{{ devices | tojson | safe }}');
+    var groups = JSON.parse('{{ groups | tojson | safe }}');
+</script>
+
+<script src="../static/js/automations_page.js" defer></script>
+
+<link rel="stylesheet" media="screen and (max-device-width: 699px)" href="../static/css/styles_tiles_mobile.css">
+<link rel="stylesheet" href="../static/css/styles_tiles.css">
+
+<dialog id="automationModal" class="modal big-modal">
+    <i class="fa-solid fa-xmark close-modal-button clickable" target-modal="automationModal"></i>
+    <h3 id="modalTitle" style="margin-top: 0px;">New automation</h3>
+    <p id="automationValidationMessageField" class="message error" style="margin: 0px;"></p>
+
+    <div class="input-field-container">
+        <p id="nameTitle" class="input-field-title">Name</p>
+        <input id="nameTxt" type="text" class="input-field"/>
+    </div>
+
+    <div class="input-field-container">
+        <p id="triggerTitle" class="input-field-title">Trigger</p>
+        <select id="triggerSelect" onchange="loadTrigger();" class="input-field"></select>
+    </div>
+
+    <fieldset id="preconditionsContainer">
+        <legend id="preconditionsTitle">Preconditions</legend>
+
+            <p id="timeWindowToggle" onclick="toggleTimeWindow();" style="margin: 10px; text-align: center; cursor: pointer;">Activate time window</p>
+            <div id="timeWindowContainer" class="full-width">
+                <div class="multi-range-slider">
+                    <input id="timeWindowStartRange" class="multi-range minimum-multi-range" type="range" min="0" max="1440" step="1" onchange="setTimeWindowBand();" oninput="loadTimeWindowRangeFieldStart();">
+                    <input id="timeWindowEndRange" class="multi-range maximum-multi-range" type="range" min="0" max="1439" step="1" onchange="setTimeWindowBand();" oninput="loadTimeWindowRangeFieldEnd();">
+                </div>
+                <div style="display: flex; align-items: center; justify-content: center;">
+                    <p id="timeWindowRangeField" style="margin: 10px;">Time window</p>
+                    <i id="timeWindowTypeToggle" class="fa-solid fa-circle-check clickable" onclick="toggleTimeWindowActiveState();"></i>
+                </div>
+            </div>
+    </fieldset>
+    
+    <div id="timeTriggerContainer">
+        <div class="input-field-container">
+            <p id="activationTimeTitle" class="input-field-title">Activation time</p>
+            <input type="time" id="timeTxt" class="input-field"/>
+        </div>
+    
+        <div class="input-field-container input-tile-container">
+            <p id="daysTitle" class="input-field-title input-tile-title">Days</p>
+            <div class="flex-grid" style="margin-bottom: 15px; justify-content: center;">
+                <div id="dayTile0" class="tile single" onclick="toggleDaySelection(DAY_MONDAY);" style="background-color: var(--background2);">
+                    <div id="dayTileTitle0" style="grid-column: span 2;">Monday</div>
+                </div>
+                <div id="dayTile1" class="tile single" onclick="toggleDaySelection(DAY_TUESDAY);" style="background-color: var(--background2);">
+                    <div id="dayTileTitle1" style="grid-column: span 2;">Tuesday</div>
+                </div>
+                <div id="dayTile2" class="tile single" onclick="toggleDaySelection(DAY_WEDNESDAY);" style="background-color: var(--background2);">
+                    <div id="dayTileTitle2" style="grid-column: span 2;">Wednesday</div>
+                </div>
+                <div id="dayTile3" class="tile single" onclick="toggleDaySelection(DAY_THURSDAY);" style="background-color: var(--background2);">
+                    <div id="dayTileTitle3" style="grid-column: span 2;">Thursday</div>
+                </div>
+                <div id="dayTile4" class="tile single" onclick="toggleDaySelection(DAY_FRIDAY);" style="background-color: var(--background2);">
+                    <div id="dayTileTitle4" style="grid-column: span 2;">Friday</div>
+                </div>
+                <div id="dayTile5" class="tile single" onclick="toggleDaySelection(DAY_SATURDAY);" style="background-color: var(--background2);">
+                    <div id="dayTileTitle5" style="grid-column: span 2;">Saturday</div>
+                </div>
+                <div id="dayTile6" class="tile single" onclick="toggleDaySelection(DAY_SUNDAY);" style="background-color: var(--background2);">
+                    <div id="dayTileTitle6" style="grid-column: span 2;">Sunday</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="sensorTriggerContainer">
+        <div class="input-field-container input-tile-container">
+            <p id="triggerSensorTitle" class="input-field-title input-tile-title">Trigger sensors</p>
+            <div id="triggerDeviceContainer" class="flex-grid" style="justify-content: center; margin-bottom: 15px;"></div>
+        </div>
+        
+        <div class="input-field-container">
+            <p id="triggerSensorStateTitle" class="input-field-title">Trigger sensor state</p>
+            <select id="triggerDeviceStateSelect" class="input-field"></select>
+        </div>
+
+        <div class="input-field-container" style="max-width: unset;">
+            <p id="delayTimeRangeField" class="input-field-title range-title"></p>
+            <div style="display: flex; align-items: center; flex-direction: column;">
+                <input id="delayTimeRange" type="range" min="0" max="60" oninput="updateDelayTimeField();" style="width: 100%;"/>
+                <div id="delayTimeTogglesContainer" style="display: flex;">
+                    <div>
+                        <p id="delayThisAutomationTitle" class="input-field-title range-title">Delay this automation</p>
+                        <label class="switch" style="margin: 15px;">
+                            <input id="delayThisAutomationCb" type="checkbox">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    <div>
+                        <p id="delayInvertedAutomationTitle" class="input-field-title range-title">Delay inverted automation</p>
+                        <label class="switch" style="margin: 15px;">
+                            <input id="delayInvertedAutomationCb" type="checkbox">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="targetDeviceContainerWrap" class="input-field-container input-tile-container" style="margin-top: 20px;">
+        <p id="targetDeviceTitle" class="input-field-title input-tile-title">Target devices</p>
+        <div id="targetDeviceContainer" class="flex-grid" style="justify-content: center; margin-bottom: 15px;"></div>
+    </div>
+
+    <div class="input-field-container">
+        <p id="actionTitle" class="input-field-title">Action</p>
+        <select id="actionSelect" class="input-field" onchange="loadActionParameters();"></select>
+    </div>
+
+    <div id="devicePowerContainer" class="input-field-container">
+        <p id="powerTitle" class="input-field-title">Power</p>
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <select id="devicePowerSelect" class="input-field" onchange="loadInvertedActionTitle();"></select>
+            <i id="copyAutomationInvertedTriggerAndPowerToggle" class="fa-solid fa-circle-check clickable" onclick="toggleCopyAutomationInvertedTriggerAndPower();"></i>
+        </div>
+        <div id="timeInvertedActionContainer">
+            <p id="timeInvertedActionTitle" class="input-field-title">Time turning off</p>
+            <input type="time" id="timeInvertedActionTxt" class="input-field"/>
+        </div>
+    </div>
+
+    <div id="ledstripColorContainer" class="input-field-container color-container">
+        <p id="colorTitle" class="input-field-title">Color</p>
+        <input id="ledstripColorColor" type="color" class="input-field"/>
+    </div>
+    <div id="ledstripModeContainer" class="input-field-container">
+        <p id="modeTitle" class="input-field-title">Mode</p>
+        <select id="ledstripModeSelect" class="input-field"></select>
+    </div>
+
+    <button id="submitAutomationBtn" onclick="addAutomation();">Submit</button>
+    <button id="deleteAutomationBtn">Delete</button>
+</dialog>
+
+<div id="automationContainer" class="flex-grid"></div>
+
+{% endblock %}

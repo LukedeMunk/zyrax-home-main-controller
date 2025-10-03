@@ -1,0 +1,19 @@
+[Unit]
+Description=ZyraX Home weather service
+After=network.target
+StartLimitBurst=30
+StartLimitIntervalSec=60
+#StartLimitAction=reboot
+
+[Service]
+Type=simple
+WorkingDirectory=/etc/ZyraX_Home/application/services
+ExecStart=/etc/homesystem/webserver/start_telegram_service.sh
+User=masterControllerAdmin
+Restart=always
+RestartSec=1
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

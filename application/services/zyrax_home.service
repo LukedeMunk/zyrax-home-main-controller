@@ -1,0 +1,34 @@
+[Unit]
+Description=ZyraX Home main controller
+After=network.target
+StartLimitBurst=30
+StartLimitIntervalSec=60
+#StartLimitAction=reboot
+
+[Service]
+Type=simple
+WorkingDirectory=/etc/ZyraX_Home
+ExecStart=/etc/ZyraX_Home/venv/bin/python3 /etc/ZyraX_Home/application/main.py
+User=ZyraXHome
+Restart=always
+RestartSec=2
+StandardOutput=journal
+StandardError=journal
+Environment="PATH=/etc/ZyraX_Home/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+Environment="XDG_CONFIG_HOME=/var/lib/ZyraX_Home/data"
+Environment="XDG_CACHE_HOME=/var/lib/ZyraX_Home/data"
+Environment="LG_WD=/var/lib/ZyraX_Home/data/.zyrax_temp"
+
+# GPIO permission
+AmbientCapabilities=CAP_SYS_RAWIO
+CapabilityBoundingSet=CAP_SYS_RAWIO
+
+# Security hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/lib/ZyraX_Home/data
+
+[Install]
+WantedBy=multi-user.target

@@ -1,12 +1,12 @@
 # ZyraX Home | Main controller
 
-[ZyraX Home](https://www.zyraxhome.munkservices.com) is an open-source platform engineered as a unified smart home system. It provides centralized control and real-time monitoring of home electronics, integrates sensor data, and manages programmable LED lighting. The platform supports extensible modules and automation rules, enabling fine-grained control over connected devices.
+[ZyraX Home](https://zyraxhome.munkservices.com/) is an open-source platform engineered as a unified smart home system. It provides centralized control and real-time monitoring of home electronics, integrates sensor data, and manages programmable LED lighting. The platform supports extensible modules and automation rules, enabling fine-grained control over connected devices.
 
 ![banner_image](documentation/images/banner.png)
 
 See `documentation/images` for more product images.
 
-> Note: For those who prefer not to program it themselves, plug-and-play solutions are also available for purchase on [ZyraX Home](https://www.zyraxhome.munkservices.com/plug-play-products).
+> Note: For those who prefer not to program it themselves, plug-and-play solutions are also available for purchase on [ZyraX Home](https://zyraxhome.munkservices.com/plug-play-products).
 
 ### Features
 

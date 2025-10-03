@@ -6,39 +6,35 @@
 
 See `documentation/images` for more product images.
 
-> Note: For those who prefer not to program it themselves, plug-and-play solutions are also available for purchase on [ZyraX Home](https://www.zyraxhome.munkservices.com/order_products).
+> Note: For those who prefer not to program it themselves, plug-and-play solutions are also available for purchase on [ZyraX Home](https://www.zyraxhome.munkservices.com/plug-play-products).
 
 ### Features
 
 ZyraX Home is in early-stage development, with continuous improvements planned. See section `7.2 Roadmap` for a complete overview of upcoming features and components. Key features in version `0.9.0 Beta` include:
 
 - **Easy device onboarding and configuration**
-
 - **Customizable dashboards:**
     - Device and group widgets with detailed status and controls
     - Date/time and weather forecast widgets
-
 - **Device grouping:**
     - Synchronize devices or assign groups as automation targets
-
 - **RF sensor support. Tested models:**
     - Contact sensors:
         - [433MHz Two-way Intelligent Door/Window Sensor](https://nl.aliexpress.com/item/4000780196360.html)
     - PIR motion sensors
         - [Sonoff PIR RF Motion Sensor](https://nl.aliexpress.com/item/1005008632282924.html)
         - [TAIBOAN 433MHz PIR Motion Sensor](https://nl.aliexpress.com/item/1005005510159304.html)
-
 - **Automation engine:**
-    - **Triggers:** scheduled events, sensor input  
-    - **Targets:** individual devices, device groups  
+    - **Triggers:** scheduled events, sensor input
+    - **Targets:** individual devices, device groups
+- **Alarm:** Alarm can be triggered by RF sensors and can send real-time messages via Telegram
+- **Over-The-Air LED strip updates:** LED strip firmware can be updated remotely
 
-- **Alarm:** Alarm can be triggered by RF sensors and can send real-time messages via Telegram  
-
-### About the ZyraX Home main controller
+### About the ZyraX Home platform
 
 The ZyraX Home platform is designed for **modularity and extensibility**, allowing developers to integrate custom devices, extend automation logic, and interface with external APIs.
 
-The vision of the ZyraX Home system is to provide a high-end, fully integrated smart home experience. Every component, from lighting and sensors to automations and third-party devices/services, will work seamlessly together under a single platform, creating a unified, intelligent home environment. The system aims to combine luxury, flexibility, and advanced functionality, making it easy for users to manage and expand their smart home setup while ensuring reliability and performance.
+The vision of the ZyraX Home platform is to provide a high-end, fully integrated smart home experience. Every component, from lighting and sensors to automations and third-party devices/services, will work seamlessly together under a single platform, creating a unified, intelligent home environment. The system aims to combine luxury, flexibility, and advanced functionality, making it easy for users to manage and expand their smart home setup while ensuring reliability and performance.
 
 This main ZyraX Home controller serves as the central interface and management hub for all connected components. It supports integration of modules such as RF sensors, automations and LED strips, with additional modules currently in development.  
 
@@ -48,7 +44,7 @@ The controller software is cross-platform and can run on Windows and Linux syste
 
 The platform can integrate with other open-source components developed for the ZyraX Home ecosystem:
 
-- [ZyraX Home | RGBW LED strip controller](https://github.com/LukedeMunk/zyrax-home-rgbw-ledstrip-controller/releases)
+- [ZyraX Home | RGBW LED strip controller](https://github.com/LukedeMunk/zyrax-home-rgbw-led-strip-controller/releases)
 - [ZyraX Home | RF & Zigbee bridge](https://github.com/LukedeMunk/zyrax-home-rf-zigbee-bridge/releases) (Unreleased, in development)
 - [ZyraX Home | IP camera](https://github.com/LukedeMunk/zyrax-home-ip-camera/releases) (Unreleased, in development)
 - [ZyraX Home | ElectriControl]() (Unreleased, in development)
@@ -74,7 +70,7 @@ The table below lists the compatible firmware versions for each version of the m
 
 | **Version**     | **Device**     | **Compatible firmware versions**                       |
 |-------------    |----------------------    |------------------------------------    |
-| v0.9.0 Beta     | RGBW LED strip controller    | [v0.9.0 Beta](https://github.com/LukedeMunk/zyrax-home-rgbw-ledstrip-controller/releases)     |
+| v0.9.0 Beta     | RGBW LED strip controller    | [v0.9.0 Beta](https://github.com/LukedeMunk/zyrax-home-rgbw-led-strip-controller/releases)     |
 
 ## 3. Getting Started (Raspberry Pi 4 - Raspbian OS)
 
@@ -113,7 +109,9 @@ Use the schematic to connect the RF receiver to the Raspberry Pi, to be able to 
     - Unexpected end of file error? -> `sudo dos2unix install.sh`
 3. Navigate to [mastercontroller.local](mastercontroller.local)
 4. (Optional) To configure the weather API, check [Visual Crossing website](https://github.com/LukedeMunk/zyrax-home-main-controller/releases).
-4. (Optional) To configure the Telegram alarm messages, check the [Telegram](https://core.telegram.org/bots/api) documentation.
+5. (Optional) To configure the Telegram alarm messages, check the [Telegram](https://core.telegram.org/bots/api) documentation.
+
+> Note: When visiting [mastercontroller.local](mastercontroller.local), a browser security notification will appear because local SSL keys are being used. This warning can be safely ignored.
 
 ## 4. Configure RF sensors (optional)
 
@@ -121,7 +119,7 @@ A few RF sensors have been tested, but any 433 MHz sensor should work. On the 
 
 ## 5. Configure ledstrips (optional)
 
-To add new [RGBW LED strip controllers](https://github.com/LukedeMunk/zyrax-home-rgbw-ledstrip-controller/releases) to the system, please boot the LED controller (with a compatible firmware version) and connect it to the same network as the main controller.
+To add new [RGBW LED strip controllers](https://github.com/LukedeMunk/zyrax-home-rgbw-led-strip-controller/releases) to the system, please boot the LED controller (with a compatible firmware version) and connect it to the same network as the main controller.
 
 At the configuration page -> Add device -> Choose device or choose `My accessory is not shown here` -> Configure options -> Configure LED addressing
 
@@ -154,12 +152,14 @@ Below is a roadmap for the ZyraX Home main controller, highlighting the key vers
 | v0.9.0 Beta   | 10-2025               | First public release                                                      |
 | v1.0.0        | 11-2025               | User management, login page, improved security                            |
 |               |                       | Improved LED strip addressing configuration UI                            |
+|               |                       | Improved OTA update functionality                                         |
 |               |                       | Improved alarm functionality                                              |
 |               |                       | Device location and location based automation targets                     |
 |               |                       | Tap-to-run dashboard shortcut and automation, multiple actions            |
 |               |                       | Scenarios: configure scenarios for  LED strip groups                      |
 |               |                       | Language pack support                                                     |
 |               |                       | Multiple UI languages                                                     |
+|               |                       | Sender verification (by hash) for HTTPS commands                          |
 | v1.1.0        | 2026                  | Alarm functionality improvements                                          |
 |               |                       | [RF & Zigbee bridge]() support                                            |
 |               |                       | [Athom GU10 bulb](https://www.athom.tech/blank-1/wled-gu10-rgbcw) support |

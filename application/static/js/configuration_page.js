@@ -26,37 +26,33 @@ const ledstripHasSensorTitleElem = document.getElementById("ledstripHasSensorTit
 const ledstripSensorIsInvertedTitleElem = document.getElementById("ledstripSensorIsInvertedTitle");
 const ledstripSensorModelTitleElem = document.getElementById("ledstripSensorModelTitle");
 
-const sensorModalTitleElem = document.getElementById("sensorModalTitle");
-const sensorNameTitleElem = document.getElementById("sensorNameTitle");
-const sensorIconTitleElem = document.getElementById("sensorIconTitle");
-const sensorIconLowStateTitleElem = document.getElementById("sensorIconLowStateTitle");
+const rfDeviceModalTitleElem = document.getElementById("rfDeviceModalTitle");
+const rfDeviceNameTitleElem = document.getElementById("rfDeviceNameTitle");
+const rfDeviceIconTitleElem = document.getElementById("rfDeviceIconTitle");
+const rfDeviceIconLowStateTitleElem = document.getElementById("rfDeviceIconLowStateTitle");
 
 const groupModalTitleElem = document.getElementById("groupModalTitle");
 const groupNameTitleElem = document.getElementById("groupNameTitle");
 const groupIconTitleElem = document.getElementById("groupIconTitle");
 const groupTypeSelectTitleElem = document.getElementById("groupTypeSelectTitle");
 
-const modulesTitleElem = document.getElementById("modulesTitle");
-const weatherApiKeyTitleElem = document.getElementById("weatherApiKeyTitle");
-const telegramBotTokenTitleElem = document.getElementById("telegramBotTokenTitle");
-
-const weatherIntegrationTitleElem = document.getElementById("weatherIntegrationTitle");
-const telegramIntegrationTitleElem = document.getElementById("telegramIntegrationTitle");
-const rpiRfModuleTitleElem = document.getElementById("rpiRfModuleTitle");
-
 /* Fields */
 const errorMessageLedstripFieldElem = document.getElementById("errorMessageLedstripField");
-const errorMessageSensorFieldElem = document.getElementById("errorMessageSensorField");
+const errorMessageRfDeviceFieldElem = document.getElementById("errorMessageRfDeviceField");
 const errorMessageGroupFieldElem = document.getElementById("errorMessageGroupField");
 
 const currentLedstripFirmwareVersionFieldElem = document.getElementById("currentLedstripFirmwareVersionField");
 
-const errorMessageModuleConfigurationFieldElem = document.getElementById("errorMessageModuleConfigurationField");//
-
 /* Buttons */
-const manuallyAddDeviceBtnElem = document.getElementById("manuallyAddDeviceBtn");
+const ledstripIconBtnElem = document.getElementById("ledstripIconBtn");
+const ledstripIconLowStateBtnElem = document.getElementById("ledstripIconLowStateBtn");
 const submitLedstripBtnElem = document.getElementById("submitLedstripBtn");
-const submitSensorBtnElem = document.getElementById("submitSensorBtn");
+
+const rfDeviceIconBtnElem = document.getElementById("rfDeviceIconBtn");
+const rfDeviceIconLowStateBtnElem = document.getElementById("rfDeviceIconLowStateBtn");
+const submitRfDeviceBtnElem = document.getElementById("submitRfDeviceBtn");
+
+const groupIconBtnElem = document.getElementById("groupIconBtn");
 const submitGroupBtnElem = document.getElementById("submitGroupBtn");
 
 const resetToFactoryConfigurationBtnElem = document.getElementById("resetToFactoryConfigurationBtn");
@@ -72,20 +68,14 @@ const ledstripHasSensorCbElem = document.getElementById("ledstripHasSensorCb");
 const ledstripSensorIsInvertedCbElem = document.getElementById("ledstripSensorIsInvertedCb");
 const ledstripSensorModelSelectElem = document.getElementById("ledstripSensorModelSelect");
 const ledstripModelSelectElem = document.getElementById("ledstripModelSelect");
-const sensorNameTxtElem = document.getElementById("sensorNameTxt");
-const sensorIconTxtElem = document.getElementById("sensorIconTxt");
-const sensorIconLowStateTxtElem = document.getElementById("sensorIconLowStateTxt");
+const rfDeviceNameTxtElem = document.getElementById("rfDeviceNameTxt");
+const rfDeviceIconTxtElem = document.getElementById("rfDeviceIconTxt");
+const rfDeviceIconLowStateTxtElem = document.getElementById("rfDeviceIconLowStateTxt");
 const groupNameTxtElem = document.getElementById("groupNameTxt");
 const groupIconTxtElem = document.getElementById("groupIconTxt");
 const groupTypeSelectElem = document.getElementById("groupTypeSelect");
 
 const otaPackageFileUploadElem = document.getElementById("otaPackageFileUpload");
-
-const weatherServiceEnabledCbElem = document.getElementById("weatherServiceEnabledCb");
-const weatherApiKeyTxtElem = document.getElementById("weatherApiKeyTxt");
-const telegramServiceEnabledCbElem = document.getElementById("telegramServiceEnabledCb");
-const telegramBotTokenTxtElem = document.getElementById("telegramBotTokenTxt");
-const rpiRfModuleEnabledCbElem = document.getElementById("rpiRfModuleEnabledCb");
 
 /* Tables */
 const rfCodesTableElem = document.getElementById("rfCodesTable");
@@ -96,7 +86,7 @@ const logTableElem = document.getElementById("logTable");
 const iconModalElem = document.getElementById("iconModal");
 const deviceModalElem = document.getElementById("deviceModal");
 const ledstripModalElem = document.getElementById("ledstripModal");
-const sensorModalElem = document.getElementById("sensorModal");
+const rfDeviceModalElem = document.getElementById("rfDeviceModal");
 const groupModalElem = document.getElementById("groupModal");
 
 /* Other */
@@ -104,22 +94,17 @@ const iconPickerContainerElem = document.getElementById("iconPickerContainer");
 const searchingDevicesContainerElem = document.getElementById("searchingDevicesContainer");
 const automaticDevicePairContainerElem = document.getElementById("automaticDevicePairContainer");
 const manualDevicePairContainerElem = document.getElementById("manualDevicePairContainer");
-const deviceTypeContainerElem = document.getElementById("deviceTypeContainer");
+const deviceCategoryContainerElem = document.getElementById("deviceCategoryContainer");
 const deviceModelContainerElem = document.getElementById("deviceModelContainer");
 const ledstripSensorInvertedContainerElem = document.getElementById("ledstripSensorInvertedContainer");
 const ledstripSensorModelContainerElem = document.getElementById("ledstripSensorModelContainer");
+const rfDeviceIconLowStateContainerElem = document.getElementById("rfDeviceIconLowStateContainer");
 const rfCodesContainerElem = document.getElementById("rfCodesContainer");
 const groupTypeSelectContainerElem = document.getElementById("groupTypeSelectContainer");
 const groupDevicesContainerElem = document.getElementById("groupDevicesContainer");
-const ledstripContainerElem = document.getElementById("ledstripContainer");
-const sensorContainerElem = document.getElementById("sensorContainer");
-const cameraContainerElem = document.getElementById("cameraContainer");
-const groupContainerElem = document.getElementById("groupContainer");
 
-const ledstripGridElem = document.getElementById("ledstripGrid");
-const sensorGridElem = document.getElementById("sensorGrid");
-const cameraGridElem = document.getElementById("cameraGrid");
-const groupGridElem = document.getElementById("groupGrid");
+
+const devicesContainerElem = document.getElementById("devicesContainer");
 //#endregion
 
 //#region Constants
@@ -140,8 +125,8 @@ const CONFIGURATION_OPTION_UPDATE_LEDSTRIP = {icon: "fa-solid fa-pen-to-square c
 const CONFIGURATION_OPTION_DELETE_LEDSTRIP = {icon: "fa-solid fa-trash clickable", title: TEXT_DELETE_LEDSTRIP, function: "deleteLedstripConfirm"}
 const CONFIGURATION_OPTION_UPDATE_LEDSTRIP_LEDS = {icon: "fa-solid fa-list-timeline clickable", title: TEXT_UPDATE_PIXEL_ADDRESSING, function: "updateLedAddressing"}
 
-const CONFIGURATION_OPTION_UPDATE_SENSOR = {icon: "fa-solid fa-pen-to-square clickable", title: TEXT_CONFIGURE, function: "loadSensorModal"}
-const CONFIGURATION_OPTION_DELETE_SENSOR = {icon: "fa-solid fa-trash clickable", title: TEXT_DELETE_SENSOR, function: "deleteSensorConfirm"}
+const CONFIGURATION_OPTION_UPDATE_SENSOR = {icon: "fa-solid fa-pen-to-square clickable", title: TEXT_CONFIGURE, function: "loadRfDeviceModal"}
+const CONFIGURATION_OPTION_DELETE_SENSOR = {icon: "fa-solid fa-trash clickable", title: TEXT_DELETE_SENSOR, function: "deleteRfDeviceConfirm"}
 
 const CONFIGURATION_OPTION_UPDATE_GROUP = {icon: "fa-solid fa-pen-to-square clickable", title: TEXT_CONFIGURE, function: "loadGroupModal"}
 const CONFIGURATION_OPTION_DELETE_GROUP = {icon: "fa-solid fa-trash clickable", title: TEXT_DELETE_GROUP, function: "deleteGroupConfirm"}
@@ -165,8 +150,6 @@ const CONFIGURATION_OPTIONS_GROUP = [CONFIGURATION_OPTION_UPDATE_GROUP,
 //#endregion
 
 //#region Variables
-let ledstrips = [];
-let sensors = [];
 let fileUploaded = true;
 
 let isFetchingRfCodes = false;
@@ -174,7 +157,7 @@ let isFetchingUnconfiguredDevices = false;
 let lastRecievedRfCodes = [];
 
 let lastLedstripData;
-let lastSensorData;
+let lastRfDeviceData;
 let lastGroupData;
 //#endregion
 
@@ -207,19 +190,19 @@ ledstripIconLowStateTxtElem.addEventListener("keydown", function (e) {
 });
 
 /* Sensor modal flow */
-sensorNameTxtElem.addEventListener("keydown", function (e) {
+rfDeviceNameTxtElem.addEventListener("keydown", function (e) {
     if (e.code === "Enter") {
-        sensorIconTxtElem.focus();
+        rfDeviceIconTxtElem.focus();
     }
 });
-sensorIconTxtElem.addEventListener("keydown", function (e) {
+rfDeviceIconTxtElem.addEventListener("keydown", function (e) {
     if (e.code === "Enter") {
-        sensorIconTxtElem.click();
+        rfDeviceIconTxtElem.click();
     }
 });
-sensorIconLowStateTxtElem.addEventListener("keydown", function (e) {
+rfDeviceIconLowStateTxtElem.addEventListener("keydown", function (e) {
     if (e.code === "Enter") {
-        sensorIconLowStateTxtElem.click();
+        rfDeviceIconLowStateTxtElem.click();
     }
 });
 
@@ -269,11 +252,18 @@ $(document).ready(function() {
 
     weatherServiceEnabledCbElem.checked = weatherServiceEnabled;
     weatherApiKeyTxtElem.value = weatherApiKey;
+    if (weatherServiceEnabled) {
+        weatherApiKeyTxtElem.disabled = false;
+        weatherApiKeyTxtElem.classList.remove("disabled");
+    }
     telegramServiceEnabledCbElem.checked = telegramServiceEnabled;
     telegramBotTokenTxtElem.value = telegramBotToken;
+    if (telegramServiceEnabled) {
+        telegramBotTokenTxtElem.disabled = false;
+        telegramBotTokenTxtElem.classList.remove("disabled");
+    }
     rpiRfModuleEnabledCbElem.checked = rpiRfReceiverEnabled;
 
-    loadDevices();
     loadIconOptions();
     loadLedstripModelSelectOptions();
     loadGroupTypeSelectOptions();
@@ -287,6 +277,11 @@ $(document).ready(function() {
     }
 
     fetchUnconfiguredDevices();
+    const urlParams = new URLSearchParams(window.location.search);
+
+    if (urlParams.has("show_welcome_message")) {
+        showBanner(TEXT_WELCOME, TEXT_WELCOME_TO_THE_CONFIGURATION_PAGE, BANNER_TYPE_INFO)
+    }
 });
 
 //#region Tile generation
@@ -296,31 +291,69 @@ $(document).ready(function() {
 */
 /******************************************************************************/
 function generateTiles() {
-    ledstripGridElem.innerHTML = "";
-    sensorGridElem.innerHTML = "";
-    cameraGridElem.innerHTML = "";
-    groupGridElem.innerHTML = "";
-    ledstripContainerElem.style.display = ledstrips.length > 0 ? "block" : "none";
-    sensorContainerElem.style.display = sensors.length > 0 ? "block" : "none";
-    cameraContainerElem.style.display = false ? "block" : "none";
-    groupContainerElem.style.display = groups.length > 0 ? "block" : "none";
+    devicesContainerElem.innerHTML = "";
+    let index = 0;
+    for (let category of DEVICE_CATEGORIES) {
+        const containerElem = document.createElement("div");
+        containerElem.id = "deviceCategory" + index + "Container";
+        containerElem.style.flexGrow = "1";
+        containerElem.style.display = "flex";
+        containerElem.style.gap = "10px";
+        containerElem.style.flexDirection = "column";
 
-    for (let ledstrip of ledstrips) {
-        generateDeviceTile(ledstrip);
+        const titleContainerElem = document.createElement("div");
+        titleContainerElem.style.display = "flex";
+        titleContainerElem.style.gap = "10px";
+        titleContainerElem.style.alignItems = "baseline";
+        titleContainerElem.style.justifyContent = "center";
+        const titleElem = document.createElement("p");
+        titleElem.textContent = category.name + "s";
+        titleContainerElem.appendChild(titleElem);
+
+        if (!RF_RECEIVER_PRESENT && category.device_models[0].type == DEVICE_TYPE_RF_DEVICE) {
+            const warningIconElem = document.createElement("i");
+            warningIconElem.className = "fa-duotone fa-solid fa-circle-exclamation";
+            warningIconElem.title = TEXT_NO_RF_RECEIVER_PRESENT;
+            titleContainerElem.appendChild(warningIconElem);
+        }
+        containerElem.appendChild(titleContainerElem);
+
+        for (let device of devices) {
+            if (device.category == index) {
+                devicesContainerElem.appendChild(containerElem);//First device, create column
+                break;
+            }
+        }
+        index++;
     }
-    for (let sensor of sensors) {
-        generateDeviceTile(sensor);
+
+    for (let device of devices) {
+        generateDeviceTile(device);
     }
+    
+    const containerElem = document.createElement("div");
+    containerElem.id = "groupContainer";
+    containerElem.style.flexGrow = "1";
+    containerElem.style.display = "flex";
+    containerElem.style.gap = "10px";
+    containerElem.style.flexDirection = "column";
+
+    const titleElem = document.createElement("p");
+    titleElem.textContent = TEXT_GROUPS;
+    containerElem.appendChild(titleElem);
+
+    devicesContainerElem.appendChild(containerElem);
+    
     for (let group of groups) {
         generateGroupTile(group);
     }
-    
+
     let tileItem;
     let tileContainer;
 
     tileContainer = document.createElement("div");
-    tileContainer.style.backgroundColor = "var(--background3)";
-    tileContainer.style.boxShadow = "0 6px 12px var(--shadow-color)";
+    tileContainer.style.backgroundColor = "var(--background4)";
+    tileContainer.style.boxShadow = "var(--shadow-small)";
     tileContainer.className = "tile double-horizontal";
     tileContainer.setAttribute("onclick", "loadGroupModal();");
 
@@ -334,7 +367,7 @@ function generateTiles() {
 
     tileItem.appendChild(icon);
     tileContainer.appendChild(tileItem);
-    groupGridElem.appendChild(tileContainer);
+    containerElem.appendChild(tileContainer);
 }
 
 /******************************************************************************/
@@ -350,18 +383,32 @@ function generateDeviceTile(device) {
     let tileName;
 
     let configurationOptions;
-    let container;
-    if (device.type == DEVICE_TYPE_LEDSTRIP) {
-        configurationOptions = CONFIGURATION_OPTIONS_LEDSTRIP;
-        container = ledstripGridElem;
-    } else if (device.type == DEVICE_TYPE_SENSOR) {
-        configurationOptions = CONFIGURATION_OPTIONS_SENSOR;
-        container = sensorGridElem;
-    } else if (device.type == DEVICE_TYPE_IP_CAMERA) {
-        configurationOptions = CONFIGURATION_OPTIONS_IP_CAMERA;
-        container = cameraGridElem;
-    } else {
-        console.log(device)
+    const containerElem = document.getElementById("deviceCategory" + device.category + "Container");
+    switch (device.category) {
+        case DEVICE_CATEGORY_LEDSTRIP:
+            configurationOptions = CONFIGURATION_OPTIONS_LEDSTRIP;
+            break;
+        case DEVICE_CATEGORY_DOOR_SENSOR:
+            configurationOptions = CONFIGURATION_OPTIONS_SENSOR;
+            break;
+        case DEVICE_CATEGORY_MOTION_SENSOR:
+            configurationOptions = CONFIGURATION_OPTIONS_SENSOR;
+            break;
+        case DEVICE_CATEGORY_SWITCH:
+            configurationOptions = CONFIGURATION_OPTIONS_SENSOR;
+            break;
+        case DEVICE_CATEGORY_REMOTE:
+            configurationOptions = CONFIGURATION_OPTIONS_SENSOR;
+            break;
+        case DEVICE_CATEGORY_POWER_OUTLET:
+            configurationOptions = CONFIGURATION_OPTIONS_SENSOR;
+            break;
+        case DEVICE_TYPE_IP_CAMERA:
+            configurationOptions = CONFIGURATION_OPTIONS_IP_CAMERA;
+            break;
+        default:
+            console.log(device)
+            break;
     }
 
     tileContainer = document.createElement("div");
@@ -369,7 +416,7 @@ function generateDeviceTile(device) {
     //tileContainer.setAttribute("onclick", redirectFunction);
 
     tileContainer.className = "tile double-horizontal";
-    tileContainer.style.boxShadow = "0 6px 12px var(--shadow-color)";
+    tileContainer.style.boxShadow = "var(--shadow-small)";
     tileContainer.style.gridTemplateColumns = "repeat(3, 33%)";
 
     /* Name */
@@ -382,18 +429,18 @@ function generateDeviceTile(device) {
     if (device.type == DEVICE_TYPE_LEDSTRIP || device.type == DEVICE_TYPE_IP_CAMERA) {
         tileName = document.createElement("p");
         tileName.style.fontSize = "10px";
-        tileName.style.color = device.connection_status ? "var(--success_text)" : "var(--warning_text)";
+        tileName.style.color = device.connection_status ? "var(--success-text)" : "var(--warning-text)";
         tileName.textContent = device.hostname;
         tileItem.appendChild(tileName);
         tileName = document.createElement("p");
         tileName.style.fontSize = "10px";
-        tileName.style.color = device.connection_status ? "var(--success_text)" : "var(--warning_text)";
+        tileName.style.color = device.connection_status ? "var(--success-text)" : "var(--warning-text)";
         tileName.textContent = device.ip_address;
         tileItem.appendChild(tileName);
-    } else if (device.type == DEVICE_TYPE_SENSOR) {
+    } else if (device.type == DEVICE_TYPE_RF_DEVICE) {
         tileName = document.createElement("p");
         tileName.style.fontSize = "10px";
-        tileName.textContent = "Last time triggered: XX:XX"
+        tileName.textContent = DEVICE_CATEGORIES[device.category].name;
         tileItem.appendChild(tileName);
     }
 
@@ -419,8 +466,16 @@ function generateDeviceTile(device) {
         tileItem.appendChild(icon);
     }
 
+    if (device.type == DEVICE_TYPE_LEDSTRIP && device.number_of_leds == 0) {
+        icon = document.createElement("i");
+        icon.className = "fas fa-exclamation-circle";
+        icon.style.color = "var(--warning-text)";
+        icon.title = TEXT_LED_ADDRESSING_NOT_CONFIGURED;
+        tileItem.appendChild(icon);
+    }
+
     tileContainer.appendChild(tileItem);
-    container.appendChild(tileContainer);
+    containerElem.appendChild(tileContainer);
 }
 
 /******************************************************************************/
@@ -440,7 +495,7 @@ function generateGroupTile(group) {
     //tileContainer.setAttribute("onclick", redirectFunction);
 
     tileContainer.className = "tile double-horizontal";
-    tileContainer.style.boxShadow = "0 6px 12px var(--shadow-color)";
+    tileContainer.style.boxShadow = "var(--shadow-small)";
     tileContainer.style.gridTemplateColumns = "repeat(3, 33%)";
 
     /* Name */
@@ -478,7 +533,6 @@ function generateGroupTile(group) {
     }
 
     tileContainer.appendChild(tileItem);
-
     
     tileItem = document.createElement("div");
     tileItem.style.gridColumn = "span 2";
@@ -497,7 +551,7 @@ function generateGroupTile(group) {
     tileItem.appendChild(tileName);
     tileContainer.appendChild(tileItem);
 
-    groupGridElem.appendChild(tileContainer);
+    document.getElementById("groupContainer").appendChild(tileContainer);
 }
 //#endregion
 
@@ -607,16 +661,16 @@ function generateLogTableBody() {
         /* Give every type another color based on priority */
         if (log.type == NOTE) {
             typeString = TEXT_NOTE
-            backgroundColor = "var(--row_green)";
+            backgroundColor = "var(--row-green)";
         } else if (log.type == WARNING) {
             typeString = TEXT_WARNING;
-            backgroundColor = "var(--row_orange)";
+            backgroundColor = "var(--row-orange)";
         } else if (log.type == ERROR) {
             typeString = TEXT_ERROR;
-            backgroundColor = "var(--row_red)";
+            backgroundColor = "var(--row-red)";
         } else if (log.type == FATAL_ERROR) {
             typeString = TEXT_FATAL_ERROR;
-            backgroundColor = "var(--row_red)";
+            backgroundColor = "var(--row-red)";
         }
 
         row.style.backgroundColor = backgroundColor;
@@ -763,7 +817,7 @@ function addUnconfiguredDevice(hostname) {
 
 /******************************************************************************/
 /*!
-  @brief    Adds a ledstrip to the back-end.
+  @brief    Adds a ledstrip to the system.
   @param    model               Device model
 */
 /******************************************************************************/
@@ -813,7 +867,7 @@ function updateLedstrip(id) {
 /******************************************************************************/
 function deleteLedstripConfirm(id) {
     let isInGroup = false;
-    let ledstrip = ledstrips[getIndexFromId(ledstrips, id)];
+    let ledstrip = devices[getIndexFromId(devices, id)];
 
     for (let group of groups) {
         if (getIndexFromId(group.device_ids, id, false) != -1) {
@@ -864,7 +918,6 @@ function deleteLedstrip(id) {
         }
     }
 
-    loadDevices();
     generateTiles();
     showBanner(TEXT_SUCCESS, TEXT_ITEM_DELETED_SUCCESSFULLY, BANNER_TYPE_SUCCESS);
 }
@@ -876,42 +929,35 @@ function deleteLedstrip(id) {
 */
 /******************************************************************************/
 function updateLedstripSuccess(result) {
-    let updated = false;
-
+    /* When updated, update existing ledstrip */
     if (lastLedstripData.id != -1) {
-        updated = true;
-    }
-
-    if (updated) {
-        for (let i in ledstrips) {
-            if (ledstrips[i].id == lastLedstripData.id) {
-                if (lastLedstripData.name != undefined) {
-                    ledstrips[i].name = lastLedstripData.name;
-                }
-                if (lastLedstripData.ip_address != undefined) {
-                    ledstrips[i].ip_address = lastLedstripData.ip_address;
-                }
-                if (lastLedstripData.has_sensor != undefined) {
-                    ledstrips[i].has_sensor = lastLedstripData.has_sensor;
-                }
-                if (lastLedstripData.number_of_leds != undefined) {
-                    ledstrips[i].number_of_leds = lastLedstripData.number_of_leds;
-                }
-                if (lastLedstripData.driver != undefined) {
-                    ledstrips[i].driver = lastLedstripData.driver;
-                }
-                ledstrips[i].connection_status = false;
-                break;
-            }
+        let ledstrip = devices[getIndexFromId(devices, lastLedstripData.id)];
+        if (lastLedstripData.name != undefined) {
+            ledstrip.name = lastLedstripData.name;
         }
-    }
-
-    if (updated) {
+        if (lastLedstripData.ip_address != undefined) {
+            ledstrip.ip_address = lastLedstripData.ip_address;
+        }
+        if (lastLedstripData.has_sensor != undefined) {
+            ledstrip.has_sensor = lastLedstripData.has_sensor;
+        }
+        if (lastLedstripData.number_of_leds != undefined) {
+            ledstrip.number_of_leds = lastLedstripData.number_of_leds;
+        }
+        if (lastLedstripData.model_id != undefined) {
+            ledstrip.model_id = lastLedstripData.model_id;
+        }
+        ledstrip.connection_status = false;                                     //Reset connection status to 'loading'
         showBanner(TEXT_SUCCESS, TEXT_CHANGES_SAVED_SUCCESSFULLY, BANNER_TYPE_SUCCESS);
     } else {
         lastLedstripData.id = result.message.id;       
-        ledstrips.push(lastLedstripData);
-        showBanner(TEXT_SUCCESS, TEXT_LEDSTRIP_ADDED_CLICK_TO_CONFIGURE, BANNER_TYPE_SUCCESS, BACK_END_UPDATE_INTERVAL_5S, "updateLedAddressing(" + lastLedstripData.id + ");");
+        devices.push(lastLedstripData);
+
+        let buttons = [
+                        {text: TEXT_CONFIGURE, onclickFunction: "updateLedAddressing(" + lastLedstripData.id + ");"},
+                        {text: TEXT_DONT_CONFIGURE, onclickFunction: "closePopup();"}
+                    ];
+        showPopup(TEXT_SUCCESS, TEXT_LEDSTRIP_ADDED_CLICK_TO_CONFIGURE, buttons, BANNER_TYPE_INFO);
     }
 
     generateTiles();
@@ -926,13 +972,13 @@ function updateLedstripSuccess(result) {
 /******************************************************************************/
 async function checkDeviceConnectionStatus(id) {
     //TODO show banner
-    ledstrips[getIndexFromId(ledstrips, id)].connection_status = false;
+    devices[getIndexFromId(devices, id)].connection_status = false;
     generateTiles();
     
     /* Wait for DOM to load connecting state */
     setTimeout(function() {
         let result = httpRequestJsonReturn("/check_ledstrip_connection_status", {"id" : id});
-        ledstrips[getIndexFromId(ledstrips, id)].connection_status = result.message.connection_status;
+        devices[getIndexFromId(devices, id)].connection_status = result.message.connection_status;
         generateTiles();
     }, 50);
 }
@@ -941,56 +987,57 @@ async function checkDeviceConnectionStatus(id) {
 //#region Sensor functions
 /******************************************************************************/
 /*!
-  @brief    Adds a sensor to the back-end.
+  @brief    Adds an RF device to the system.
+  @param    modelId             Device model ID
 */
 /******************************************************************************/
-function addSensor(model) {
-    if (!validateSensor(undefined, model)) {
+function addRfDevice(modelId) {
+    if (!validateRfDevice(-1, modelId)) {
         return;
     }
 
-    let result = httpPostRequestJsonReturn("/add_sensor", lastSensorData);
+    let result = httpPostRequestJsonReturn("/add_rf_device", lastRfDeviceData);
     
     if (result.status_code != HTTP_CODE_OK) {
-        errorMessageSensorFieldElem.style.display = "inline-block";
-        errorMessageSensorFieldElem.textContent = result.message;
+        errorMessageRfDeviceFieldElem.style.display = "inline-block";
+        errorMessageRfDeviceFieldElem.textContent = result.message;
         return;
     }
 
-    updateSensorSuccess(result);
+    updateRfDeviceSuccess(result);
 }
 
 /******************************************************************************/
 /*!
-  @brief    Updates the specified sensor.
+  @brief    Updates the specified RF device.
   @param    id                  Device ID
 */
 /******************************************************************************/
-function updateSensor(id) {
-    if (!validateSensor(id)) {
+function updateRfDevice(id) {
+    if (!validateRfDevice(id)) {
         return;
     }
 
-    let result = httpPostRequestJsonReturn("/update_sensor", lastSensorData);
+    let result = httpPostRequestJsonReturn("/update_rf_device", lastRfDeviceData);
     
     if (result.status_code != HTTP_CODE_OK) {
-        errorMessageSensorFieldElem.style.display = "inline-block";
-        errorMessageSensorFieldElem.textContent = result.message;
+        errorMessageRfDeviceFieldElem.style.display = "inline-block";
+        errorMessageRfDeviceFieldElem.textContent = result.message;
         return;
     }
 
-    updateSensorSuccess(result);
+    updateRfDeviceSuccess(result);
 }
 
 /******************************************************************************/
 /*!
-  @brief    Shows a confirmation before deleting the specified sensor.
+  @brief    Shows a confirmation before deleting the specified RF device.
   @param    id                  Device ID
 */
 /******************************************************************************/
-function deleteSensorConfirm(id) {
+function deleteRfDeviceConfirm(id) {
     let isInGroup = false;
-    let sensor = sensors[getIndexFromId(sensors, id)];
+    let device = devices[getIndexFromId(devices, id)];
 
     for (let group of groups) {
         if (getIndexFromId(group.device_ids, id, false) != -1) {
@@ -1000,27 +1047,27 @@ function deleteSensorConfirm(id) {
     }
 
     let buttons = [
-                    {text: TEXT_DELETE, onclickFunction: "deleteSensor(" + id + ");"},
+                    {text: TEXT_DELETE, onclickFunction: "deleteRfDevice(" + id + ");"},
                     CANCEL_POPUP_BUTTON
                 ];
 
     if (isInGroup) {
-        showPopup(TEXT_Q_ARE_YOU_SURE, VAR_TEXT_Q_DELETE_OUT_OF_GROUP(sensor.name), buttons, BANNER_TYPE_WARNING);
+        showPopup(TEXT_Q_ARE_YOU_SURE, VAR_TEXT_Q_DELETE_OUT_OF_GROUP(device.name), buttons, BANNER_TYPE_WARNING);
     } else {
-        showPopup(TEXT_Q_ARE_YOU_SURE, VAR_TEXT_Q_DELETE(sensor.name), buttons, BANNER_TYPE_WARNING);
+        showPopup(TEXT_Q_ARE_YOU_SURE, VAR_TEXT_Q_DELETE(device.name), buttons, BANNER_TYPE_WARNING);
     }
 }
 
 /******************************************************************************/
 /*!
-  @brief    Deletes the specified sensor.
+  @brief    Deletes the specified RF device.
   @param    id                  Device ID
 */
 /******************************************************************************/
-function deleteSensor(id) {
+function deleteRfDevice(id) {
     closePopup();
 
-    httpPostRequest("/delete_sensor", {"id" : id});
+    httpPostRequest("/delete_rf_device", {"id" : id});
 
     for (let i = 0; i < devices.length; i++) {
         if (devices[i].id == id) {
@@ -1040,57 +1087,57 @@ function deleteSensor(id) {
         }
     }
 
-    loadDevices();
     generateTiles();
     showBanner(TEXT_SUCCESS, TEXT_ITEM_DELETED_SUCCESSFULLY, BANNER_TYPE_SUCCESS);
 }
 
 /******************************************************************************/
 /*!
-  @brief    Handles the server response for updating or adding sensors.
+  @brief    Handles the server response for updating or adding RF devices.
   @param    result              Server response to handle
 */
 /******************************************************************************/
-function updateSensorSuccess(result) {
+function updateRfDeviceSuccess(result) {
     let updated = false;
 
-    if (lastSensorData.id != -1) {
+    if (lastRfDeviceData.id != -1) {
         updated = true;
     }
 
-    let model = sensorModels[lastSensorData.model];
+    let model = DEVICE_MODELS[lastRfDeviceData.model_id];
 
     if (updated) {
-        for (let i in sensors) {
-            if (sensors[i].id == lastSensorData.id) {
-                sensors[i].name = lastSensorData.name;
-                sensors[i].icon = lastSensorData.icon;
-                sensors[i].icon_low_state = lastSensorData.icon_low_state;
-                for (let code in model.rf_code_types) {
-                    sensors[i].rf_codes[code].rf_code = parseInt(lastSensorData.rf_codes_array[code]);
-                }
-                break;
-            }
+        let device = devices[getIndexFromId(devices, lastRfDeviceData.id)];
+        device.name = lastRfDeviceData.name;
+        device.icon = lastRfDeviceData.icon;
+
+        if (model.icons.length > 1) {
+            device.icon_low_state = lastRfDeviceData.icon_low_state;
+        }
+
+        for (let code in model.rf_code_types) {
+            device.rf_codes[code].rf_code = parseInt(lastRfDeviceData.rf_codes_array[code].rf_code);
         }
     }
 
     if (updated) {
         showBanner(TEXT_SUCCESS, TEXT_CHANGES_SAVED_SUCCESSFULLY, BANNER_TYPE_SUCCESS);
     } else {
-        lastSensorData.id = result.message.id;
-        sensors.push(lastSensorData);
+        lastRfDeviceData.id = result.message.id;
+        lastRfDeviceData.rf_codes = lastRfDeviceData.rf_codes_array;
+        devices.push(lastRfDeviceData);
         showBanner(TEXT_SUCCESS, TEXT_ITEM_ADDED_SUCCESSFULLY, BANNER_TYPE_SUCCESS);
     }
 
     generateTiles();
-    closeModal(sensorModalElem);
+    closeModal(rfDeviceModalElem);
 }
 //#endregion
 
 //#region Group functions
 /******************************************************************************/
 /*!
-  @brief    Adds a group to the back-end.
+  @brief    Adds a group to the system.
 */
 /******************************************************************************/
 function addGroup() {
@@ -1183,14 +1230,10 @@ function updateGroupSuccess(result) {
     }
 
     if (updated) {
-        for (let i in groups) {
-            if (groups[i].id == lastGroupData.id) {
-                groups[i].name = lastGroupData.name;
-                groups[i].type = lastGroupData.type;
-                groups[i].device_ids = lastGroupData.device_ids;
-                break;
-            }
-        }
+        let group = groups[getIndexFromId(groups, lastGroupData.id)];
+        group.name = lastGroupData.name;
+        group.type = lastGroupData.type;
+        group.device_ids = lastGroupData.device_ids;
     }
 
     if (updated) {
@@ -1375,7 +1418,7 @@ async function fetchRfCodes() {
         return;
     }
 
-    if (!sensorModalElem.classList.contains("show")) {
+    if (!rfDeviceModalElem.classList.contains("show")) {
         isFetchingRfCodes = false;
         setTimeout(fetchRfCodes, BACK_END_UPDATE_INTERVAL_5S);
         return;
@@ -1510,33 +1553,13 @@ function loadText() {
     ledstripHasSensorTitleElem.textContent = TEXT_HAS_SENSOR;
     ledstripSensorIsInvertedTitleElem.textContent = TEXT_INVERTED;
     ledstripSensorModelTitleElem.textContent = TEXT_MODEL;
-    sensorNameTitleElem.textContent = TEXT_NAME;
-    sensorIconTitleElem.textContent = TEXT_ICON;
-    sensorIconLowStateTitleElem.textContent = TEXT_ICON_NOT_ACTIVE;
+    rfDeviceNameTitleElem.textContent = TEXT_NAME;
+    rfDeviceIconTitleElem.textContent = TEXT_ICON;
+    rfDeviceIconLowStateTitleElem.textContent = TEXT_ICON_NOT_ACTIVE;
     groupNameTitleElem.textContent = TEXT_NAME;
     groupIconTitleElem.textContent = TEXT_ICON;
 
-    manuallyAddDeviceBtnElem.textContent = TEXT_MY_ACCESSORY_NOT_FOUND;
-
     modulesTitleElem.textContent = TEXT_API_KEYS;
-}
-
-/******************************************************************************/
-/*!
-  @brief    Loads the devices in arrays based on device type.
-*/
-/******************************************************************************/
-function loadDevices() {
-    ledstrips = [];
-    sensors = [];
-
-    for (let device of devices) {
-        if (device.type == DEVICE_TYPE_LEDSTRIP) {
-            ledstrips.push(device);
-        } else if (device.type == DEVICE_TYPE_SENSOR) {
-            sensors.push(device);
-        }
-    }
 }
 
 /******************************************************************************/
@@ -1547,9 +1570,9 @@ function loadDevices() {
 function loadLedstripModelSelectOptions() {
     ledstripModelSelectElem.innerHTML = "";
     
-    for (let model of ledstripModels) {
+    for (let model of DEVICE_CATEGORIES[DEVICE_CATEGORY_LEDSTRIP].device_models) {
         option = document.createElement("option");
-        option.value = model.model;
+        option.value = model.model_id;
         option.text = model.name;
         
         ledstripModelSelectElem.appendChild(option);
@@ -1564,7 +1587,7 @@ function loadLedstripModelSelectOptions() {
 function loadGroupTypeSelectOptions() {
     groupTypeSelectElem.innerHTML = "";
     
-    for (let model of deviceTypes) {
+    for (let model of DEVICE_TYPES) {
         option = document.createElement("option");
         option.value = model.type;
         option.text = model.name;
@@ -1581,7 +1604,7 @@ function loadGroupTypeSelectOptions() {
 function loadLedstripSensorModelSelectOptions() {
     ledstripSensorModelSelectElem.innerHTML = "";
     
-    for (let model of ledstripSensorModels) {
+    for (let model of LEDSTRIP_SENSOR_MODELS) {
         option = document.createElement("option");
         option.value = model.model;
         option.text = model.name;
@@ -1592,41 +1615,28 @@ function loadLedstripSensorModelSelectOptions() {
 
 /******************************************************************************/
 /*!
-  @brief    Loads the devices models of the specified device type.
-  @param    deviceType          Device type
+  @brief    Loads the devices models of the specified device category.
+  @param    deviceCategory      Device category
 */
 /******************************************************************************/
-function loadDeviceModels(deviceType) {
+function loadDeviceModels(deviceCategory) {
     deviceModelContainerElem.innerHTML = "";
     let tile;
     let grid;
-    let icon;
 
     let models;
-    let func;
-    let iconName;
+    let func = "loadDeviceAddModal";
 
-    if (deviceType == DEVICE_TYPE_LEDSTRIP) {
-        models = ledstripModels;
-        func = "loadLedstripModal";
-        iconName = "fa-duotone fa-regular fa-lightbulb fa-2x";
-    } else if (deviceType == DEVICE_TYPE_SENSOR) {
-        models = sensorModels;
-        func = "loadSensorModal";
-        iconName = "fa-duotone fa-solid fa-door-open fa-2x";
-    } else if (deviceType == DEVICE_TYPE_IP_CAMERA) {
-        models = cameraModels;
-        func = "loadCameraModal";
-        iconName = "fa-duotone fa-solid fa-camera-cctv fa-2x";
-    }
+    models = DEVICE_CATEGORIES[deviceCategory].device_models;
 
     for (let model of models) {
         tile = document.createElement("div");
-        tile.id = "sensorTile" + model.model;
+        tile.id = "deviceTile" + model.model_id;
         tile.className = "tile single";
+        tile.style.margin = "10px";
         tile.style.backgroundColor = "var(--background2)";
 
-        tile.setAttribute("onclick", func + "(undefined, " + model.model + ");");
+        tile.setAttribute("onclick", func + "(" + model.model_id + ");");
 
         grid = document.createElement("div");
         grid.style.gridColumn = "span 2";
@@ -1635,17 +1645,25 @@ function loadDeviceModels(deviceType) {
         grid.appendChild(title);
         tile.appendChild(grid);
 
-        grid = document.createElement("div");
-        icon = document.createElement("i");
-        icon.className = iconName;
-
-        grid.appendChild(icon);
-        tile.appendChild(grid);
-
         deviceModelContainerElem.appendChild(tile);
     }
 }
 
+/******************************************************************************/
+/*!
+  @brief    Loads the specific device modal for the specified model.
+  @param    modelId             Device model ID
+*/
+/******************************************************************************/
+function loadDeviceAddModal(modelId) {
+    if (DEVICE_MODELS[modelId].type == DEVICE_TYPE_LEDSTRIP) {
+        loadLedstripModal(undefined, modelId);
+    } else if (DEVICE_MODELS[modelId].type == DEVICE_TYPE_RF_DEVICE) {
+        loadRfDeviceModal(undefined, modelId);
+    } else if (DEVICE_MODELS[modelId].type == DEVICE_TYPE_IP_CAMERA) {
+        //
+    }
+}
 /******************************************************************************/
 /*!
   @brief    Loads the device modal.
@@ -1654,20 +1672,32 @@ function loadDeviceModels(deviceType) {
 */
 /******************************************************************************/
 function loadDeviceModal(manualPairing=false) {
+    deviceCategoryContainerElem.innerHTML = "";
+
+    for (let category of DEVICE_CATEGORIES) {
+        if (!RF_RECEIVER_PRESENT && category.device_models[0].type == DEVICE_TYPE_RF_DEVICE) {
+            continue;
+        }
+
+        const categoryBtnElem = document.createElement("button");
+        categoryBtnElem.className = "icon-text-button";
+        categoryBtnElem.style.justifyContent = "space-between";
+        categoryBtnElem.style.padding = "0px 10px";
+        categoryBtnElem.textContent = category.name;
+        categoryBtnElem.setAttribute("onclick", "loadDeviceModels(" + category.category + ");");
+        
+        let icon = document.createElement("i");
+        icon.className = category.icon;
+        icon.style.fontSize = "var(--font-size-h2)";
+        
+        categoryBtnElem.appendChild(icon);
+        deviceCategoryContainerElem.appendChild(categoryBtnElem);
+    }
+
     if (manualPairing) {
         searchingDevicesContainerElem.style.display = "none";
         automaticDevicePairContainerElem.style.display = "none";
         manualDevicePairContainerElem.style.display = "block";
-        manuallyAddDeviceBtnElem.style.display = "none";
-        
-        deviceTypeContainerElem.innerHTML = "";
-
-        for (let type of deviceTypes) {
-            let typeElem = document.createElement("button");
-            typeElem.textContent = type.name;
-            typeElem.setAttribute("onclick", "loadDeviceModels(" + type.type + ");");
-            deviceTypeContainerElem.appendChild(typeElem);
-        }
 
         showModal(deviceModalElem);
         return;
@@ -1677,7 +1707,6 @@ function loadDeviceModal(manualPairing=false) {
     searchingDevicesContainerElem.style.display = "flex";
     automaticDevicePairContainerElem.style.display = "grid";
     manualDevicePairContainerElem.style.display = "none";
-    manuallyAddDeviceBtnElem.style.display = "block";
     loadUnconfiguredDevices();
     showModal(deviceModalElem);
 }
@@ -1776,8 +1805,9 @@ function loadLedstripModal(id=undefined, modelId=undefined, hostname=undefined) 
 
     ledstripNameTxtElem.classList.remove("invalid-input");
     ledstripHostnameTxtElem.classList.remove("invalid-input");
-    ledstripIconTxtElem.classList.remove("invalid-input");
-    ledstripIconLowStateTxtElem.classList.remove("invalid-input");
+    ledstripIconBtnElem.classList.remove("invalid-input");
+    ledstripIconLowStateBtnElem.classList.remove("invalid-input");
+
     ledstripModelSelectElem.classList.remove("invalid-input");
 
     if (id == undefined) {
@@ -1805,7 +1835,7 @@ function loadLedstripModal(id=undefined, modelId=undefined, hostname=undefined) 
         return;
     }
 
-    let ledstrip = ledstrips[getIndexFromId(ledstrips, id)];
+    let ledstrip = devices[getIndexFromId(devices, id)];
 
     ledstripModalTitleElem.textContent = TEXT_UPDATE_LEDSTRIP;
     ledstripNameTxtElem.value = ledstrip.name;
@@ -1832,52 +1862,66 @@ function loadLedstripModal(id=undefined, modelId=undefined, hostname=undefined) 
 
 /******************************************************************************/
 /*!
-  @brief    Loads the sensor modal.
+  @brief    Loads the RF device modal.
   @param    id                  Device ID
   @param    modelId             Model ID
 */
 /******************************************************************************/
-function loadSensorModal(id=undefined, modelId=undefined) {
+function loadRfDeviceModal(id=undefined, modelId=undefined) {
     closeModal(deviceModalElem, false);
     
     /* Reset error styling */
-    errorMessageSensorFieldElem.style.display = "none";
+    errorMessageRfDeviceFieldElem.style.display = "none";
 
-    sensorNameTxtElem.classList.remove("invalid-input");
-    sensorIconTxtElem.classList.remove("invalid-input");
-    sensorIconLowStateTxtElem.classList.remove("invalid-input");
+    rfDeviceNameTxtElem.classList.remove("invalid-input");
+    rfDeviceIconBtnElem.classList.remove("invalid-input");
+    rfDeviceIconLowStateBtnElem.classList.remove("invalid-input");
 
     if (id == undefined) {
-        sensorModalTitleElem.textContent = TEXT_ADD_SENSOR;
-        sensorNameTxtElem.value = "";
-        sensorIconTxtElem.className = "";
-        sensorIconLowStateTxtElem.className = "";
-        loadRfCodeFields(modelId);
+        rfDeviceModalTitleElem.textContent = VAR_TEXT_ADD(DEVICE_MODELS[modelId].name);
+        rfDeviceNameTxtElem.value = "";
+        rfDeviceIconTitleElem.textContent = DEVICE_MODELS[modelId].icons[0].name;
+        rfDeviceIconTxtElem.className = "";
+        if (DEVICE_MODELS[modelId].icons.length > 1) {
+            rfDeviceIconLowStateContainerElem.style.display = "block";
+            rfDeviceIconLowStateTitleElem.textContent = DEVICE_MODELS[modelId].icons[1].name;
+        } else {
+            rfDeviceIconLowStateContainerElem.style.display = "none";
+        }
+        rfDeviceIconLowStateTxtElem.className = "";
+        loadRfCodeFields(undefined, modelId);
 
-        submitSensorBtnElem.setAttribute("onclick", "addSensor(" + modelId + ");");
+        submitRfDeviceBtnElem.setAttribute("onclick", "addRfDevice(" + modelId + ");");
 
-        showModal(sensorModalElem);
+        showModal(rfDeviceModalElem);
         isFetchingRfCodes = true;
         fetchRfCodes();
         return;
     }
 
-    let sensor = sensors[getIndexFromId(sensors, id)];
+    let device = devices[getIndexFromId(devices, id)];
+    modelId = device.model_id;
 
-    sensorModalTitleElem.textContent = TEXT_UPDATE_SENSOR;
-    sensorNameTxtElem.value = sensor.name;
-    sensorIconTxtElem.className = sensor.icon + " fa-xl";
-    sensorIconLowStateTxtElem.className = sensor.icon_low_state + " fa-xl";
-    loadRfCodeFields(sensor.model);
-    submitSensorBtnElem.setAttribute("onclick", "updateSensor(" + sensor.id + ");");
+    rfDeviceModalTitleElem.textContent = VAR_TEXT_UPDATE(device.name);
+    rfDeviceNameTxtElem.value = device.name;
+    rfDeviceIconTxtElem.className = device.icon + " fa-xl";
+    rfDeviceIconTitleElem.textContent = DEVICE_MODELS[modelId].icons[0].name;
+    if (DEVICE_MODELS[modelId].icons.length > 1) {
+        rfDeviceIconLowStateContainerElem.style.display = "block";
+        rfDeviceIconLowStateTitleElem.textContent = DEVICE_MODELS[modelId].icons[1].name;
+        rfDeviceIconLowStateTxtElem.className = device.icon_low_state + " fa-xl";
+    } else {
+        rfDeviceIconLowStateContainerElem.style.display = "none";
+    }
+    loadRfCodeFields(device.id, device.model_id);
+    submitRfDeviceBtnElem.setAttribute("onclick", "updateRfDevice(" + device.id + ");");
 
-    let model = sensorModels[sensor.model];
-
-    for (let codeType of model.rf_code_types) {
-        document.getElementById(codeType.type + "RfCodeTxt").value = getRfCode(sensor, codeType.type).rf_code;
+    for (let codeType of DEVICE_MODELS[modelId].rf_code_types) {
+        console.log(codeType)
+        document.getElementById(codeType.type + "RfCodeTxt").value = getRfCode(device, codeType.type).rf_code;
     }
 
-    showModal(sensorModalElem);
+    showModal(rfDeviceModalElem);
     isFetchingRfCodes = true;
     fetchRfCodes();
 }
@@ -1885,16 +1929,49 @@ function loadSensorModal(id=undefined, modelId=undefined) {
 /******************************************************************************/
 /*!
   @brief    Loads the RF code fields based on the specified RF device model ID.
-  @param    modelId             Model ID
+  @param    deviceId            Device ID
+  @param    modelId             Device model ID
 */
 /******************************************************************************/
-function loadRfCodeFields(modelId) {
+function loadRfCodeFields(deviceId=undefined, modelId=undefined) {
     rfCodesContainerElem.innerText = "";
 
-    let model = sensorModels[modelId];
+    let model = DEVICE_MODELS[modelId];
+
+    if (model.category == DEVICE_CATEGORY_REMOTE) {
+        if (deviceId == undefined) {
+            generateRfCodeInput({name: "Code 1", type: 0});
+            return;
+        }
+
+        let device = devices[getIndexFromId(devices, deviceId)];
+        for (let codeType of device.rf_codes) {
+            generateRfCodeInput(codeType);
+        }
+    }
+
     for (let codeType of model.rf_code_types) {
         generateRfCodeInput(codeType);
     }
+}
+
+/******************************************************************************/
+/*!
+  @brief    Loads the RF code fields based on the specified RF device model ID.
+  @param    modelId             Device model ID
+  @returns  category            Category ID
+*/
+/******************************************************************************/
+function getCategoryFromModel(modelId) {
+    for (let category in DEVICE_CATEGORIES) {
+        for (let model of DEVICE_CATEGORIES[category].device_models) {
+            if (model.model_id == modelId) {
+                return parseInt(category);
+            }
+        }
+    }
+
+    return undefined;
 }
 
 /******************************************************************************/
@@ -1925,7 +2002,7 @@ function generateRfCodeInput(type) {
     input.type = "text";
     container.appendChild(input);
 
-    rfCodesContainerElem.appendChild(container);
+    rfCodesContainerElem.appendChild(container);//TODO Add quick actions bij rfcodes.
 }
 
 /******************************************************************************/
@@ -1938,7 +2015,7 @@ function loadGroupModal(id=undefined) {
     /* Reset error styling */
     errorMessageGroupFieldElem.style.display = "none";
     groupNameTxtElem.classList.remove("invalid-input");
-    groupIconTxtElem.classList.remove("invalid-input");
+    groupIconBtnElem.classList.remove("invalid-input");
 
     if (id == undefined) {
         groupModalTitleElem.textContent = TEXT_ADD_GROUP;
@@ -1991,6 +2068,7 @@ function updateGroupDevices(group=undefined) {
         type = groupTypeSelectElem.value;
     }
 
+    let numberOfDevices = 0;
     for (let device of devices) {
         if (device.type != type) {
             continue;
@@ -2021,9 +2099,32 @@ function updateGroupDevices(group=undefined) {
         icon = document.createElement("i");
         if (device.type == DEVICE_TYPE_LEDSTRIP) {
             icon.className = "fa-duotone fa-regular fa-lightbulb fa-2x";
-        } else if (device.type == DEVICE_TYPE_SENSOR) {
+        } else if (device.type == DEVICE_TYPE_RF_DEVICE) {
             icon.className = "fa-duotone fa-regular fa-door-open fa-2x";
         }
+
+        grid.appendChild(icon);
+        tile.appendChild(grid);
+
+        groupDevicesContainerElem.appendChild(tile);
+    }
+
+    if (numberOfDevices == 0) {
+        tile = document.createElement("div");
+        tile.id = "groupDeviceTile";
+        tile.className = "tile single";
+        tile.style.backgroundColor = "var(--background2)";
+
+        grid = document.createElement("div");
+        grid.style.gridColumn = "span 2";
+        title = document.createTextNode("No devices yet");
+
+        grid.appendChild(title);
+        tile.appendChild(grid);
+
+        grid = document.createElement("div");
+        icon = document.createElement("i");
+        icon.className = "fa-solid fa-square-xmark fa-xl";
 
         grid.appendChild(icon);
         tile.appendChild(grid);
@@ -2047,7 +2148,7 @@ function validateLedstrip(id=-1) {
     let hostname = ledstripHostnameTxtElem.value;
     let icon = ledstripIconTxtElem.className.replace(" fa-xl", "");
     let iconLowState = ledstripIconLowStateTxtElem.className.replace(" fa-xl", "");
-    let driver = ledstripModelSelectElem.value;
+    let modelId = ledstripModelSelectElem.value;
     
     let hasSensor = ledstripHasSensorCbElem.checked;
     let sensorInverted = ledstripSensorIsInvertedCbElem.checked;
@@ -2058,8 +2159,8 @@ function validateLedstrip(id=-1) {
 
     ledstripNameTxtElem.classList.remove("invalid-input");
     ledstripHostnameTxtElem.classList.remove("invalid-input");
-    ledstripIconTxtElem.classList.remove("invalid-input");
-    ledstripIconLowStateTxtElem.classList.remove("invalid-input");
+    ledstripIconBtnElem.classList.remove("invalid-input");
+    ledstripIconLowStateBtnElem.classList.remove("invalid-input");
     ledstripModelSelectElem.classList.remove("invalid-input");
     ledstripHasSensorCbElem.classList.remove("invalid-input");
     ledstripSensorModelSelectElem.classList.remove("invalid-input");
@@ -2072,6 +2173,13 @@ function validateLedstrip(id=-1) {
         errorMessageLedstripFieldElem.style.display = "inline-block";
         return false;
     }
+    if (name.match(SYMBOL_CRITICAL_RE)) {
+        ledstripNameTxtElem.classList.add("invalid-input");
+        ledstripNameTxtElem.focus();
+        errorMessageLedstripFieldElem.textContent = TEXT_FIELD_NO_SYMBOLS;
+        errorMessageLedstripFieldElem.style.display = "inline-block";
+        return false;
+    }
 
     /* Validate hostname */
     if (hostname == "") {
@@ -2081,9 +2189,16 @@ function validateLedstrip(id=-1) {
         errorMessageLedstripFieldElem.style.display = "inline-block";
         return false;
     }
+    if (hostname.match(SYMBOL_CRITICAL_RE)) {
+        ledstripHostnameTxtElem.classList.add("invalid-input");
+        ledstripHostnameTxtElem.focus();
+        errorMessageLedstripFieldElem.textContent = TEXT_FIELD_NO_SYMBOLS;
+        errorMessageLedstripFieldElem.style.display = "inline-block";
+        return false;
+    }
     
-    /* Validate driver */
-    if (driver == "") {
+    /* Validate model */
+    if (modelId == "") {
         ledstripModelSelectElem.classList.add("invalid-input");
         ledstripModelSelectElem.focus();
         errorMessageLedstripFieldElem.textContent = TEXT_FIELD_REQUIRED;
@@ -2093,15 +2208,15 @@ function validateLedstrip(id=-1) {
 
     /* Validate icons */
     if (icon == "") {
-        ledstripIconTxtElem.classList.add("invalid-input");
-        ledstripIconTxtElem.focus();
+        ledstripIconBtnElem.classList.add("invalid-input");
+        ledstripIconBtnElem.focus();
         errorMessageLedstripFieldElem.textContent = TEXT_FIELD_REQUIRED;
         errorMessageLedstripFieldElem.style.display = "inline-block";
         return false;
     }
     if (iconLowState == "") {
-        ledstripIconLowStateTxtElem.classList.add("invalid-input");
-        ledstripIconLowStateTxtElem.focus();
+        ledstripIconLowStateBtnElem.classList.add("invalid-input");
+        ledstripIconLowStateBtnElem.focus();
         errorMessageLedstripFieldElem.textContent = TEXT_FIELD_REQUIRED;
         errorMessageLedstripFieldElem.style.display = "inline-block";
         return false;
@@ -2116,13 +2231,13 @@ function validateLedstrip(id=-1) {
         return false;
     }
 
-    for (let ledstrip of ledstrips) {
-        if (ledstrip.id == id) {
+    for (let device of devices) {
+        if (device.id == id) {
             continue;
         }
 
         /* Check if name is unique */
-        if (ledstrip.name == name) {
+        if (device.name == name) {
             ledstripNameTxtElem.classList.add("invalid-input");
             ledstripNameTxtElem.focus();
             errorMessageLedstripFieldElem.textContent = TEXT_FIELD_UNIQUE;
@@ -2131,7 +2246,7 @@ function validateLedstrip(id=-1) {
         }
 
         /* Check if hostname is unique */
-        if (ledstrip.hostname == hostname) {
+        if (device.hostname == hostname) {
             ledstripHostnameTxtElem.classList.add("invalid-input");
             ledstripHostnameTxtElem.focus();
             errorMessageLedstripFieldElem.textContent = TEXT_FIELD_UNIQUE;
@@ -2141,13 +2256,14 @@ function validateLedstrip(id=-1) {
     }
 
     lastLedstripData = {
-        id : id
+        id : id,
+        category : DEVICE_CATEGORY_LEDSTRIP
     }
 
     let numberChanged = 0;
 
     if (id != -1) {
-        let ledstrip = ledstrips[getIndexFromId(ledstrips, id)];
+        let ledstrip = devices[getIndexFromId(devices, id)];
         if (ledstrip.hostname != hostname) {
             lastLedstripData.hostname = hostname;
             numberChanged++;
@@ -2156,8 +2272,8 @@ function validateLedstrip(id=-1) {
             lastLedstripData.name = name;
             numberChanged++;
         }
-        if (ledstrip.driver != driver) {
-            lastLedstripData.driver = driver;
+        if (ledstrip.model_id != modelId) {
+            lastLedstripData.model_id = modelId;
             numberChanged++;
         }
         if (ledstrip.icon != icon) {
@@ -2188,7 +2304,7 @@ function validateLedstrip(id=-1) {
     } else {
         lastLedstripData.name = name;
         lastLedstripData.hostname = hostname;
-        lastLedstripData.driver = driver;
+        lastLedstripData.model_id = modelId;
         lastLedstripData.type = DEVICE_TYPE_LEDSTRIP;
         lastLedstripData.icon = icon;
         lastLedstripData.icon_low_state = iconLowState;
@@ -2202,115 +2318,135 @@ function validateLedstrip(id=-1) {
 
 /******************************************************************************/
 /*!
-  @brief    Validates the sensor input.
+  @brief    Validates the RF device input.
   @param    id                  Device ID
   @param    modelId             Model ID
   @returns  bool                True if valid
 */
 /******************************************************************************/
-function validateSensor(id=-1, modelId=undefined) {
+function validateRfDevice(id=-1, modelId=undefined) {
     if (id != -1) {
-        modelId = sensors[getIndexFromId(sensors, id)].model;
+        modelId = devices[getIndexFromId(devices, id)].model_id;
     }
-    let model = sensorModels[modelId];
+    let model = DEVICE_MODELS[modelId];
 
     /* Get user input */
-    let name = sensorNameTxtElem.value;
-    let icon = sensorIconTxtElem.className.replace(" fa-xl", "");
-    let iconLowState = sensorIconLowStateTxtElem.className.replace(" fa-xl", "");
+    let name = rfDeviceNameTxtElem.value;
+    let icon = rfDeviceIconTxtElem.className.replace(" fa-xl", "");
+    let iconLowState = rfDeviceIconLowStateTxtElem.className.replace(" fa-xl", "");
     let rfCodeElements = [];
 
-    console.log(model)
     for (let codeType of model.rf_code_types) {
         document.getElementById(codeType.type + "RfCodeTxt").classList.remove("invalid-input");
         rfCodeElements.push(document.getElementById(codeType.type + "RfCodeTxt"));
     }
 
-    let rfCodes = [];
-
-    for (let element of rfCodeElements) {
-        rfCodes.push(element.value);
-    }
-    console.log(rfCodes)
-
     /* Reset error styling */
-    errorMessageSensorFieldElem.style.display = "none";
+    errorMessageRfDeviceFieldElem.style.display = "none";
 
-    sensorNameTxtElem.classList.remove("invalid-input");
-    sensorIconTxtElem.classList.remove("invalid-input");
-    sensorIconLowStateTxtElem.classList.remove("invalid-input");
+    rfDeviceNameTxtElem.classList.remove("invalid-input");
+    rfDeviceIconBtnElem.classList.remove("invalid-input");
+    rfDeviceIconLowStateBtnElem.classList.remove("invalid-input");
 
     /* Validate name */
     if (name == "") {
-        sensorNameTxtElem.classList.add("invalid-input");
-        sensorNameTxtElem.focus();
-        errorMessageSensorFieldElem.textContent = TEXT_FIELD_REQUIRED;
-        errorMessageSensorFieldElem.style.display = "inline-block";
+        rfDeviceNameTxtElem.classList.add("invalid-input");
+        rfDeviceNameTxtElem.focus();
+        errorMessageRfDeviceFieldElem.textContent = TEXT_FIELD_REQUIRED;
+        errorMessageRfDeviceFieldElem.style.display = "inline-block";
         return false;
     }
+    if (name.match(SYMBOL_CRITICAL_RE)) {
+        rfDeviceNameTxtElem.classList.add("invalid-input");
+        rfDeviceNameTxtElem.focus();
+        errorMessageRfDeviceFieldElem.textContent = TEXT_FIELD_NO_SYMBOLS;
+        errorMessageRfDeviceFieldElem.style.display = "inline-block";
+        return false;
+    }
+
     /* Validate icons */
     if (icon == "") {
-        sensorIconTxtElem.classList.add("invalid-input");
-        sensorIconTxtElem.focus();
-        errorMessageSensorFieldElem.textContent = TEXT_FIELD_REQUIRED;
-        errorMessageSensorFieldElem.style.display = "inline-block";
+        rfDeviceIconBtnElem.classList.add("invalid-input");
+        rfDeviceIconBtnElem.focus();
+        errorMessageRfDeviceFieldElem.textContent = TEXT_FIELD_REQUIRED;
+        errorMessageRfDeviceFieldElem.style.display = "inline-block";
         return false;
     }
-    if (iconLowState == "") {
-        sensorIconLowStateTxtElem.classList.add("invalid-input");
-        sensorIconLowStateTxtElem.focus();
-        errorMessageSensorFieldElem.textContent = TEXT_FIELD_REQUIRED;
-        errorMessageSensorFieldElem.style.display = "inline-block";
+    if (DEVICE_MODELS[modelId].icons.length > 1 && iconLowState == "") {
+        rfDeviceIconLowStateBtnElem.classList.add("invalid-input");
+        rfDeviceIconLowStateBtnElem.focus();
+        errorMessageRfDeviceFieldElem.textContent = TEXT_FIELD_REQUIRED;
+        errorMessageRfDeviceFieldElem.style.display = "inline-block";
         return false;
     }
 
-    /* Validate RF open */
-    let index = 0;
-    for (let code of rfCodes) {
-        if (code == "") {
-            rfCodeElements[index].classList.add("invalid-input");
-            rfCodeElements[index].focus();
-            errorMessageSensorFieldElem.textContent = TEXT_FIELD_REQUIRED;
-            errorMessageSensorFieldElem.style.display = "inline-block";
+    /* Validate RF */
+    let rfCodes = [];
+    let rfCodesArray = [];
+
+    let rfTypeIndex = 0;
+    for (const rfCodeInputElement of rfCodeElements) {
+        if (rfCodeInputElement.value == "") {
+            rfCodeInputElement.classList.add("invalid-input");
+            rfCodeInputElement.focus();
+            errorMessageRfDeviceFieldElem.textContent = TEXT_FIELD_REQUIRED;
+            errorMessageRfDeviceFieldElem.style.display = "inline-block";
             return false;
         }
 
-        /* Check if RF open is unique */
+        if (NUMBER_RE.test(rfCodeInputElement.value)) {
+            rfCodeInputElement.classList.add("invalid-input");
+            rfCodeInputElement.focus();
+            errorMessageRfDeviceFieldElem.textContent = TEXT_FIELD_ONLY_NUMBERS;
+            errorMessageRfDeviceFieldElem.style.display = "inline-block";
+            return false;
+        }
+
+        let code = {
+            rf_code: parseInt(rfCodeInputElement.value),
+            type: model.rf_code_types[rfTypeIndex].type,
+            name: model.rf_code_types[rfTypeIndex].name
+        }
+
+        /* Check if RF is unique */
         if (!rfCodeIsUnique(id, code)) {
-            rfCodeElements[index].classList.add("invalid-input");
-            rfCodeElements[index].focus();
-            errorMessageSensorFieldElem.textContent = TEXT_FIELD_UNIQUE;
-            errorMessageSensorFieldElem.style.display = "inline-block";
+            rfCodeInputElement.classList.add("invalid-input");
+            rfCodeInputElement.focus();
+            errorMessageRfDeviceFieldElem.textContent = TEXT_FIELD_UNIQUE;
+            errorMessageRfDeviceFieldElem.style.display = "inline-block";
             return false;
         }
-        index++;
+
+        rfCodes.push(code);
+        rfCodesArray.push(code);
+        rfTypeIndex++;
     }
 
-    for (let sensor of sensors) {
-        if (sensor.id == id) {
+    for (let device of devices) {
+        if (device.id == id) {
             continue;
         }
 
         /* Check if name is unique */
-        if (sensor.name == name) {
-            sensorNameTxtElem.classList.add("invalid-input");
-            sensorNameTxtElem.focus();
-            errorMessageSensorFieldElem.textContent = TEXT_FIELD_UNIQUE;
-            errorMessageSensorFieldElem.style.display = "inline-block";
+        if (device.name == name) {
+            rfDeviceNameTxtElem.classList.add("invalid-input");
+            rfDeviceNameTxtElem.focus();
+            errorMessageRfDeviceFieldElem.textContent = TEXT_FIELD_UNIQUE;
+            errorMessageRfDeviceFieldElem.style.display = "inline-block";
             return false;
         }
     }
 
-    lastSensorData = {
+    lastRfDeviceData = {
         id: id,
         name: name,
         icon: icon,
-        type: DEVICE_TYPE_SENSOR,
-        sensor_type: model.type,
+        type: DEVICE_TYPE_RF_DEVICE,
         icon_low_state: iconLowState,
-        rf_codes_array: rfCodes,
-        rf_codes: "[" + rfCodes.toString() + "]",
-        model: modelId
+        rf_codes_array: rfCodesArray,
+        rf_codes: JSON.stringify(rfCodes),
+        model_id: modelId,
+        category : model.category
     }
 
     return true;
@@ -2343,7 +2479,7 @@ function validateGroup(id=-1) {
     /* Reset error styling */
     errorMessageGroupFieldElem.style.display = "none";
     groupNameTxtElem.classList.remove("invalid-input");
-    groupIconTxtElem.classList.remove("invalid-input");
+    groupIconBtnElem.classList.remove("invalid-input");
 
     /* Validate name */
     if (name == "") {
@@ -2353,11 +2489,18 @@ function validateGroup(id=-1) {
         errorMessageGroupFieldElem.style.display = "inline-block";
         return false;
     }
+    if (name.match(SYMBOL_CRITICAL_RE)) {
+        groupNameTxtElem.classList.add("invalid-input");
+        groupNameTxtElem.focus();
+        errorMessageGroupFieldElem.textContent = TEXT_FIELD_NO_SYMBOLS;
+        errorMessageGroupFieldElem.style.display = "inline-block";
+        return false;
+    }
     
     /* Validate icon */
     if (icon == "") {
-        groupIconTxtElem.classList.add("invalid-input");
-        groupIconTxtElem.focus();
+        groupIconBtnElem.classList.add("invalid-input");
+        groupIconBtnElem.focus();
         errorMessageGroupFieldElem.textContent = TEXT_FIELD_REQUIRED;
         errorMessageGroupFieldElem.style.display = "inline-block";
         return false;
@@ -2390,6 +2533,7 @@ function validateGroup(id=-1) {
         name: name,
         icon: icon,
         type: type,
+        category : DEVICE_CATEGORY_LEDSTRIP,
         device_ids: "[" + deviceIds.toString() + "]"
     }
 
@@ -2418,82 +2562,6 @@ function validateUpdateFilename(filename) {
         showBanner(TEXT_ERROR, TEXT_FIRMWARE_FILE_NOT_SUPPORTED, BANNER_TYPE_ERROR);
         return false;
     }
-
-    return true;
-}
-
-/******************************************************************************/
-/*!
-  @brief    Validates the weather module configuration.
-  @returns  bool                True if valid
-*/
-/******************************************************************************/
-function validateWeatherModuleConfiguration() {
-    /* Get user input */
-    let weatherServiceEnabledInput = weatherServiceEnabledCbElem.checked;
-    let weatherApiKeyInput = weatherApiKeyTxtElem.value;
-
-    /* Reset error styling */
-    errorMessageModuleConfigurationFieldElem.style.display = "none";
-    weatherApiKeyTxtElem.classList.remove("invalid-input");
-
-    /* No API key check when disabled */
-    if (!weatherServiceEnabledInput) {
-        weatherServiceEnabled = weatherServiceEnabledInput;
-        weatherApiKey = weatherApiKeyInput;
-        return true;
-    }
-
-    /* Validate API key */
-    if (weatherApiKeyInput.length != 25) {
-        weatherApiKeyTxtElem.classList.add("invalid-input");
-        weatherApiKeyTxtElem.focus();
-        errorMessageModuleConfigurationFieldElem.textContent = TEXT_KEY_NOT_VALID;
-        errorMessageModuleConfigurationFieldElem.style.display = "inline-block";
-        weatherServiceEnabledCbElem.checked = false;
-        return false;
-    }
-    
-    weatherServiceEnabled = weatherServiceEnabledInput;
-    weatherApiKey = weatherApiKeyInput;
-
-    return true;
-}
-
-/******************************************************************************/
-/*!
-  @brief    Validates the Telegram configuration.
-  @returns  bool                True if valid
-*/
-/******************************************************************************/
-function validateTelegramModuleConfiguration() {
-    /* Get user input */
-    let telegramServiceEnabledInput = telegramServiceEnabledCbElem.checked;
-    let telegramBotTokenInput = telegramBotTokenTxtElem.value;
-
-    /* Reset error styling */
-    errorMessageModuleConfigurationFieldElem.style.display = "none";
-    telegramBotTokenTxtElem.classList.remove("invalid-input");
-
-    /* No bot token check when disabled */
-    if (!telegramServiceEnabledInput) {
-        telegramServiceEnabled = telegramServiceEnabledInput;
-        telegramBotToken = telegramBotTokenInput;
-        return true;
-    }
-
-    /* Validate Telegram bot token */
-    if (telegramBotTokenInput.length != 46) {
-        telegramBotTokenTxtElem.classList.add("invalid-input");
-        telegramBotTokenTxtElem.focus();
-        errorMessageModuleConfigurationFieldElem.textContent = TEXT_KEY_NOT_VALID;
-        errorMessageModuleConfigurationFieldElem.style.display = "inline-block";
-        telegramServiceEnabledCbElem.checked = false;
-        return false;
-    }
-    
-    telegramServiceEnabled = telegramServiceEnabledInput;
-    telegramBotToken = telegramBotTokenInput;
 
     return true;
 }
@@ -2535,8 +2603,8 @@ function markLogsRead() {
 */
 /******************************************************************************/
 function downloadLogs(id) {
-    let ledstrip = ledstrips[getIndexFromId(ledstrips, id)];
-    window.open("http://" + ledstrip.hostname + "/download_logs", "_blank")
+    let device = devices[getIndexFromId(devices, id)];
+    window.open("http://" + device.hostname + "/download_logs", "_blank")
 }
 
 /******************************************************************************/
@@ -2552,24 +2620,15 @@ function rebootDevice(id) {
 
 /******************************************************************************/
 /*!
-  @brief    Redirects to the LED addressing page of the specified ledstrip.
-  @param    id                  Device ID
-*/
-/******************************************************************************/
-function updateLedAddressing(id) {
-    redirect("/configure_led_addressing?id=" + id);
-}
-
-/******************************************************************************/
-/*!
-  @brief    Returns the RF code object based on the specified sensor and RF code
-            type.
-  @param    sensor              Sensor object
+  @brief    Returns the RF code object based on the specified RF device and RF
+            code type.
+  @param    rfDevice            RF device object
   @param    type                RF code type ID
+  @returns  code                RF code object
 */
 /******************************************************************************/
-function getRfCode(sensor, type) {
-    for (let code of sensor.rf_codes) {
+function getRfCode(rfDevice, type) {
+    for (let code of rfDevice.rf_codes) {
         if (code.type == type) {
             return code;
         }
@@ -2594,7 +2653,7 @@ function toggleLedstripHasSensor() {
 /******************************************************************************/
 /*!
   @brief    Toggles group device selection.
-  @param    sensorId            Device ID
+  @param    id                  Device ID
 */
 /******************************************************************************/
 function toggleGroupDeviceSelection(id) {
@@ -2609,19 +2668,26 @@ function toggleGroupDeviceSelection(id) {
 /******************************************************************************/
 /*!
   @brief    Toggles whether the RF code is unique or not.
-  @param    sensorId            Sensor ID
+  @param    deviceId            Device ID
   @param    rfCode              RF code
   @returns  bool                True if unique
 */
 /******************************************************************************/
-function rfCodeIsUnique(sensorId, rfCode) {
-    for (let sensor of sensors) {
-        if (sensor.id == sensorId) {
+function rfCodeIsUnique(deviceId, rfCode) {
+    for (let device of devices) {
+        if (device.id == deviceId) {
             continue;
         }
 
-        for (let code of sensor.rf_codes) {
-            if (code == rfCode) {
+        if (device.rf_codes == undefined) {
+            continue;
+        }
+
+        console.log(device.rf_codes)
+        console.log(rfCode)
+
+        for (let code of device.rf_codes) {
+            if (code.rf_code == rfCode.rf_code) {
                 return false;
             }
         }
@@ -2636,87 +2702,6 @@ function rfCodeIsUnique(sensorId, rfCode) {
 
 
 
-
-
-/******************************************************************************/
-/*!
-  @brief    Submits the configuration when valid.
-  @param    device              Device object
-*/
-/******************************************************************************/
-function submitWeatherModuleConfiguration() {
-    if (!validateWeatherModuleConfiguration()) {
-        return;
-    }
-
-    let data = {
-        weather_service_enabled: +weatherServiceEnabled,
-        weather_api_key: weatherApiKey
-    }
-
-    let result = httpPostRequestJsonReturn("/update_weather_configuration", data);
-    
-    if (result.status_code != HTTP_CODE_OK) {
-        errorMessageModuleConfigurationFieldElem.style.display = "inline-block";
-        errorMessageModuleConfigurationFieldElem.textContent = result.message;
-        return;
-    }
-    
-    showBanner(TEXT_SUCCESS, TEXT_CHANGES_SAVED_SUCCESSFULLY, BANNER_TYPE_SUCCESS);
-}
-
-/******************************************************************************/
-/*!
-  @brief    Submits the configuration when valid.
-  @param    device              Device object
-*/
-/******************************************************************************/
-function submitTelegramModuleConfiguration() {
-    if (!validateTelegramModuleConfiguration()) {
-        return;
-    }
-
-    let data = {
-        telegram_service_enabled: +telegramServiceEnabled,
-        telegram_bot_token: telegramBotToken
-    }
-
-    let result = httpPostRequestJsonReturn("/update_telegram_configuration", data);
-    
-    if (result.status_code != HTTP_CODE_OK) {
-        errorMessageModuleConfigurationFieldElem.style.display = "inline-block";
-        errorMessageModuleConfigurationFieldElem.textContent = result.message;
-        return;
-    }
-    
-    showBanner(TEXT_SUCCESS, TEXT_CHANGES_SAVED_SUCCESSFULLY, BANNER_TYPE_SUCCESS);
-}
-
-/******************************************************************************/
-/*!
-  @brief    Enables or disables the Rpi RF receiver
-*/
-/******************************************************************************/
-function submitRpiRfModuleEnabled() {
-    rpiRfReceiverEnabled = rpiRfModuleEnabledCbElem.checked;
-
-    let data = {
-        rpi_rf_receiver_enabled: +rpiRfReceiverEnabled
-    }
-
-    let result = httpPostRequestJsonReturn("/update_rpi_rf_module", data);
-    
-    if (result.status_code != HTTP_CODE_OK) {
-        errorMessageModuleConfigurationFieldElem.style.display = "inline-block";
-        errorMessageModuleConfigurationFieldElem.textContent = result.message;
-        
-        rpiRfReceiverEnabled = false;
-        rpiRfModuleEnabledCbElem.checked = rpiRfReceiverEnabled;
-        return;
-    }
-    
-    showBanner(TEXT_SUCCESS, TEXT_CHANGES_SAVED_SUCCESSFULLY, BANNER_TYPE_SUCCESS);
-}
 
 /******************************************************************************/
 /*!

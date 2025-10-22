@@ -8,11 +8,13 @@
     var unconfiguredDevices = JSON.parse('{{ unconfigured_devices | tojson | safe }}');
     var groups = JSON.parse('{{ groups | tojson | safe }}');
     var logs = JSON.parse('{{ logs | tojson | safe }}');
-    var ledstripModels = JSON.parse('{{ ledstrip_models | tojson | safe }}');
-    var ledstripSensorModels = JSON.parse('{{ ledstrip_sensor_models | tojson | safe }}');
-    var sensorModels = JSON.parse('{{ sensor_models | tojson | safe }}');
-    var cameraModels = JSON.parse('{{ camera_models | tojson | safe }}');//TODO make const
-    var deviceTypes = JSON.parse('{{ device_types | tojson | safe }}');
+
+    const LEDSTRIP_SENSOR_MODELS = JSON.parse('{{ LEDSTRIP_SENSOR_MODELS | tojson | safe }}');
+    const DEVICE_TYPES = JSON.parse('{{ DEVICE_TYPES | tojson | safe }}');
+    const DEVICE_CATEGORIES = JSON.parse('{{ DEVICE_CATEGORIES | tojson | safe }}');
+    const DEVICE_MODELS = JSON.parse('{{ DEVICE_MODELS | tojson | safe }}');
+    
+    const SUPPORTED_UI_LANGUAGES = JSON.parse('{{ SUPPORTED_UI_LANGUAGES | tojson | safe }}');
 
     var weatherServiceEnabled = "{{ weather_service_enabled }}" == "True";
     var weatherApiKey = "{{ weather_api_key }}";
@@ -25,10 +27,11 @@
     var currentLedstripFirmwareVersion = "v0.0.0";
 </script>
 
+<script src="../static/js/user_and_module_utilities.js" defer></script>
 <script src="../static/js/configuration_page.js" defer></script>
 <link rel="stylesheet" href="../static/css/styles_tiles.css">
 
-<dialog id="iconModal" class="modal">
+<dialog id="iconModal" class="modal" style="width: 30%; box-shadow: var(--shadow-large);">
     <i class="fa-solid fa-xmark close-modal-button clickable" target-modal="iconModal"></i>
     <h3 id="iconModalTitle" style="margin-top: 0px;">Pick icon</h3>
     
@@ -38,20 +41,23 @@
 <dialog id="deviceModal" class="modal">
     <i class="fa-solid fa-xmark close-modal-button clickable" target-modal="deviceModal"></i>
     <h3 id="deviceModalTitle" style="margin-top: 0px;">Add device</h3>
+
+    <div style="display: flex; flex-direction: row;">
+        <div id="deviceCategoryContainer" style="display: flex; flex-direction: column;"></div>
+
+        <div style="display: flex; flex-direction: column;">
+            <div id="deviceModelContainer" class="flex-grid" style="justify-content: center; gap: 0px;"></div>
+
+            <div id="searchingDevicesContainer" class="centered-flex" style="gap: 5px;">
+                <div id="" class="dot-loader"></div>
+                <p id="searchingDevicesTitle">Looking for devices</p>
+            </div>
+            <div id="automaticDevicePairContainer" class="flex-grid" style="justify-content: center; margin-bottom: 15px; display: none;"></div>
+        </div>
+    </div>
     
-    <div id="searchingDevicesContainer" class="centered-flex" style="gap: 5px;">
-        <div id="" class="dot-loader"></div>
-        <p id="searchingDevicesTitle">Looking for devices</p>
-    </div>
-
-    <div id="automaticDevicePairContainer" class="flex-grid" style="justify-content: center; margin-bottom: 15px; display: none;"></div>
-
     <div id="manualDevicePairContainer" style="display: none;">
-        <div id="deviceTypeContainer" style="display: flex;"></div>
-        <div id="deviceModelContainer" class="flex-grid" style="justify-content: center; margin-bottom: 15px;"></div>
     </div>
-
-    <p id="manuallyAddDeviceBtn" onclick="loadDeviceModal(true);" style="cursor: pointer;">My accessory is not shown here</p>
 </dialog>
 
 <dialog id="ledstripModal" class="modal">
@@ -83,12 +89,12 @@
             <div style="display: flex;">
                 <div class="input-field-container">
                     <p id="ledstripIconTitle" class="input-field-title field-title-button">Icon</p>
-                    <button class="icon-button" onclick="loadIconModal('ledstripIconTxt')" style="width: 50px; height: 50px;"><i id="ledstripIconTxt"></i></button>
+                    <button id="ledstripIconBtn" class="icon-button" onclick="loadIconModal('ledstripIconTxt')" style="width: 50px; height: 50px;"><i id="ledstripIconTxt"></i></button>
                 </div>
 
                 <div class="input-field-container">
                     <p id="ledstripIconLowStateTitle" class="input-field-title field-title-button">Icon not active</p>
-                    <button class="icon-button" onclick="loadIconModal('ledstripIconLowStateTxt')" style="width: 50px; height: 50px;"><i id="ledstripIconLowStateTxt"></i></button>
+                    <button id="ledstripIconLowStateBtn" class="icon-button" onclick="loadIconModal('ledstripIconLowStateTxt')" style="width: 50px; height: 50px;"><i id="ledstripIconLowStateTxt"></i></button>
                 </div>
             </div>
         </div>
@@ -129,25 +135,25 @@
     <button id="submitLedstripBtn" onclick="addLedstrip();">Submit</button>
 </dialog>
 
-<dialog id="sensorModal" class="modal">
-    <i class="fa-solid fa-xmark close-modal-button clickable" target-modal="sensorModal"></i>
-    <h3 id="sensorModalTitle" style="margin-top: 0px;">Add sensor</h3>
-    <p id="errorMessageSensorField" class="message error" style="margin: 0px;"></p>
+<dialog id="rfDeviceModal" class="modal">
+    <i class="fa-solid fa-xmark close-modal-button clickable" target-modal="rfDeviceModal"></i>
+    <h3 id="rfDeviceModalTitle" style="margin-top: 0px;">Add RF Device</h3>
+    <p id="errorMessageRfDeviceField" class="message error" style="margin: 0px;"></p>
 
     <div class="input-field-container" style="width: 100%;">
-        <p id="sensorNameTitle" class="input-field-title">Name</p>
-        <input id="sensorNameTxt" class="input-field" type="text" placeholder="Name">
+        <p id="rfDeviceNameTitle" class="input-field-title">Name</p>
+        <input id="rfDeviceNameTxt" class="input-field" type="text" placeholder="Name">
     </div>
 
     <div style="display: flex;">
         <div class="input-field-container">
-            <p id="sensorIconTitle" class="input-field-title field-title-button">Icon</p>
-            <button class="icon-button" onclick="loadIconModal('sensorIconTxt')" style="width: 50px; height: 50px;"><i id="sensorIconTxt"></i></button>
+            <p id="rfDeviceIconTitle" class="input-field-title field-title-button">Icon</p>
+            <button id="rfDeviceIconBtn" class="icon-button" onclick="loadIconModal('rfDeviceIconTxt')" style="width: 50px; height: 50px;"><i id="rfDeviceIconTxt"></i></button>
         </div>
 
-        <div class="input-field-container">
-            <p id="sensorIconLowStateTitle" class="input-field-title field-title-button">Icon not active</p>
-            <button class="icon-button" onclick="loadIconModal('sensorIconLowStateTxt')" style="width: 50px; height: 50px;"><i id="sensorIconLowStateTxt"></i></button>
+        <div id="rfDeviceIconLowStateContainer" class="input-field-container">
+            <p id="rfDeviceIconLowStateTitle" class="input-field-title field-title-button">Icon not active</p>
+            <button id="rfDeviceIconLowStateBtn" class="icon-button" onclick="loadIconModal('rfDeviceIconLowStateTxt')" style="width: 50px; height: 50px;"><i id="rfDeviceIconLowStateTxt"></i></button>
         </div>
     </div>
 
@@ -155,7 +161,7 @@
     
     <table id="rfCodesTable" style="display: table; width: 70%;"></table>
 
-    <button id="submitSensorBtn" onclick="addSensor();">Submit</button>
+    <button id="submitRfDeviceBtn" onclick="addRfDevice();">Submit</button>
 </dialog>
 
 <dialog id="groupModal" class="modal">
@@ -170,7 +176,7 @@
 
     <div class="input-field-container">
         <p id="groupIconTitle" class="input-field-title field-title-button">Icon</p>
-        <button class="icon-button" onclick="loadIconModal('groupIconTxt')" style="width: 50px; height: 50px;"><i id="groupIconTxt"></i></button>
+        <button id="groupIconBtn" class="icon-button" onclick="loadIconModal('groupIconTxt')" style="width: 50px; height: 50px;"><i id="groupIconTxt"></i></button>
     </div>
 
     <div id="groupTypeSelectContainer" class="input-field-container">
@@ -188,35 +194,18 @@
 </dialog>
 
 <div class="container-form">
-    <div class="wrap-form">
+    <div class="base-container">
         <div style="display: flex; gap: 10px; align-items: baseline; justify-content: center;">
             <h2 style="margin-top: 0px;">Configure devices</h2>
             <i class="fa-duotone fa-solid fa-plus clickable" onclick="loadDeviceModal();"></i>
         </div>
 
-        <div style="display: flex; margin-bottom: 15px; justify-content: space-evenly; flex-wrap: wrap; gap: 10px;">
-            <div id="ledstripContainer">
-                <p>Ledstrips</p>
-                <div id="ledstripGrid" class="flex-grid" style="justify-content: center;"></div>
-            </div>
-            <div id="sensorContainer">
-                <p>Sensors</p>
-                <div id="sensorGrid" class="flex-grid" style="justify-content: center;"></div>
-            </div>
-            <div id="cameraContainer">
-                <p>Cameras</p>
-                <div id="cameraGrid" class="flex-grid" style="justify-content: center;"></div>
-            </div>
-            <div id="groupContainer">
-                <p>Groups</p>
-                <div id="groupGrid" class="flex-grid" style="justify-content: center;"></div>
-            </div>
-        </div>
+        <div id="devicesContainer" style="display: flex; justify-content: space-evenly; flex-wrap: wrap; gap: 10px;"></div>
     </div>
 </div>
 
 <div class="container-form">
-    <div class="wrap-form">
+    <div class="base-container">
         <table class="scrollable-table-container-table">
             <tr>
                 <td class="scrollable-td">
@@ -235,13 +224,13 @@
 </div>
 
 <div class="container-form">
-    <div class="wrap-form">
-        <h3 style="margin-top: 0px;">Ledstrip firmware update</h3>
+    <div class="base-container">
+        <h3 style="margin-top: 0px;">Firmware updates</h3>
         <table class="small-table">
             <tbody>
                 <tr>
                     <td style="border: 0px;">
-                        <p id="currentVersionTitle" class="p-button">Current version:</p>
+                        <p id="currentVersionTitle" class="p-button">Current main controller version:</p>
                     </td>
                     <td style="border: 0px;">
                         <b id="currentLedstripFirmwareVersionField"></b>
@@ -251,7 +240,7 @@
         </table>
 
         <fieldset>
-            <legend id="">Firmware version update</legend>
+            <legend id="">LED strip firmware update</legend>
 
             <div class="flex" style="text-align: center; flex-direction: column; gap: 0px;">
                 <div class="full-width">
@@ -269,54 +258,55 @@
 </div>
 
 <div class="container-form">
-    <div class="wrap-form">
+    <div class="base-container">
         <p id="errorMessageModuleConfigurationField" class="message error" style="margin-top: 0px;"></p>
-        <div class="flex" style="flex-direction: column;">
             <fieldset style="margin-top: 0px;">
                 <legend id="modulesTitle">Modules</legend>
 
-                <fieldset style="margin-top: 0px;">
+            <div class="flex-wrap" style="margin: 10px 20px;">
+                <fieldset style="margin-top: 0px; width: 30%; flex: auto; min-width: 250px; max-width: 500px;">
                     <legend id="weatherIntegrationTitle"><a href="https://www.visualcrossing.com/weather-api">VisualCrossing</a> weather integration</legend>
-                    <div class="centered-flex" style="margin: 10px 100px; align-items: flex-end;">
-                        <div class="input-field-container">
+
+                    <div class="switch-input-container">
+                        <label class="switch" style="margin: 15px;">
+                            <input id="weatherServiceEnabledCb" type="checkbox" onclick="toggleWeatherServiceEnabled();">
+                            <span class="slider round"></span>
+                        </label>
+
+                        <div class="input-field-container" style="margin: 10px;">
                             <p id="weatherApiKeyTitle" class="input-field-title gradient-background">API key</p>
-                            <input id="weatherApiKeyTxt" class="input-field" type="text" placeholder="API key" onchange="submitWeatherModuleConfiguration();">
+                            <input id="weatherApiKeyTxt" class="input-field disabled" type="text" placeholder="API key" onchange="submitWeatherModuleConfiguration();" disabled>
                         </div>
-                        
-                        <label class="switch" style="margin: 15px;">
-                            <input id="weatherServiceEnabledCb" type="checkbox" onclick="submitWeatherModuleConfiguration();">
-                            <span class="slider round"></span>
-                        </label>
                     </div>
                 </fieldset>
 
-                <fieldset style="margin-top: 0px;">
+                <fieldset style="margin-top: 0px; width: 30%; flex: auto; min-width: 250px; max-width: 500px;">
                     <legend id="telegramIntegrationTitle"><a href="https://core.telegram.org/bots/tutorial">Telegram</a> integration</legend>
-                    <div class="centered-flex" style="margin: 10px 100px; align-items: flex-end;">
-                        <div class="input-field-container">
-                            <p id="telegramBotTokenTitle" class="input-field-title gradient-background">Bot Token</p>
-                            <input id="telegramBotTokenTxt" class="input-field" type="text" placeholder="Telegram Bot Token" onchange="submitTelegramModuleConfiguration();">
-                        </div>
 
+                    <div class="switch-input-container">
                         <label class="switch" style="margin: 15px;">
-                            <input id="telegramServiceEnabledCb" type="checkbox" onclick="submitTelegramModuleConfiguration();">
+                            <input id="telegramServiceEnabledCb" type="checkbox" onclick="toggleTelegramServiceEnabled();">
                             <span class="slider round"></span>
                         </label>
+
+                        <div class="input-field-container" style="margin: 10px;">
+                            <p id="telegramBotTokenTitle" class="input-field-title gradient-background">Bot Token</p>
+                            <input id="telegramBotTokenTxt" class="input-field disabled" type="text" placeholder="Telegram Bot Token" onchange="submitTelegramModuleConfiguration();" disabled>
+                        </div>
                     </div>
                 </fieldset>
 
-                <fieldset style="margin-top: 0px;">
+                <fieldset style="margin-top: 0px; width: 20%; flex: auto; min-width: 250px; max-width: 300px;">
                     <legend id="rpiRfModuleTitle">Raspberry Pi RF receiver enabled</legend>
-                    <div class="centered-flex" style="margin: 10px 100px;">
+                    <div class="centered-flex" style="margin: 10px 0px;">
                         <label class="switch" style="margin: 15px;">
                             <input id="rpiRfModuleEnabledCb" type="checkbox" onclick="submitRpiRfModuleEnabled();">
                             <span class="slider round"></span>
                         </label>
                     </div>
                 </fieldset>
-                </div>
-            </fieldset>
-        </div>
+            </div>
+        </fieldset>
     </div>
 </div>
 

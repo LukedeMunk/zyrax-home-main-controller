@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<script>
+    page = ACCOUNT_PAGE;
+    let account = JSON.parse('{{ account | tojson | safe }}');
+    const UI_THEMES = JSON.parse('{{ UI_THEMES | tojson | safe }}');
+    const SUPPORTED_UI_LANGUAGES = JSON.parse('{{ SUPPORTED_UI_LANGUAGES | tojson | safe }}');
+</script>
+
+<script src="../static/js/user_and_module_utilities.js" defer></script>
+<script src="../static/js/account_page.js" defer></script>
+
+<style>
+    html {
+        overflow: hidden;
+    }
+</style>
+
+<aside class="sidebar">
+    <div class="sidebar-header">
+        <h2 id="accountBarTitle">Account</h2>
+    </div>
+    <ul class="sidebar-menu">
+        <li id="profileBtn" class="active" onclick="scrollToSection('profileContainer');">
+            <i class="fa-duotone fa-solid fa-user fa-lg margin-r-5px" style="width: 15px;"></i>
+            <p id="profileBtn1" class="sidebar-menu-item-title">Profile</p>
+        </li>
+        <li id="profilesBtn" onclick="scrollToSection('profilesContainer');">
+            <i class="fa-duotone fa-solid fa-users fa-lg margin-r-5px" style="width: 15px;"></i>
+            <p id="profilesBtn1" class="sidebar-menu-item-title">Manage profiles</p>
+        </li>
+        <li id="accountBtn" onclick="scrollToSection('accountContainer');">
+            <i class="fa-duotone fa-solid fa-file-user fa-lg margin-r-5px" style="width: 15px;"></i>
+            <p id="accountBtn1" class="sidebar-menu-item-title">Manage account</p>
+        </li>
+        <li id="logoutBtn" onclick="redirect('./logout');">
+            <i class="fa-duotone fa-solid fa-right-from-bracket fa-lg margin-r-5px" style="width: 15px;"></i>
+            <p id="logoutBtn1" class="sidebar-menu-item-title">Sign out of all devices</p>
+        </li>
+    </ul>
+</aside>
+
+<div id="profileContainer" class="container-form right-shifted" style="min-height: 100vh; width: 50%; margin: auto;">
+    <div class="base-container">
+        <div class="profile-picture-upload">
+            <label for="profilePictureUpload" class="profile-picture-upload-button">
+                <img id="profilePicturePreview" src="/get_profile_picture" alt="Profile Placeholder">
+            </label>
+            <input type="file" id="profilePictureUpload" accept="image/*" hidden>
+        </div>
+
+        <p id="errorMessageProfileField" class="message error" style="margin: 0px; margin-top: 15px;"></p>
+        
+        <div class="input-field-container" style="width: 100%;">
+            <p id="profileNameTitle" class="input-field-title gradient-background">Name</p>
+            <input id="profileNameTxt" class="input-field" type="text" placeholder="Name">
+        </div>
+
+        <div class="input-field-container">
+            <p id="profileLanguageTitle" class="input-field-title gradient-background">Language</p>
+            <select id="profileLanguageSelect" class="input-field"></select>
+        </div>
+
+        <div class="input-field-container">
+            <p id="profileThemeTitle" class="input-field-title gradient-background">UI Theme</p>
+            <select id="profileUiThemeSelect" class="input-field"></select>
+        </div>
+
+        <div class="centered-flex">
+            <button id="submitProfileBtn" onclick="updateProfile();">Save</button>
+            <button id="deleteProfileBtn" onclick="deleteProfileConfirm();">Delete</button>
+        </div>
+    </div>
+</div>
+
+<div id="profilesContainer" class="container-form right-shifted" style="min-height: 100vh; width: 50%; margin: auto;">
+    <div class="base-container">
+        <h3 id="profileModalTitle" style="margin-top: 0px;">Profile Overview</h3>
+        <div id="profileSelectContainer" class="centered-flex" style="flex-wrap: wrap;"></div>
+    </div>
+</div>
+
+<div id="accountContainer" class="container-form right-shifted" style="min-height: 100vh; width: 50%; margin: auto;">
+    <div class="base-container">
+        <p id="errorMessageAccountField" class="message error" style="margin: 0px; margin-top: 15px;"></p>
+        
+        <div class="input-field-container" style="width: 100%;">
+            <p id="accountEmailTitle" class="input-field-title gradient-background">Email</p>
+            <input id="accountEmailTxt" class="input-field" type="text" placeholder="Email">
+        </div>
+
+        <p id="changePasswordBtn" onclick="showPasswordFields();" class="change-password-link">Change password</p>
+
+        <div id="passwordUpdateContainer" style="display: none;">
+            <div id="passwordValidationContainer" class="password-validation-container">
+                <div class="message-container">
+                    <i id="pwdValidationIconLength" class="fa-solid fa-circle-xmark" style="transition: 300ms;"></i>
+                    <p id="pwdValidationTitleLength" style="margin-bottom: 0px;">Between 8 and 64 characters</p>
+                </div>
+                <div class="message-container">
+                    <i id="pwdValidationIconUpperCase" class="fa-solid fa-circle-xmark" style="transition: 300ms;"></i>
+                    <p id="pwdValidationTitleUpperCase" style="margin-bottom: 0px;">At least one uppercase character</p>
+                </div>
+                <div class="message-container">
+                    <i id="pwdValidationIconLowerCase" class="fa-solid fa-circle-xmark" style="transition: 300ms;"></i>
+                    <p id="pwdValidationTitleLowerCase" style="margin-bottom: 0px;">At least one lowercase character</p>
+                </div>
+                <div class="message-container">
+                    <i id="pwdValidationIconNumber" class="fa-solid fa-circle-xmark" style="transition: 300ms;"></i>
+                    <p id="pwdValidationTitleNumber" style="margin-bottom: 0px;">At least one number</p>
+                </div>
+                <div class="message-container">
+                    <i id="pwdValidationIconSymbol" class="fa-solid fa-circle-xmark" style="transition: 300ms;"></i>
+                    <p id="pwdValidationTitleSymbol" >At least one symbol</p>
+                </div>
+            </div>
+
+            <div class="input-field-container" style="width: 100%;">
+                <p id="accountCurrentPasswordTitle" class="input-field-title gradient-background">Current password</p>
+                <input id="accountCurrentPasswordTxt" class="input-field" type="password" placeholder="Current Password">
+            </div>
+
+            <div class="input-field-container" style="width: 100%;">
+                <p id="accountPasswordTitle" class="input-field-title gradient-background">Password</p>
+                <input id="accountPasswordTxt" class="input-field" type="password" placeholder="Password">
+            </div>
+
+            <div class="input-field-container" style="width: 100%;">
+                <p id="accountRetypePasswordTitle" class="input-field-title gradient-background">Retype Password</p>
+                <input id="accountRetypePasswordTxt" class="input-field" type="password" placeholder="Password">
+            </div>
+
+            <button id="savePasswordBtn" onclick="updatePassword();">Save</button>
+        </div>
+    </div>
+</div>
+{% endblock %}

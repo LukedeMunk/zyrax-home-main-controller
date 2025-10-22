@@ -9,18 +9,21 @@
  */
 /******************************************************************************/
 //#region Elements
-
+let navBarProfilePictureElem;
 //#endregion
 
 //#region Constants
-const TYPES = [TEXT_LEDSTRIPS, TEXT_SENSORS, TEXT_CAMERAS];
+const THEME_LIST = ["dark", "light", "dark-green", "light-green"];
+
+const TYPES = [TEXT_LEDSTRIPS, TEXT_RF_DEVICES, TEXT_CAMERAS];
 const DEVICE_TYPE_LEDSTRIP = 0
-const DEVICE_TYPE_SENSOR = 1
+const DEVICE_TYPE_RF_DEVICE = 1
 const DEVICE_TYPE_IP_CAMERA = 2
 
 const AUTOMATION_TRIGGER_TIMER = 0;
-const AUTOMATION_TRIGGER_DOOR_SENSOR = 1;
+const AUTOMATION_TRIGGER_SENSOR = 1;
 const AUTOMATION_TRIGGER_MOTION_SENSOR = 2;
+const AUTOMATION_TRIGGER_SWITCH = 3;
 
 const AUTOMATION_ACTION_SET_DEVICE_POWER = "set_device_power";
 const AUTOMATION_ACTION_SET_LEDSTRIP_COLOR = "set_ledstrip_color";
@@ -100,15 +103,24 @@ const AUTOMATION_ICONS = [
 
 const TRIGGER_TYPE_ICONS = [
     {triggerType: AUTOMATION_TRIGGER_TIMER, icon: "fa-duotone fa-solid fa-clock fa-lg"},
-    {triggerType: AUTOMATION_TRIGGER_DOOR_SENSOR, icon: "fa-duotone fa-solid fa-door-open fa-lg"},
-    {triggerType: AUTOMATION_TRIGGER_MOTION_SENSOR, icon: "fa-duotone fa-solid fa-person-walking fa-lg"}
+    {triggerType: AUTOMATION_TRIGGER_SENSOR, icon: "fa-duotone fa-solid fa-door-open fa-lg"},
+    {triggerType: AUTOMATION_TRIGGER_MOTION_SENSOR, icon: "fa-duotone fa-solid fa-person-walking fa-lg"},
+    {triggerType: AUTOMATION_TRIGGER_SWITCH, icon: "fa-duotone fa-solid fa-light-switch fa-lg"}
 ]
 
 const DEVICE_TYPE_ICONS = [
     {type: DEVICE_TYPE_LEDSTRIP, icon: "fa-duotone fa-solid fa-lightbulb fa-2x"},
-    {type: DEVICE_TYPE_SENSOR, icon: "fa-duotone fa-solid fa-door-open fa-2x"},
+    {type: DEVICE_TYPE_RF_DEVICE, icon: "fa-duotone fa-solid fa-door-open fa-2x"},
     {type: DEVICE_TYPE_IP_CAMERA, icon: "fa-duotone fa-solid fa-camera-cctv fa-2x"}
 ]
+
+const DEVICE_CATEGORY_LEDSTRIP = 0;
+const DEVICE_CATEGORY_DOOR_SENSOR = 1;
+const DEVICE_CATEGORY_MOTION_SENSOR = 2;
+const DEVICE_CATEGORY_SWITCH = 3;
+const DEVICE_CATEGORY_REMOTE = 4;
+const DEVICE_CATEGORY_POWER_OUTLET = 5;
+const DEVICE_CATEGORY_IP_CAMERA = 6;
 
 const NUMBER_OF_OTA_FILES = 1;
 const EXTENSION_BIN = "bin";
@@ -216,12 +228,9 @@ const MODE_PARAMETER_TYPE_RANGE = 3
 const MODE_PARAMETER_TYPE_DIRECTION_CHECKBOX = 4
 const MODE_PARAMETER_TYPE_SELECT = 5
 
-const RF_DEVICE_MODEL_OPEN_CLOSE = 0
-const RF_DEVICE_MODEL_PIR_SENSOR1 = 1
-const RF_DEVICE_MODEL_PIR_SENSOR2 = 2
 
-const RF_CODE_TYPE_OPENED = 0
-const RF_CODE_TYPE_CLOSED = 1
+const RF_CODE_TYPE_ACTIVE = 0
+const RF_CODE_TYPE_INACTIVE = 1
 const RF_CODE_TYPE_TRIGGERED = 2
 const RF_CODE_TYPE_LOW_BATTERY = 3
 
@@ -248,7 +257,8 @@ const PAGES = [AUTOMATIONS_PAGE,
 const NAVIGATION_BAR_ITEMS = [
     {pages: [AUTOMATIONS_PAGE], text: "Automations", link: "./automations", icon: "fa-duotone fa-calendar-week"},
     {pages: [DASHBOARD_PAGE, LEDSTRIP_PAGE, SENSOR_PAGE, ALARM_PAGE], text: "Dashboard", link: "./", icon: "fa-duotone fa-grid-horizontal"},
-    {pages: [CONFIGURATION_PAGE], text: "Configuration", link: "./configuration", icon: "fa-duotone fa-sliders"}
+    {pages: [CONFIGURATION_PAGE], text: "Configuration", link: "./configuration", icon: "fa-duotone fa-sliders"},
+    {pages: [], onclickFunction: "openProfileNavigationBarDialog();", image: "/get_profile_picture", elementId: "navBarProfilePicture"}
 ];
 
 const MESSAGE_TYPE_SUCCESS = "success";
@@ -258,7 +268,11 @@ const MESSAGE_TYPE_ERROR = "error";
 
 //#region Variables
 let fetchTimeouts = 0;
+let profileId = undefined;
+let remember = false;
 //#endregion
+
+
 
 /******************************************************************************/
 /*!
@@ -266,18 +280,51 @@ let fetchTimeouts = 0;
 */
 /******************************************************************************/
 $(document).ready(function() {
+    /* Load theme cookie */
+    let savedTheme = sessionStorage.getItem("theme");
+    if (savedTheme) {
+        setTheme(savedTheme);
+    } else {
+        setTheme(PREFERS_DARK ? 0 : 1);
+    }
+    
     document.body.classList.add("loaded");                                      //For CSS incoming animations
     generateNavigationBar(NAVIGATION_BAR_ITEMS);
+    
+    /* Load remember cookie */
+    if (localStorage.getItem("remember") != undefined && localStorage.getItem("remember") != "") {
+        remember = localStorage.getItem("remember") == "true";
+    }
+
+    /* Load selected profile ID cookie */
+    if (remember) {
+        if (localStorage.getItem("profileId") != undefined && localStorage.getItem("profileId") != "") {
+            profileId = parseInt(localStorage.getItem("profileId"));
+        }
+    } else {
+        if (sessionStorage.getItem("profileId") != undefined && sessionStorage.getItem("profileId") != "") {
+            profileId = parseInt(sessionStorage.getItem("profileId"));
+        }
+    }
+
     loadModalCloseButtons();
 
     let buttons = [
                     {text: TEXT_DEACTIVATE, onclickFunction: "deactivateAlarm();"}
                 ];
+                
     if (alarmActivated) {
         showPopup(TEXT_ALARM_ACTIVATED, TEXT_Q_DEACTIVATE_ALARM, buttons, BANNER_TYPE_WARNING);
     }
-});
 
+    navBarProfilePictureElem = document.getElementById("navBarProfilePicture");
+    navBarProfilePictureElem.addEventListener("mouseenter", function (e) {
+        openProfileNavigationBarDialog();
+    });
+});
+//#endregion
+
+//#region Utilities
 /******************************************************************************/
 /*!
   @brief    Waits until the client is connected to the webserver again.
@@ -303,9 +350,7 @@ async function waitUntilConnected(functionAfterConnected) {
     showBanner(TEXT_BACK_ONLINE, TEXT_BACK_ONLINE, BANNER_TYPE_SUCCESS);
     setTimeout(functionAfterConnected, 10);
 }
-//#endregion
 
-//#region Utilities
 //#region OTA Utilities
 /******************************************************************************/
 /*!
@@ -442,7 +487,6 @@ function hasVersion(fileList, version) {
     
     return false;
 }
-
 //#endregion
 
 /******************************************************************************/
@@ -592,4 +636,244 @@ function getSegments(points) {
 
     return segments;
 }
+
+/******************************************************************************/
+/*!
+  @brief    Scrolls to the specified DOM section.
+  @param    sectionElement      DOM element to scroll to
+*/
+/******************************************************************************/
+function scrollToSection(sectionElement) {
+    const section = document.getElementById(sectionElement);
+
+    const targetPosition = section.offsetTop;
+    const startPosition = window.scrollY;
+    const distance = targetPosition - startPosition;
+    const duration = 1000; // 1 second
+    let start = null;
+
+    // Cubic ease in-out function
+    function easeInOutCubic(t) {
+        return t < 0.5
+            ? 4 * t * t * t
+            : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    }
+
+    function step(timestamp) {
+        if (!start) start = timestamp;
+        const progress = timestamp - start;
+        const time = Math.min(progress / duration, 1);
+        const eased = easeInOutCubic(time);
+
+        window.scrollTo(0, startPosition + distance * eased);
+
+        if (progress < duration) {
+            window.requestAnimationFrame(step);
+        } else {
+            // Add class to trigger fade-in after scrolling
+            setTimeout(() => {
+                section.classList.add("show");
+            }, 50);
+        }
+    }
+
+    window.requestAnimationFrame(step);
+}
 //#endregion
+
+
+
+
+/******************************************************************************/
+/*!
+  @brief    Changes the profile.
+  @param    id              ID of the profile
+*/
+/******************************************************************************/
+function changeProfile(id, scrollDown=false) {
+    if (remember) {
+        localStorage.setItem("profileId", id);
+    } else {
+        sessionStorage.setItem("profileId", id);
+    }
+
+    let profile = userProfiles[getIndexFromId(userProfiles, id)];
+    setTheme(profile.ui_theme);
+
+    httpPostRequest("/pick_profile", {id: id});
+
+    if (scrollDown) {
+        scrollToSection("emptyContainer");
+    }
+
+    setTimeout(function() {redirect("./")}, 700);                               //Give some time for scrolling animation
+}
+
+/******************************************************************************/
+/*!
+  @brief    Generates and opens the navigation bar dialog with account options.
+*/
+/******************************************************************************/
+function openProfileNavigationBarDialog() {
+    const rect = navBarProfilePictureElem.getBoundingClientRect();
+
+    let profileMenuItems = [
+        {profiles: []},
+        {text: "Manage profile", link: "./account#profileContainer", icon: "fa-duotone fa-regular fa-users"},
+        {text: "Manage account", link: "./account#accountContainer", icon: "fa-duotone fa-regular fa-user"},
+        {text: "Help", link: "https://zyraxhome.munkservices.com/", icon: "fa-duotone fa-solid fa-circle-info"},
+        {text: "Log out", link: "./logout", icon: "fa-duotone fa-solid fa-arrow-right-to-arc"},
+        {text: APPLICATION_VERSION}
+    ];
+
+    for (let profile of userProfiles) {
+        profileMenuItems[0].profiles.push(
+            {onclickFunction: "changeProfile(" + profile.id + ");", image: "/get_profile_picture?id=" + profile.id}
+        );
+    }
+    
+    /* Remove existing menu */
+    document.querySelectorAll(".profile-menu").forEach(el => el.remove());
+
+    let hideTimeout = null;
+
+    /* Generate menu */
+    const menu = document.createElement("div");
+    menu.className = "profile-menu";
+
+    /* Profile section */
+    if (profileMenuItems[0].profiles.length > 0) {
+        const profilesContainer = document.createElement("div");
+        profilesContainer.className = "profiles";
+
+        for (let p of profileMenuItems[0].profiles) {
+            const img = document.createElement("img");
+            img.src = p.image;
+            img.onclick = () => { eval(p.onclickFunction); };
+            profilesContainer.appendChild(img);
+        }
+
+        menu.appendChild(profilesContainer);
+    }
+
+    /* Menu items */
+    for (let i = 1; i < profileMenuItems.length; i++) {
+        let item = profileMenuItems[i];
+
+        let entry = document.createElement("p");
+        
+        if (item.link) {
+            entry = document.createElement("a");
+            entry.href = item.link;
+            if (item.link.includes("https://")) {
+                entry.target = "_blank";                        //Open in new tab
+                entry.rel = "noopener noreferrer";              //No access to window.opener
+            }
+        }
+
+        if (item.icon) {
+            let icon = document.createElement("i");
+            icon.className = item.icon;
+            entry.appendChild(icon);
+        }
+
+        let span = document.createElement("span");
+        span.textContent = item.text;
+        entry.appendChild(span);
+
+        menu.appendChild(entry);
+    }
+
+    document.body.appendChild(menu);
+
+    /* Position, requestAnimationFrame to be sure that everything is rendered correctly */
+    requestAnimationFrame(() => {
+        const menuHeight = menu.offsetHeight;
+        const centerX = rect.left + rect.width / 2;
+        const topY = rect.top;
+        const verticalOffset = 12;
+
+        menu.style.left = `${centerX}px`;
+        menu.style.top = `${topY - menuHeight - verticalOffset}px`;
+
+        menu.classList.add('show');
+    });
+
+    /*
+     * Delay activating the outside-click listener so the opening
+     * click doesn't instantly close the menu.
+     */
+    setTimeout(() => {
+        const clickHandler = (e) => {
+            if (!menu.contains(e.target) && e.target !== navBarProfilePictureElem) {
+                // start sluitanimatie
+                menu.classList.remove('show');
+                menu.classList.add('hide');
+
+                // verwijder na animatie
+                menu.addEventListener('transitionend', () => menu.remove(), { once: true });
+                document.removeEventListener('click', clickHandler);
+            }
+        };
+        document.addEventListener('click', clickHandler);
+    }, 0);
+    
+    window.addEventListener("scroll", () => {
+        menu.classList.remove('show');
+        menu.classList.add('hide');
+    });
+    window.addEventListener("contextmenu", () => {
+        menu.classList.remove('show');
+        menu.classList.add('hide');
+    });
+    
+    /* Hover leave/enter */
+    menu.addEventListener("mouseenter", () => {
+        clearTimeout(hideTimeout);
+    });
+
+    menu.addEventListener("mouseleave", () => {
+        hideTimeout = setTimeout(() => {
+        menu.classList.remove('show');
+        menu.classList.add('hide');}
+        , 50);
+    });
+}
+
+/******************************************************************************/
+/*!
+  @brief    Scrolls to the top of the page, ignoring the history.
+*/
+/******************************************************************************/
+function scrollToTop() {
+    if ("scrollRestoration" in history) {
+        history.scrollRestoration = "manual";
+    }
+    
+    window.scrollTo(0, 0);
+}
+
+/******************************************************************************/
+/*!
+  @brief    Redirects to the LED addressing page of the specified ledstrip.
+  @param    id                  Device ID
+*/
+/******************************************************************************/
+function updateLedAddressing(id) {
+    redirect("/configure_led_addressing?id=" + id);
+}
+
+
+/******************************************************************************/
+/*!
+  @brief    Sets the UI theme.
+  @param    theme               Theme name
+*/
+/******************************************************************************/
+function setTheme(theme) {
+    const root = document.documentElement;
+    root.classList.remove("light", "dark", "dark-green", "light-green");
+    root.classList.add(THEME_LIST[theme]);
+    
+    sessionStorage.setItem("theme", theme);
+}

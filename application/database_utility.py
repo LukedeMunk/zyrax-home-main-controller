@@ -13,6 +13,15 @@ import configuration as c                                                       
 from server_manager import *                                                    #
 from sqlalchemy import exc                                                      #Import exceptions to catch them
 from logger import logi, logw, loge                                             #Import logging functions
+from argon2.exceptions import VerifyMismatchError                               #For password verifying
+from zxcvbn import zxcvbn                                                       #To verify the password strength
+from argon2 import PasswordHasher                                               #For password hashing with Argon2 algoritm
+import re                                                                       #Import regex to be able to check passwords
+from cryptography.fernet import Fernet                                          #For encrypting first account data
+from urllib.parse import quote                                                  #For logging database errors in a JSON file
+
+
+ph = PasswordHasher(hash_len=128, salt_len=128)                                 #To hash and verify passwords, total length: 256
 
 #region Device functionality
 ################################################################################
@@ -24,25 +33,29 @@ from logger import logi, logw, loge                                             
 #
 ################################################################################
 def add_device(config_dict):
+    config_dict["category"] = c.DEVICE_MODELS[config_dict["model_id"]]["category"]
+
     with app.app_context():
         device = Device(name=config_dict["name"],
                         icon=config_dict["icon"],
-                        type=config_dict["type"])
+                        type=config_dict["type"],
+                        model_id=config_dict["model_id"],
+                        category=config_dict["category"])
         
         db.session.add(device)
 
         try:
             db.session.commit()
         except exc.SQLAlchemyError as e:
-            loge(c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
+            loge(c.VAR_TEXT_DATABASE_ERROR.format(quote(str(e))))
             return (False, c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
         
         config_dict["id"] = device.id
 
     if config_dict["type"] == c.DEVICE_TYPE_LEDSTRIP:
         _add_ledstrip(config_dict)
-    elif config_dict["type"] == c.DEVICE_TYPE_SENSOR:
-        _add_sensor(config_dict)
+    elif config_dict["type"] == c.DEVICE_TYPE_RF_DEVICE:
+        _add_rf_device(config_dict)
     elif config_dict["type"] == c.DEVICE_TYPE_IP_CAMERA:
         _add_camera(config_dict)
         
@@ -74,8 +87,8 @@ def update_device(id, config_dict):
 
         if device.type == c.DEVICE_TYPE_LEDSTRIP:
             _update_ledstrip(id, config_dict)
-        elif device.type == c.DEVICE_TYPE_SENSOR:
-            _update_sensor(id, config_dict)
+        elif device.type == c.DEVICE_TYPE_RF_DEVICE:
+            _update_rf_device(id, config_dict)
         elif device.type == c.DEVICE_TYPE_IP_CAMERA:
             _update_camera(id, config_dict)
 
@@ -83,7 +96,7 @@ def update_device(id, config_dict):
             db.session.commit()
             logi("Device [" + device.name + "] updated")
         except exc.SQLAlchemyError as e:
-            loge(c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
+            loge(c.VAR_TEXT_DATABASE_ERROR.format(quote(str(e))))
             return (False, c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
         
     return (True)
@@ -104,8 +117,8 @@ def delete_device(id):
         if device.type == c.DEVICE_TYPE_LEDSTRIP:
             LedstripDB.query.filter_by(id=id).delete()
             ModeHasModeParameter.query.filter_by(device_id=id).delete()
-        if device.type == c.DEVICE_TYPE_SENSOR:
-            RfSensor.query.filter_by(id=id).delete()
+        if device.type == c.DEVICE_TYPE_RF_DEVICE:
+            RfDevice.query.filter_by(id=id).delete()
             RfDeviceHasRfCode.query.filter_by(device_id=id).delete()
         if device.type == c.DEVICE_TYPE_IP_CAMERA:
             IpCamera.query.filter_by(id=id).delete()
@@ -144,7 +157,7 @@ def delete_device(id):
         try:
             db.session.commit()
         except exc.SQLAlchemyError as e:
-            loge(c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
+            loge(c.VAR_TEXT_DATABASE_ERROR.format(quote(str(e))))
             return (False, c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
             
     return (True)
@@ -170,9 +183,9 @@ def get_devices(type=None):
         if device["type"] == c.DEVICE_TYPE_LEDSTRIP:
             ledstrip = _get_ledstrip(id=device["id"])
             device.update(ledstrip)
-        elif device["type"] == c.DEVICE_TYPE_SENSOR:
-            sensor = _get_sensor(id=device["id"])
-            device.update(sensor)
+        elif device["type"] == c.DEVICE_TYPE_RF_DEVICE:
+            rf_device = _get_rf_device(id=device["id"])
+            device.update(rf_device)
         elif device["type"] == c.DEVICE_TYPE_IP_CAMERA:
             camera = _get_camera(id=device["id"])
             device.update(camera)
@@ -196,9 +209,9 @@ def get_device(id):
     if device["type"] == c.DEVICE_TYPE_LEDSTRIP:
         ledstrip = _get_ledstrip(id=device["id"])
         device.update(ledstrip)
-    elif device["type"] == c.DEVICE_TYPE_SENSOR:
-        sensor = _get_sensor(id=device["id"])
-        device.update(sensor)
+    elif device["type"] == c.DEVICE_TYPE_RF_DEVICE:
+        rf_device = _get_rf_device(id=device["id"])
+        device.update(rf_device)
     elif device["type"] == c.DEVICE_TYPE_IP_CAMERA:
         camera = _get_camera(id=device["id"])
         device.update(camera)
@@ -221,8 +234,7 @@ def _add_ledstrip(config_dict):
                                 icon_low_state=config_dict["icon_low_state"],
                                 hostname=config_dict["hostname"],
                                 has_sensor=config_dict["has_sensor"],
-                                number_of_leds=config_dict["number_of_leds"],
-                                driver=config_dict["driver"])
+                                number_of_leds=config_dict["number_of_leds"])
                                 
         db.session.add(ledstrip)
 
@@ -234,7 +246,7 @@ def _add_ledstrip(config_dict):
         try:
             db.session.commit()
         except exc.SQLAlchemyError as e:
-            loge(c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
+            loge(c.VAR_TEXT_DATABASE_ERROR.format(quote(str(e))))
             return (False, c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
 
         _add_default_mode_parameters(config_dict["id"])
@@ -270,9 +282,6 @@ def _update_ledstrip(id, config_dict):
 
         if "ip_address" in config_dict:
             ledstrip.ip_address = config_dict["ip_address"]
-
-        if "driver" in config_dict:
-            ledstrip.driver = config_dict["driver"]
 
         if "brightness" in config_dict:
             ledstrip.brightness = config_dict["brightness"]
@@ -310,7 +319,7 @@ def _update_ledstrip(id, config_dict):
         try:
             db.session.commit()
         except exc.SQLAlchemyError as e:
-            loge(c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
+            loge(c.VAR_TEXT_DATABASE_ERROR.format(quote(str(e))))
             return (False, c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
     
     return (True)
@@ -357,7 +366,7 @@ def _update_ledstrip_leds(id, leds, segments):
     try:
         db.session.commit()
     except exc.SQLAlchemyError as e:
-        loge(c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
+        loge(c.VAR_TEXT_DATABASE_ERROR.format(quote(str(e))))
         return (False, c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
     
     return (True)
@@ -427,7 +436,7 @@ def configure_ledstrip_mode(mode_id, device_id, config_dict):
         db.session.commit()
         logi("Updated mode configuration [" + mode_db.name + "]")
     except exc.SQLAlchemyError as e:
-        loge(c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
+        loge(c.VAR_TEXT_DATABASE_ERROR.format(quote(str(e))))
         return (False, c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
 
     return (True)
@@ -527,96 +536,102 @@ def get_ledstrip_modes():
 #region Sensor functionality
 ################################################################################
 #
-#   @brief  Adds a sensor to the database.
+#   @brief  Adds an RF device to the database.
 #   @param  config_dict         Configuration dictionary
 #   @return tuple               (False, [reason]) on error and (True) on
 #                               success
 #
 ################################################################################
-def _add_sensor(config_dict):
+def _add_rf_device(config_dict):
     with app.app_context():
-        sensor = RfSensor(id=config_dict["id"],
-                            sensor_type=config_dict["sensor_type"],
-                            model=config_dict["model"],
-                            icon_low_state=config_dict["icon_low_state"])
-        
-        db.session.add(sensor)
+        rf_device = RfDevice(id=config_dict["id"])
 
-        model_dict = c.SENSOR_MODELS[config_dict["model"]]
+        if "icon_low_state" in config_dict:
+            rf_device.icon_low_state = config_dict["icon_low_state"]
+        
+        db.session.add(rf_device)
+
+        model_dict = c.DEVICE_MODELS[config_dict["model_id"]]
+        print(model_dict)
         
         for i, code in enumerate(model_dict["rf_code_types"]):
-            db.session.add(RfDeviceHasRfCode(device_id=sensor.id, rf_code=config_dict["rf_codes"][i], type=code["type"]))
+            db.session.add(RfDeviceHasRfCode(device_id=rf_device.id,
+                                                name=config_dict["rf_codes"][i]["name"],
+                                                rf_code=config_dict["rf_codes"][i]["rf_code"],# hier bezig
+                                                type=code["type"]))
 
         try:
             db.session.commit()
         except exc.SQLAlchemyError as e:
-            loge(c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
+            loge(c.VAR_TEXT_DATABASE_ERROR.format(quote(str(e))))
             return (False, c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
     
     return (True)
         
 ################################################################################
 #
-#   @brief  Updates the specified sensor.
+#   @brief  Updates the specified RF device.
 #   @param  id                  Device ID
 #   @param  config_dict         Configuration dictionary
 #   @return tuple               (False, [reason]) on error and (True) on
 #                               success
 #
 ################################################################################
-def _update_sensor(id, config_dict):
+def _update_rf_device(id, config_dict):
     with app.app_context():
-        sensor = RfSensor.query.filter_by(id=id).first()
+        rf_device = RfDevice.query.filter_by(id=id).first()
 
-        if sensor == None:
-            logw("Could not find sensor with ID [" + str(id) + "]")
+        if rf_device == None:
+            logw("Could not find RF device with ID [" + str(id) + "]")
             return
         
         #Look for included variables
         if "icon_low_state" in config_dict:
-            sensor.icon_low_state = config_dict["icon_low_state"]
+            rf_device.icon_low_state = config_dict["icon_low_state"]
 
         if "state" in config_dict:
-            sensor.state = config_dict["state"]
+            rf_device.state = config_dict["state"]
 
         if "low_battery" in config_dict:
-            sensor.low_battery = config_dict["low_battery"]
+            rf_device.low_battery = config_dict["low_battery"]
         
-        model_dict = c.SENSOR_MODELS[int(sensor.model)]
+        device = Device.query.filter_by(id=id).first()
+        model_dict = c.DEVICE_MODELS[int(device.model_id)]
         
         if "rf_codes" in config_dict:
             for i, code in enumerate(model_dict["rf_code_types"]):
-                rf_code = RfDeviceHasRfCode.query.filter_by(device_id=sensor.id, type=code["type"]).first()
-                rf_code.rf_code = config_dict["rf_codes"][i]
+                rf_code = RfDeviceHasRfCode.query.filter_by(device_id=rf_device.id, type=code["type"]).first()
+                rf_code.name = config_dict["rf_codes"][i]["name"]
+                rf_code.rf_code = config_dict["rf_codes"][i]["rf_code"]
 
         try:
             db.session.commit()
         except exc.SQLAlchemyError as e:
-            loge(c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
+            loge(c.VAR_TEXT_DATABASE_ERROR.format(quote(str(e))))
             return (False, c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
 
     return (True)
 
 ################################################################################
 #
-#   @brief  Returns the specified sensor.
+#   @brief  Returns the specified RF device.
 #   @param  id                  Device ID
-#   @return dict                Dictionary of the sensor
+#   @return dict                Dictionary of the RF device
 #
 ################################################################################
-def _get_sensor(id):
+def _get_rf_device(id):
     with app.app_context():
-        sensor = RfSensor.query.filter_by(id=id).first()
-        sensor = _row_to_dictionary(sensor)
+        rf_device = RfDevice.query.filter_by(id=id).first()
+        rf_device = _row_to_dictionary(rf_device)
 
         rf_codes = RfDeviceHasRfCode.query.filter_by(device_id=id).all()
         
-        sensor["rf_codes"] = []
+        rf_device["rf_codes"] = []
         for code in rf_codes:
             code = _row_to_dictionary(code)
-            sensor["rf_codes"].append(code)
+            rf_device["rf_codes"].append(code)
             
-    return sensor
+    return rf_device
 
 ################################################################################
 #
@@ -631,9 +646,9 @@ def get_sensor_trigger_times(id=None, number_of_last_triggers=50):
     
     with app.app_context():
         if id is None:
-            trigger_dates = RfSensorIsTriggered.query.limit(number_of_last_triggers)
+            trigger_dates = RfDeviceIsTriggered.query.limit(number_of_last_triggers)
         else:
-            trigger_dates = RfSensorIsTriggered.query.filter_by(device_id=id).limit(number_of_last_triggers)
+            trigger_dates = RfDeviceIsTriggered.query.filter_by(device_id=id).limit(number_of_last_triggers)
     
     for dt in trigger_dates:
         date = datetime.strftime(dt.datetime, "%d-%m-%Y")
@@ -661,14 +676,14 @@ def get_sensor_trigger_times(id=None, number_of_last_triggers=50):
 ################################################################################
 def add_sensor_triggered(id):
     with app.app_context():
-        row = RfSensorIsTriggered(device_id=id, datetime=datetime.now(c.TIME_ZONE))
+        row = RfDeviceIsTriggered(device_id=id, datetime=datetime.now(c.TIME_ZONE))
         
         db.session.add(row)
 
         try:
             db.session.commit()
         except exc.SQLAlchemyError as e:
-            loge(c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
+            loge(c.VAR_TEXT_DATABASE_ERROR.format(quote(str(e))))
             return (False, c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
     
     return (True)
@@ -693,7 +708,7 @@ def _add_camera(config_dict):
         try:
             db.session.commit()
         except exc.SQLAlchemyError as e:
-            loge(c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
+            loge(c.VAR_TEXT_DATABASE_ERROR.format(quote(str(e))))
             return (False, c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
     
         return (True, camera.id)
@@ -728,7 +743,7 @@ def _update_camera(id, config_dict):
         try:
             db.session.commit()
         except exc.SQLAlchemyError as e:
-            loge(c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
+            loge(c.VAR_TEXT_DATABASE_ERROR.format(quote(str(e))))
             return (False, c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
 
     return (True)
@@ -775,7 +790,7 @@ def add_group(config_dict):
             db.session.commit()
             logi("Added group [" + config_dict["name"] + "]")
         except exc.SQLAlchemyError as e:
-            loge(c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
+            loge(c.VAR_TEXT_DATABASE_ERROR.format(quote(str(e))))
             return (False, c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
     
         return (True, group.id)
@@ -816,7 +831,7 @@ def update_group(id, config_dict):
             db.session.commit()
             logi("Updated group [" + group.name + "]")
         except exc.SQLAlchemyError as e:
-            loge(c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
+            loge(c.VAR_TEXT_DATABASE_ERROR.format(quote(str(e))))
             return (False, c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
     
     return (True)
@@ -863,7 +878,7 @@ def delete_group(id):
             db.session.commit()
             logi("Deleted group [" + group.name + "]")
         except exc.SQLAlchemyError as e:
-            loge(c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
+            loge(c.VAR_TEXT_DATABASE_ERROR.format(quote(str(e))))
             return (False, c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
     
     return (True)
@@ -946,7 +961,7 @@ def add_automation(automation_dict, inverted_automation=False):
         if inverted_automation and automation_dict["trigger"] == c.AUTOMATION_TRIGGER_TIMER:
             automation_dict["time"] = automation_dict["inverted_action_time"]
 
-        if automation_dict["trigger"] == c.AUTOMATION_TRIGGER_DOOR_SENSOR or automation_dict["trigger"] == c.AUTOMATION_TRIGGER_MOTION_SENSOR:
+        if automation_dict["trigger"] == c.AUTOMATION_TRIGGER_SENSOR:
             automation.time_window_activated = automation_dict["time_window_activated"]
             automation.activate_during_time_window = automation_dict["activate_during_time_window"]
             
@@ -954,6 +969,9 @@ def add_automation(automation_dict, inverted_automation=False):
                 automation.time_window_start_minutes = automation_dict["time_window_start_minutes"]
                 automation.time_window_end_minutes = automation_dict["time_window_end_minutes"]
 
+            automation.delay_minutes = automation_dict["delay_minutes"]
+
+        if automation_dict["trigger"] == c.AUTOMATION_TRIGGER_SWITCH:
             automation.delay_minutes = automation_dict["delay_minutes"]
 
         db.session.add(automation)
@@ -969,7 +987,15 @@ def add_automation(automation_dict, inverted_automation=False):
         if automation.trigger == c.AUTOMATION_TRIGGER_TIMER:
             db.session.add(AutomationHasTriggerTime(automation_id=automation.id, days=automation_dict["days"], time=automation_dict["time"]))
 
-        if automation.trigger == c.AUTOMATION_TRIGGER_DOOR_SENSOR or automation.trigger == c.AUTOMATION_TRIGGER_MOTION_SENSOR:
+        if automation.trigger == c.AUTOMATION_TRIGGER_SENSOR:
+            for device in automation_dict["trigger_device_ids"]:
+                db.session.add(AutomationHasTriggerDevice(
+                    automation_id=automation.id,
+                    device_id=device,
+                    trigger_state=automation_dict["trigger_state"]
+                ))
+
+        if automation.trigger == c.AUTOMATION_TRIGGER_SWITCH:
             for device in automation_dict["trigger_device_ids"]:
                 db.session.add(AutomationHasTriggerDevice(
                     automation_id=automation.id,
@@ -989,19 +1015,21 @@ def add_automation(automation_dict, inverted_automation=False):
             db.session.commit()
             logi("Added automation [" + automation_dict["name"] + "]")
         except exc.SQLAlchemyError as e:
-            loge(c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
+            loge(c.VAR_TEXT_DATABASE_ERROR.format(quote(str(e))))
             return (False, c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
 
         if not inverted_automation and automation_dict["inverted_automation_copy_id"] != -1:
             if automation.trigger == c.AUTOMATION_TRIGGER_TIMER:
                 automation.inverted_automation_copy_id = create_inverted_automation_copy(automation.id, None, automation_dict["inverted_action_time"])
-            elif automation.trigger == c.AUTOMATION_TRIGGER_DOOR_SENSOR or automation.trigger == c.AUTOMATION_TRIGGER_MOTION_SENSOR:
+            elif automation.trigger == c.AUTOMATION_TRIGGER_SENSOR:
+                automation.inverted_automation_copy_id = create_inverted_automation_copy(automation.id, automation_dict["inverted_delay_minutes"])
+            elif automation.trigger == c.AUTOMATION_TRIGGER_SWITCH:
                 automation.inverted_automation_copy_id = create_inverted_automation_copy(automation.id, automation_dict["inverted_delay_minutes"])
 
             try:
                 db.session.commit()
             except exc.SQLAlchemyError as e:
-                loge(c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
+                loge(c.VAR_TEXT_DATABASE_ERROR.format(quote(str(e))))
                 return (False, c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
 
         return (True, automation.id)
@@ -1114,10 +1142,14 @@ def update_automation(id, config_dict):
         try:
             db.session.commit()
         except exc.SQLAlchemyError as e:
-            loge(c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
+            loge(c.VAR_TEXT_DATABASE_ERROR.format(quote(str(e))))
             return (False, c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
 
-        if automation.trigger == c.AUTOMATION_TRIGGER_DOOR_SENSOR or automation.trigger == c.AUTOMATION_TRIGGER_MOTION_SENSOR:
+        if automation.trigger == c.AUTOMATION_TRIGGER_SENSOR:
+            if "trigger_device_ids" in config_dict:
+                _update_automation_trigger_devices(id, config_dict)
+
+        if automation.trigger == c.AUTOMATION_TRIGGER_SWITCH:
             if "trigger_device_ids" in config_dict:
                 _update_automation_trigger_devices(id, config_dict)
 
@@ -1131,28 +1163,34 @@ def update_automation(id, config_dict):
             elif config_dict["inverted_automation_copy_id"] == 9999 and automation.inverted_automation_copy_id == -1:
                 if automation.trigger == c.AUTOMATION_TRIGGER_TIMER:
                     automation.inverted_automation_copy_id = create_inverted_automation_copy(automation.id, None, config_dict.get("inverted_action_time"))
-                elif automation.trigger == c.AUTOMATION_TRIGGER_DOOR_SENSOR or automation.trigger == c.AUTOMATION_TRIGGER_MOTION_SENSOR:
+                elif automation.trigger == c.AUTOMATION_TRIGGER_SENSOR:
+                    automation.inverted_automation_copy_id = create_inverted_automation_copy(automation.id, config_dict.get("inverted_delay_minutes"))
+                elif automation.trigger == c.AUTOMATION_TRIGGER_SWITCH:
                     automation.inverted_automation_copy_id = create_inverted_automation_copy(automation.id, config_dict.get("inverted_delay_minutes"))
 
             #Copy is updated
             else:
                 if automation.trigger == c.AUTOMATION_TRIGGER_TIMER:
                     update_inverted_automation_copy(automation.id, None, config_dict.get("inverted_action_time"))
-                elif automation.trigger == c.AUTOMATION_TRIGGER_DOOR_SENSOR or automation.trigger == c.AUTOMATION_TRIGGER_MOTION_SENSOR:
+                elif automation.trigger == c.AUTOMATION_TRIGGER_SENSOR:
+                    update_inverted_automation_copy(automation.id, config_dict.get("inverted_delay_minutes"))
+                elif automation.trigger == c.AUTOMATION_TRIGGER_SWITCH:
                     update_inverted_automation_copy(automation.id, config_dict.get("inverted_delay_minutes"))
         
         #inverted ID not altered, but automation has a copy
         elif automation.inverted_automation_copy_id != -1:
             if automation.trigger == c.AUTOMATION_TRIGGER_TIMER:
                 update_inverted_automation_copy(automation.id, None, config_dict.get("inverted_action_time"))
-            elif automation.trigger == c.AUTOMATION_TRIGGER_DOOR_SENSOR or automation.trigger == c.AUTOMATION_TRIGGER_MOTION_SENSOR:
+            elif automation.trigger == c.AUTOMATION_TRIGGER_SENSOR:
+                update_inverted_automation_copy(automation.id, config_dict.get("inverted_delay_minutes"))
+            elif automation.trigger == c.AUTOMATION_TRIGGER_SWITCH:
                 update_inverted_automation_copy(automation.id, config_dict.get("inverted_delay_minutes"))
 
         try:
             db.session.commit()
             logi("Updated automation [" + automation.name + "]")
         except exc.SQLAlchemyError as e:
-            loge(c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
+            loge(c.VAR_TEXT_DATABASE_ERROR.format(quote(str(e))))
             return (False, c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
     
     return (True)
@@ -1224,7 +1262,7 @@ def delete_automation(id):
             db.session.commit()
             logi("Deleted automation [" + automation.name + "]")
         except exc.SQLAlchemyError as e:
-            loge(c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
+            loge(c.VAR_TEXT_DATABASE_ERROR.format(quote(str(e))))
             return (False, c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
         
         #Delete inverted copy when present
@@ -1261,7 +1299,7 @@ def _update_automation_trigger_devices(id, trigger_devices):
             db.session.commit()
             logi("Updated automation trigger devices")
         except exc.SQLAlchemyError as e:
-            loge(c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
+            loge(c.VAR_TEXT_DATABASE_ERROR.format(quote(str(e))))
             return (False, c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
         
     return (True)
@@ -1289,7 +1327,7 @@ def _update_automation_target_devices(id, target_device_ids):
             db.session.commit()
             logi("Updated automation target devices")
         except exc.SQLAlchemyError as e:
-            loge(c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
+            loge(c.VAR_TEXT_DATABASE_ERROR.format(quote(str(e))))
             return (False, c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
         
     return (True)
@@ -1318,7 +1356,7 @@ def _update_automation_parameters(id, parameters):
             db.session.commit()
             logi("Updated automation parameters")
         except exc.SQLAlchemyError as e:
-            loge(c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
+            loge(c.VAR_TEXT_DATABASE_ERROR.format(quote(str(e))))
             return (False, c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
     
     return (True)
@@ -1359,7 +1397,13 @@ def get_automation(id=None, name=None):
             else:
                 automation["inverted_action_time"] = "00:00"
 
-        elif automation["trigger"] == c.AUTOMATION_TRIGGER_DOOR_SENSOR or automation["trigger"] == c.AUTOMATION_TRIGGER_MOTION_SENSOR:
+        elif automation["trigger"] == c.AUTOMATION_TRIGGER_SENSOR:
+            trigger_device = AutomationHasTriggerDevice.query.filter_by(
+                                                                    device_id=automation["trigger_device_ids"][0],
+                                                                    automation_id=automation["id"]).first()
+            automation["trigger_state"] = trigger_device.trigger_state
+
+        elif automation["trigger"] == c.AUTOMATION_TRIGGER_SWITCH:
             trigger_device = AutomationHasTriggerDevice.query.filter_by(
                                                                     device_id=automation["trigger_device_ids"][0],
                                                                     automation_id=automation["id"]).first()
@@ -1404,7 +1448,17 @@ def get_automations(trigger=None, include_inverted_copies=False):
                 else:
                     automation["inverted_action_time"] = "00:00"
 
-            elif automation["trigger"] == c.AUTOMATION_TRIGGER_DOOR_SENSOR or automation["trigger"] == c.AUTOMATION_TRIGGER_MOTION_SENSOR:
+            elif automation["trigger"] == c.AUTOMATION_TRIGGER_SENSOR:
+                if int(automation["inverted_automation_copy_id"]) != -1:
+                    automation["inverted_delay_minutes"] = get_automation(automation["inverted_automation_copy_id"])["delay_minutes"]
+
+                automation["trigger_device_ids"] = _get_automation_trigger_devices(automation["id"])
+                trigger_device = AutomationHasTriggerDevice.query.filter_by(
+                                                                        device_id=automation["trigger_device_ids"][0],
+                                                                        automation_id=automation["id"]).first()
+                automation["trigger_state"] = trigger_device.trigger_state
+
+            elif automation["trigger"] == c.AUTOMATION_TRIGGER_SWITCH:
                 if int(automation["inverted_automation_copy_id"]) != -1:
                     automation["inverted_delay_minutes"] = get_automation(automation["inverted_automation_copy_id"])["delay_minutes"]
 
@@ -1495,7 +1549,7 @@ def add_alarm_deactivation_device(device_dict):
         try:
             db.session.commit()
         except exc.SQLAlchemyError as e:
-            loge(c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
+            loge(c.VAR_TEXT_DATABASE_ERROR.format(quote(str(e))))
             return (False, c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
 
         return (True, deactivation_device.id)
@@ -1524,7 +1578,7 @@ def update_alarm_deactivation_device(device_id, device_dict):
             db.session.commit()
             logi("Updated deactivation device [" + str(deactivation_device.name) + "]")
         except exc.SQLAlchemyError as e:
-            loge(c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
+            loge(c.VAR_TEXT_DATABASE_ERROR.format(quote(str(e))))
             return (False, c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
 
     return (True)
@@ -1545,7 +1599,7 @@ def delete_alarm_deactivation_device(device_id):
             db.session.commit()
             logi("Deleted alarm deactivation device")
         except exc.SQLAlchemyError as e:
-            loge(c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
+            loge(c.VAR_TEXT_DATABASE_ERROR.format(quote(str(e))))
             return (False, c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
 
     return (True)
@@ -1571,7 +1625,7 @@ def add_alarm_trigger_device(device_id):
             db.session.commit()
             logi("Added alarm trigger device")
         except exc.SQLAlchemyError as e:
-            loge(c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
+            loge(c.VAR_TEXT_DATABASE_ERROR.format(quote(str(e))))
             return (False, c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
         
     return (True)
@@ -1592,7 +1646,7 @@ def delete_alarm_trigger_device(device_id):
             db.session.commit()
             logi("Deleted alarm trigger device")
         except exc.SQLAlchemyError as e:
-            loge(c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
+            loge(c.VAR_TEXT_DATABASE_ERROR.format(quote(str(e))))
             return (False, c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
         
     return (True)
@@ -1624,7 +1678,7 @@ def update_alarm(config_dict):
             db.session.commit()
             logi("Updated alarm")
         except exc.SQLAlchemyError as e:
-            loge(c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
+            loge(c.VAR_TEXT_DATABASE_ERROR.format(quote(str(e))))
             return (False, c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
         
     return (True)
@@ -1666,7 +1720,7 @@ def add_alarm_trigger_time(device_id):
         try:
             db.session.commit()
         except exc.SQLAlchemyError as e:
-            loge(c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
+            loge(c.VAR_TEXT_DATABASE_ERROR.format(quote(str(e))))
             return (False, c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
         
     return (True)
@@ -1757,7 +1811,7 @@ def add_dashboard_configuration(config_dict):
         try:
             db.session.commit()
         except exc.SQLAlchemyError as e:
-            loge(c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
+            loge(c.VAR_TEXT_DATABASE_ERROR.format(quote(str(e))))
             return (False, c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
         
         return (True, configuration.id)
@@ -1785,7 +1839,7 @@ def update_dashboard_configuration(id, config_dict):
         try:
             db.session.commit()
         except exc.SQLAlchemyError as e:
-            loge(c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
+            loge(c.VAR_TEXT_DATABASE_ERROR.format(quote(str(e))))
             return (False, c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
         
     return (True)
@@ -1809,7 +1863,7 @@ def delete_dashboard_configuration(id):
             db.session.commit()
             logi("Deleted dashboard_configuration: " + configuration.name)
         except exc.SQLAlchemyError as e:
-            loge(c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
+            loge(c.VAR_TEXT_DATABASE_ERROR.format(quote(str(e))))
             return (False, c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
         
     return (True)
@@ -1839,7 +1893,7 @@ def add_dashboard_tile(config_dict):
         try:
             db.session.commit()
         except exc.SQLAlchemyError as e:
-            loge(c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
+            loge(c.VAR_TEXT_DATABASE_ERROR.format(quote(str(e))))
             return (False, c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
 
         return (True, tile.id)
@@ -1871,28 +1925,27 @@ def update_dashboard_tile(id, config_dict):
         try:
             db.session.commit()
         except exc.SQLAlchemyError as e:
-            loge(c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
+            loge(c.VAR_TEXT_DATABASE_ERROR.format(quote(str(e))))
             return (False, c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
         
     return (True)
        
 ################################################################################
 #
-#   @brief  Deletes the specified tile from the dashboard.
+#   @brief  Deletes the specified dashboard tile.
 #   @param  id                  Tile ID
 #   @return tuple               (False, [reason]) on error and (True) on
 #                               success
 #
 ################################################################################
 def delete_dashboard_tile(id):
-    #TODO test with multiple dashboards, a dashboard id is needed
     with app.app_context():
         DashboardHasTile.query.filter_by(id=id).delete()
 
         try:
             db.session.commit()                                                 #Commit changes to database
         except exc.SQLAlchemyError as e:
-            loge(c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
+            loge(c.VAR_TEXT_DATABASE_ERROR.format(quote(str(e))))
             return (False, c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
     
     return (True)
@@ -1915,7 +1968,7 @@ def reset_dashboard_tile_order(id):
         try:
             db.session.commit()
         except exc.SQLAlchemyError as e:
-            loge(c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
+            loge(c.VAR_TEXT_DATABASE_ERROR.format(quote(str(e))))
             return (False, c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
         
     return (True)
@@ -1923,12 +1976,21 @@ def reset_dashboard_tile_order(id):
 ################################################################################
 #
 #   @brief  Returns the dashboard configurations.
+#   @param  account_id          Account ID
 #   @return list                Dictionary list with dashboards
 #
 ################################################################################
-def get_dashboard_configurations():
+def get_dashboard_configurations(account_id=None):
     with app.app_context():
-        dashboard_configurations = DashboardConfiguration.query.all()
+        #account_id for now unimplemented
+        if account_id is None:
+            dashboard_configurations = DashboardConfiguration.query.all()
+        #else:
+        #    account_dashboards = AccountHasDashboardConfiguration.query.filter_by(account_id=account_id).all()
+        #    dashboard_configurations = []
+        #    for dashboard in account_dashboards:
+        #        dashboard_configurations.append(DashboardConfiguration.query.filter_by(configuration_id=dashboard.configuration_id).first())
+
         dashboard_configuration_list = []
         for dashboard_configuration in dashboard_configurations:
             dashboard_configuration = _row_to_dictionary(dashboard_configuration)
@@ -1960,6 +2022,446 @@ def get_dashboard_configuration(id):
 
     return dashboard_configuration
 #endregion
+
+
+
+
+
+
+
+
+#region Accounts
+################################################################################
+#
+#   @brief  Adds a account to the database.
+#   @param  data_dict           User dictionary
+#   @return                     Tupel with success bool and error string
+#
+################################################################################
+def add_account(data_dict):
+    encryptor = Fernet(c.DATABASE_ENCRYPTION_KEY)                               #Instance the Fernet class with the key
+    encrypted_email = encryptor.encrypt(data_dict["email"].encode()).decode()
+    
+    accounts = Account.query.all()
+
+    #Search for existing names
+    for account in accounts:
+        if encryptor.decrypt(account.email).decode() == data_dict["email"]:
+            return (False, c.TEXT_EMAIL_ALREADY_EXISTS)
+
+    account = Account(
+                    email=encrypted_email,
+                    password=ph.hash(data_dict["password"])
+                )
+    
+    db.session.add(account)                                                     #Add account to database
+    
+    try:
+        db.session.commit()
+    except exc.SQLAlchemyError as e:
+        loge(c.VAR_TEXT_DATABASE_ERROR.format(quote(str(e))))
+        return (False, c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
+
+    return (True, account.id)
+
+################################################################################
+#
+#   @brief  Updates a account based on a dictionary with provided items.
+#   @param  id                  ID of the account to update
+#   @param  data_dict           Dictionary with new data
+#   @return                     Tupel with success bool and error string
+#
+################################################################################
+def update_account(id, data_dict):
+    encryptor = Fernet(c.DATABASE_ENCRYPTION_KEY)                               #Instance the Fernet class with the key
+    account = Account.query.filter_by(id=id).first()                                  #Get account to update
+
+    if account is None:
+        return (False, c.TEXT_ACCOUNT_NOT_FOUND)
+
+    accounts = Account.query.all()
+
+    encrypted_email = encryptor.encrypt(data_dict["email"].encode()).decode()
+    
+    #Search for existing names
+    for db_account in accounts:
+        if encryptor.decrypt(db_account.email).decode() == data_dict["email"]:
+            return (False, c.TEXT_EMAIL_ALREADY_EXISTS)
+
+    account.email = encrypted_email
+    
+    try:
+        db.session.commit()
+    except exc.SQLAlchemyError as e:
+        loge(c.VAR_TEXT_DATABASE_ERROR.format(quote(str(e))))
+        return (False, c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
+    
+    return (True, "")
+
+################################################################################
+#
+#   @brief  Deletes a account from the database.
+#   @param  id                  ID of the account to delete
+#   @return                     Tupel with success bool and error string
+#
+################################################################################
+def delete_account(id):
+    account = Account.query.filter_by(id=id).first()                                  #Get account to delete
+
+    if account is None:
+        return (False, c.TEXT_ACCOUNT_NOT_FOUND)
+
+    db.session.delete(account)                                                     #Delete account
+    
+    try:
+        db.session.commit()                                                     #Commit changes to database
+    except exc.SQLAlchemyError as e:
+        loge(c.VAR_TEXT_DATABASE_ERROR.format(quote(str(e))))
+        return (False, c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
+
+    return (True, "")
+
+################################################################################
+#
+#   @brief  Updates the password of the specified user.
+#   @param  id                  ID of the user to update password
+#   @param  password            New password of the user
+#   @param  current_password    Current password of the user
+#   @return                     Tupel with success bool and error string
+#
+################################################################################
+def update_account_password(id, password, current_password=None):
+    account = Account.query.filter_by(id=id).first()                                  #Get account to update
+
+    if account is None:
+        return (False, c.TEXT_ACCOUNT_NOT_FOUND)
+    
+    if not re.search(c.RE_PASSWORD, password):
+        return (False, c.TEXT_PASSWORD_NOT_STRONG)
+    
+    #Check whether current password is the same
+    if current_password is not None:
+        try:
+            ph.verify(account.password, current_password)
+        except VerifyMismatchError:
+            return (False, c.TEXT_INVALID_CURRENT_PASSWORD)
+
+    #Check whether new password is unique
+    try:
+        ph.verify(account.password, password)
+        return (False, c.TEXT_CANNOT_BE_THE_SAME_PASSWORD)
+    except VerifyMismatchError:
+        pass
+
+    account.password = ph.hash(password)                                           #Hash the default password
+    account.password_updated_at = datetime.now(c.TIME_ZONE)                        #Update date and time password updated
+
+    try:
+        db.session.commit()                                                     #Commit changes to database
+    except exc.SQLAlchemyError as e:
+        loge(c.VAR_TEXT_DATABASE_ERROR.format(quote(str(e))))
+        return (False, c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
+    
+    strength_results = zxcvbn(password)
+
+    return (True, strength_results["feedback"]["warning"])
+
+################################################################################
+#
+#   @brief  Resets the password to the default one of the specified account.
+#   @param  id                  ID of the account to reset password
+#   @return                     True if success, otherwise false
+#
+################################################################################
+def reset_account_password(id):
+    account = Account.query.filter_by(id=id).first()                                  #Get account to update password
+
+    if account is None:
+        return False
+
+    account.password = ph.hash(c.DEFAULT_PASSWORD)                                 #Hash the default password
+    account.password_updated_at = datetime.now(c.TIME_ZONE)
+    
+    try:
+        db.session.commit()                                                     #Commit changes to database
+    except exc.SQLAlchemyError as e:
+        loge(c.VAR_TEXT_DATABASE_ERROR.format(quote(str(e))))
+        return False
+
+    return True
+    
+################################################################################
+#
+#   @brief  Checks account credentials.
+#   @param  email               The email of the account
+#   @param  password            The password of the account
+#   @return                     Tupel with success bool and error string or account
+#
+################################################################################
+def account_login(email, password):
+    encryptor = Fernet(c.DATABASE_ENCRYPTION_KEY)                               #Instance the Fernet class with the key
+    accounts = Account.query.all()
+    account = None
+    
+    #Search accounts for email
+    for db_account in accounts:
+        #If email corresponds to a account, select account
+        if encryptor.decrypt(db_account.email).decode() == email:
+            account = db_account
+            break
+
+    if account is None:
+        return (False, c.TEXT_WRONG_CREDENTIALS)                                #User not found by email, wrong email
+    
+    try:
+        ph.verify(account.password, password)                                      #Verify if password is a match
+    except VerifyMismatchError:
+        return (False, c.TEXT_WRONG_CREDENTIALS)                                #Password incorrect
+    
+    account.last_logged_in_at = datetime.now(c.TIME_ZONE)                          #Update date and time last logged in
+    
+    try:
+        db.session.commit()                                                     #Commit changes to database
+    except exc.SQLAlchemyError as e:
+        loge(c.VAR_TEXT_DATABASE_ERROR.format(quote(str(e))))
+        return (False, c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
+
+    #Decrypt data
+    account.email = encryptor.decrypt(account.email).decode()
+
+    account = _row_to_dictionary(account)
+    account.pop("password")
+
+    return (True, account)                                                         #If credentials are correct, return user
+    
+################################################################################
+#
+#   @brief  Returns all users.
+#   @return                     List of dictionaries of the users
+#
+################################################################################
+def get_accounts():
+    encryptor = Fernet(c.DATABASE_ENCRYPTION_KEY)                               #Instance the Fernet class with the key
+    accounts = Account.query.all()
+    accounts_list = []
+
+    for account in accounts:
+        account = _row_to_dictionary(account)
+        account["email"] = encryptor.decrypt(account["email"]).decode()
+
+        account.pop("password")
+        accounts_list.append(account)
+    
+    return accounts_list
+
+################################################################################
+#
+#   @brief  Returns a user dictionary based on the ID or email.
+#   @param  id                  ID of the user
+#   @param  email               Email of the user
+#   @return                     Dictionary of the specified user
+#
+################################################################################
+def get_account(id):
+    encryptor = Fernet(c.DATABASE_ENCRYPTION_KEY)                               #Instance the Fernet class with the key
+    account = Account.query.filter_by(id=id).first()                              #Get user based on ID
+
+    if account is None:
+        loge(c.TEXT_ACCOUNT_NOT_FOUND)
+        return
+
+    account = _row_to_dictionary(account)                                             #Convert db object to dictionary
+    account["email"] = encryptor.decrypt(account["email"]).decode()
+
+    account.pop("password")
+
+    return account
+#endregion
+
+
+
+
+
+
+
+
+
+
+
+
+#region Users
+################################################################################
+#
+#   @brief  Adds a profile to the database.
+#   @param  data_dict           User dictionary
+#   @return                     Tupel with success bool and error string
+#
+################################################################################
+def add_profile(data_dict):
+    profiles = Profile.query.all()
+    
+    #Search for existing names
+    for db_profile in profiles:
+        if db_profile.name == data_dict["name"]:
+            return (False, c.TEXT_NAME_ALREADY_EXISTS)
+
+    profile = Profile(
+                    account_id=data_dict["account_id"],
+                    name=data_dict["name"],
+                    language=data_dict["language"]
+                )
+    
+    db.session.add(profile)                                                     #Add profile to database
+    
+    try:
+        db.session.commit()
+    except exc.SQLAlchemyError as e:
+        loge(c.VAR_TEXT_DATABASE_ERROR.format(quote(str(e))))
+        return (False, c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
+
+    return (True, profile.id)
+
+################################################################################
+#
+#   @brief  Updates a profile based on a dictionary with provided items.
+#   @param  id                  ID of the profile to update
+#   @param  data_dict           Dictionary with new data
+#   @return                     Tupel with success bool and error string
+#
+################################################################################
+def update_profile(id, data_dict):
+    profile = Profile.query.filter_by(id=id).first()                                  #Get profile to update
+
+    if profile is None:
+        return (False, c.TEXT_PROFILE_NOT_FOUND)
+
+    profiles = Profile.query.all()
+    
+    if "name" in data_dict:
+        #Search for existing names
+        for db_profile in profiles:
+            if db_profile.id == id:
+                continue
+
+            if db_profile.name == data_dict["name"]:
+                return (False, c.TEXT_NAME_ALREADY_EXISTS)
+            
+        profile.name = data_dict["name"]
+
+    if "language" in data_dict:
+        profile.language = data_dict["language"]
+
+    if "profile_picture" in data_dict:
+        profile.profile_picture = data_dict["profile_picture"]
+
+    if "ui_theme" in data_dict:
+        profile.ui_theme = data_dict["ui_theme"]
+    
+    try:
+        db.session.commit()
+    except exc.SQLAlchemyError as e:
+        loge(c.VAR_TEXT_DATABASE_ERROR.format(quote(str(e))))
+        return (False, c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
+    
+    return (True, "")
+
+################################################################################
+#
+#   @brief  Deletes a profile from the database.
+#   @param  id                  ID of the profile to delete
+#   @return                     Tupel with success bool and error string
+#
+################################################################################
+def delete_profile(id):
+    profile = Profile.query.filter_by(id=id).first()                                  #Get profile to delete
+
+    if profile is None:
+        return (False, c.TEXT_PROFILE_NOT_FOUND)
+
+    picture_filename = profile.profile_picture
+    db.session.delete(profile)                                                     #Delete profile
+    
+    try:
+        db.session.commit()                                                     #Commit changes to database
+    except exc.SQLAlchemyError as e:
+        loge(c.VAR_TEXT_DATABASE_ERROR.format(quote(str(e))))
+        return (False, c.VAR_TEXT_DATABASE_ERROR.format(str(e)))
+
+    #Remove profile picture
+    if picture_filename != c.DEFAULT_PROFILE_PICTURE_FILENAME:
+        path = os.path.join(c.PROFILE_PICTURES_DIRECTORY_PATH, picture_filename)
+        if os.path.exists(path):
+            os.remove(path)
+
+    return (True, "")
+    
+################################################################################
+#
+#   @brief  Returns all users.
+#   @return                     List of dictionaries of the users
+#
+################################################################################
+def get_profiles(account_id):
+    profiles = Profile.query.filter_by(account_id=account_id).all()
+    profiles_list = []
+
+    for profile in profiles:
+        profiles_list.append(_row_to_dictionary(profile))
+    
+    return profiles_list
+
+################################################################################
+#
+#   @brief  Returns a user dictionary based on the ID or email.
+#   @param  id                  ID of the user
+#   @param  email               Email of the user
+#   @return                     Dictionary of the specified user
+#
+################################################################################
+def get_profile(id):
+    profile = Profile.query.filter_by(id=id).first()                              #Get user based on ID
+
+    if profile is None:
+        loge(c.TEXT_PROFILE_NOT_FOUND)
+        return
+
+    profile = _row_to_dictionary(profile)                                             #Convert db object to dictionary
+    
+    return profile
+#endregion
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #region Utilities
 ################################################################################

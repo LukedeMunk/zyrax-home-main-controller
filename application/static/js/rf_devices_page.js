@@ -1,6 +1,6 @@
 /******************************************************************************/
 /*
- * File:    control_sensors_page.js
+ * File:    control_rf_devices_page.js
  * Author:  Luke de Munk
  * Version: 0.9.0
  * 
@@ -191,7 +191,7 @@ function loadStates() {
         iconContainer.style.margin = "auto";
 
         icon = document.createElement("i");
-        if (device.type == DEVICE_TYPE_SENSOR) {
+        if (device.type == DEVICE_TYPE_RF_DEVICE) {
             if (device.state) {
                 icon.className = device.icon + " fa-2x";
             } else {

@@ -9,7 +9,7 @@
 #           https://github.com/LukedeMunk/zyrax-home-main-controller
 #
 ################################################################################
-from flask import Blueprint, request                                            #Import flask blueprints and requests
+from flask import Blueprint, request, session                                   #Import flask blueprints and requests
 import configuration as c                                                       #Import application configuration variables
 from DeviceManager import DeviceManager                                         #Import device manager
 from server_manager import generate_json_http_response
@@ -25,6 +25,9 @@ alarm_bp = Blueprint("alarm_blueprints", __name__)
 ################################################################################
 @alarm_bp.route("/update_alarm", methods=["POST"])
 def update_alarm():
+    if "account_id" not in session:
+        return generate_json_http_response(c.HTTP_CODE_UNAUTHORIZED)
+    
     alarm_dict = {}
 
     if "activated" in request.form:
@@ -47,6 +50,9 @@ def update_alarm():
 ################################################################################
 @alarm_bp.route("/add_deactivation_device", methods=["POST"])
 def add_deactivation_device():
+    if "account_id" not in session:
+        return generate_json_http_response(c.HTTP_CODE_UNAUTHORIZED)
+    
     alarm_dict = {
         "name": request.form.get("name"),
         "ip_address": request.form.get("ip_address")
@@ -66,6 +72,9 @@ def add_deactivation_device():
 ################################################################################
 @alarm_bp.route("/update_deactivation_device", methods=["POST"])
 def update_deactivation_device():
+    if "account_id" not in session:
+        return generate_json_http_response(c.HTTP_CODE_UNAUTHORIZED)
+    
     id = int(request.form.get("id"))
 
     alarm_dict = {
@@ -87,6 +96,9 @@ def update_deactivation_device():
 ################################################################################
 @alarm_bp.route("/delete_deactivation_device", methods=["POST"])
 def delete_deactivation_device():
+    if "account_id" not in session:
+        return generate_json_http_response(c.HTTP_CODE_UNAUTHORIZED)
+    
     id = int(request.form.get("id"))
 
     dm.delete_alarm_deactivation_device(id)
@@ -100,6 +112,9 @@ def delete_deactivation_device():
 ################################################################################
 @alarm_bp.route("/add_alarm_trigger_device", methods=["POST"])
 def add_alarm_trigger_device():
+    if "account_id" not in session:
+        return generate_json_http_response(c.HTTP_CODE_UNAUTHORIZED)
+    
     id = int(request.form.get("id"))
 
     dm.add_alarm_trigger_device(id)
@@ -113,6 +128,9 @@ def add_alarm_trigger_device():
 ################################################################################
 @alarm_bp.route("/delete_alarm_trigger_device", methods=["POST"])
 def delete_alarm_trigger_device():
+    if "account_id" not in session:
+        return generate_json_http_response(c.HTTP_CODE_UNAUTHORIZED)
+    
     id = int(request.form.get("id"))
 
     dm.delete_alarm_trigger_device(id)

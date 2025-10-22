@@ -15,6 +15,9 @@ import json                                                                     
 from language_package_english import *                                          #Import language package
 import keyring
 import base64
+from device_model_configurations import *
+
+APPLICATION_VERSION = "v0.9.0"
 
 PRODUCTION_MODE = True
 if os.name == "nt":
@@ -22,12 +25,11 @@ if os.name == "nt":
 
 KEYRING_KEY = None
 
-USER_PRESENT = True#TODO For later use in login first user
-
 #Pins
 RF_PIN_BCM = 27                                                                 #BCM mode so GPIO27 (pin 13). RF reciever
 
 APPLICATION_NAME = "ZyraX_Home"
+DEFAULT_PASSWORD = "ZyraXHomeUser123!"
 
 #Credential names
 WEATHER_API_KEY_NAME = "WEATHER_API_KEY"
@@ -35,6 +37,7 @@ TELEGRAM_BOT_TOKEN_NAME = "TELEGRAM_BOT_TOKEN"
 TELEGRAM_CHAT_ID_NAME = "TELEGRAM_CHAT_ID"
 FLASK_ENCRYPTION_KEY_NAME = "FLASK_ENCRYPTION_KEY"
 MICROSERVICE_KEY_NAME = "MICROSERVICE_KEY"
+DATABASE_ENCRYPTION_KEY_NAME = "DATABASE_ENCRYPTION_KEY"
 
 TELEGRAM_SERVICE_NAME = "Telegram_microservice"
 WEATHER_SERVICE_NAME = "Weather_microservice"
@@ -120,22 +123,15 @@ TIME_ZONE = pytz.timezone("CET")
 
 MIN_LEDSTRIP_BRIGHTNESS = 25
 MAX_LEDSTRIP_BRIGHTNESS = 255
+MAX_NUMBER_OF_LEDS = 250
 
 DEFAULT_FIRMWARE_VERSION = "v0.0.0"
 COMPATIBLE_LEDSTRIP_FIRMWARE_VERSIONS = ["v0.0.2", "v0.9.0"]
 
-DEVICE_TYPE_LEDSTRIP = 0
-DEVICE_TYPE_SENSOR = 1
-DEVICE_TYPE_IP_CAMERA = 2
 
-ALL_DEVICE_TYPES = [DEVICE_TYPE_LEDSTRIP, DEVICE_TYPE_SENSOR]
-DEVICE_TYPES = [{"name": "Ledstrips", "type" : DEVICE_TYPE_LEDSTRIP},
-                {"name": "Sensors", "type" : DEVICE_TYPE_SENSOR},
-                {"name": "Cameras", "type" : DEVICE_TYPE_IP_CAMERA}]
 
-AUTOMATION_TRIGGER_TIMER = 0
-AUTOMATION_TRIGGER_DOOR_SENSOR = 1
-AUTOMATION_TRIGGER_MOTION_SENSOR = 2
+
+
 
 #Ledstrip mode parameters
 PARAMETER_NAME_MIN_COLOR_POS = "min_color_pos"
@@ -183,43 +179,16 @@ MODE_PARAMETER_TYPE_RANGE = 3
 MODE_PARAMETER_TYPE_DIRECTION_CHECKBOX = 4
 MODE_PARAMETER_TYPE_SELECT = 5
 
-#Device models
-LEDSTRIP_MODEL_WS2801 = 0
-LEDSTRIP_MODEL_WS2812B = 1
-LEDSTRIP_MODEL_SK6812K = 2
-MAX_NUMBER_OF_LEDS = 250
 
-LEDSTRIP_SENSOR_MODEL_CONTACT_SWITCH = 0
+UI_THEME_DARK_BLUE = 0
+UI_THEME_LIGHT_BLUE = 1
+UI_THEME_DARK_GREEN = 2
+UI_THEME_LIGHT_GREEN = 3
 
-LEDSTRIP_MODELS = [{"model" : LEDSTRIP_MODEL_WS2801, "name" : "WS2801"},
-                    {"model" : LEDSTRIP_MODEL_WS2812B, "name" : "WS2812B"},
-                    {"model" : LEDSTRIP_MODEL_SK6812K, "name" : "SK6812K"}]
-
-LEDSTRIP_SENSOR_MODELS = [{"model" : LEDSTRIP_SENSOR_MODEL_CONTACT_SWITCH, "name" : "Contact Switch"}]
-
-RF_DEVICE_MODEL_OPEN_CLOSE = 0
-RF_DEVICE_MODEL_PIR_SENSOR1 = 1
-RF_DEVICE_MODEL_PIR_SENSOR2 = 2
-
-RF_DEVICE_TYPE_DOOR_SENSOR = 0
-RF_DEVICE_TYPE_MOTION_SENSOR = 1
-RF_DEVICE_TYPE_REMOTE = 2
-
-RF_CODE_TYPE_OPENED = 0
-RF_CODE_TYPE_CLOSED = 1
-RF_CODE_TYPE_TRIGGERED = 2
-RF_CODE_TYPE_LOW_BATTERY = 3
-
-RF_CODE_OPENED = {"name": "Open signal", "type": RF_CODE_TYPE_OPENED}
-RF_CODE_CLOSED = {"name": "Close signal", "type": RF_CODE_TYPE_CLOSED}
-RF_CODE_TRIGGERED = {"name": "Trigger signal", "type": RF_CODE_TYPE_TRIGGERED}
-RF_CODE_LOW_BATTERY = {"name": "Low battery signal", "type": RF_CODE_TYPE_LOW_BATTERY}
-
-SENSOR_MODELS = [{"model" : RF_DEVICE_MODEL_OPEN_CLOSE, "type": RF_DEVICE_TYPE_DOOR_SENSOR, "name" : "OpenClose", "rf_code_types" : [RF_CODE_OPENED, RF_CODE_CLOSED]},
-                    {"model" : RF_DEVICE_MODEL_PIR_SENSOR1, "type": RF_DEVICE_TYPE_MOTION_SENSOR, "name" : "PIR", "rf_code_types" : [RF_CODE_TRIGGERED]},
-                    {"model" : RF_DEVICE_MODEL_PIR_SENSOR2, "type": RF_DEVICE_TYPE_MOTION_SENSOR, "name" : "PIR2", "rf_code_types" : [RF_CODE_TRIGGERED, RF_CODE_LOW_BATTERY]}]
-
-CAMERA_MODELS = [{"model" : 0, "name" : "Not supported yet"},]
+UI_THEMES = [{"id" : UI_THEME_DARK_BLUE, "name" : "Dark Blue"},
+                {"id" : UI_THEME_LIGHT_BLUE, "name" : "Light Blue"},
+                {"id" : UI_THEME_DARK_GREEN, "name" : "Dark Green"},
+                {"id" : UI_THEME_LIGHT_GREEN, "name" : "Light Green"}]
 
 #Automations
 AUTOMATION_ACTION_SET_DEVICE_POWER = "set_device_power"
@@ -230,9 +199,27 @@ AUTOMATION_ACTIONS = [{"name" : "Set power", "device_types" : [DEVICE_TYPE_LEDST
                         {"name" : "Update color", "device_types" : [DEVICE_TYPE_LEDSTRIP], "function" : AUTOMATION_ACTION_SET_LEDSTRIP_COLOR},
                         {"name" : "Update mode", "device_types" : [DEVICE_TYPE_LEDSTRIP], "function" : AUTOMATION_ACTION_SET_LEDSTRIP_MODE}]
 
-AUTOMATION_TRIGGERS = [{"id" : 0, "name": "Time", "type" : AUTOMATION_TRIGGER_TIMER},
-                        {"id" : 1, "name": "Door sensor", "type" : AUTOMATION_TRIGGER_DOOR_SENSOR},
-                        {"id" : 2, "name": "Motion sensor", "type" : AUTOMATION_TRIGGER_MOTION_SENSOR}]
+
+AUTOMATION_TRIGGER_TIMER = 0
+AUTOMATION_TRIGGER_SENSOR = 1
+AUTOMATION_TRIGGER_MOTION_SENSOR = 2
+AUTOMATION_TRIGGER_SWITCH = 3
+
+AUTOMATION_TRIGGERS = [{"id" : AUTOMATION_TRIGGER_TIMER, "name": "Time", "type" : AUTOMATION_TRIGGER_TIMER},
+                        {"id" : AUTOMATION_TRIGGER_SENSOR, "name": "Sensor", "type" : AUTOMATION_TRIGGER_SENSOR},
+                        {"id" : AUTOMATION_TRIGGER_SWITCH, "name": "Switch", "type" : AUTOMATION_TRIGGER_SWITCH}]
+
+SUPPORTED_UI_LANGUAGES = [{"id" : 0, "language": "English"}]
+
+#region Regex strings
+RE_FIRSTNAME = r"^[a-z]{2,50}$"
+RE_PREPOSITION = r"^[a-z']{0,3}[ ]?[a-z']{0,3}$"
+RE_LASTNAME = r"^[a-z]{2,50}$"
+RE_EMAIL = r"^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$"
+RE_PASSWORD = r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[#$^+=!*()@%&]).{8,64}$"
+#endregion
+
+ALLOWED_IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif"}
 
 #HTTP commands
 CMD_SET_POWER = "set_power"
@@ -259,15 +246,17 @@ NETWORK_IP_RANGE = "192.168.2.1/24"
 
 #Paths config
 PATH = os.path.dirname(os.path.realpath(__file__))                              #Current path
-DB_FILENAME = "zyrax_home.db"
+DB_FILENAME = "zyrax_home.db"                                                   #File name of database
 LOG_FILENAME = "logs.log"                                                       #File name of logs
 WEATHER_FILENAME = "weather.json"                                               #File name of weather information
 CONFIGURATION_FILENAME = "configuration.conf"
 KEYRING_FILENAME = "./keyring"
 KEYRING_KEY_FILENAME = "keyring.key"
+DEFAULT_PROFILE_PICTURE_FILENAME = "default_profile_picture.png"
 
 DATA_DIRECTORY = "data"
 OTA_DIRECTORY = "ota"
+PROFILE_PICTURES_DIRECTORY = "profile_pictures"
 LINUX_SYSTEM_DIRECTORY = os.path.join("/etc", APPLICATION_NAME)
 LINUX_DATA_DIRECTORY = os.path.join("/var/lib", APPLICATION_NAME)
 
@@ -277,6 +266,7 @@ if PRODUCTION_MODE:
     LOGS_PATH = os.path.join(DATA_DIRECTORY, LOG_FILENAME)
     WEATHER_PATH = os.path.join(DATA_DIRECTORY, WEATHER_FILENAME)
     OTA_FILE_DIRECTORY_PATH = os.path.join(DATA_DIRECTORY, OTA_DIRECTORY)
+    PROFILE_PICTURES_DIRECTORY_PATH = os.path.join(DATA_DIRECTORY, PROFILE_PICTURES_DIRECTORY)
     CONFIGURATION_FILE_PATH = os.path.join(DATA_DIRECTORY, CONFIGURATION_FILENAME)
     KEYRING_FILE_PATH = os.path.join(DATA_DIRECTORY, KEYRING_FILENAME)
     KEYRING_KEY_FILE_PATH = os.path.join(DATA_DIRECTORY, KEYRING_KEY_FILENAME)
@@ -304,6 +294,8 @@ else:
     LOGS_PATH = os.path.join(DATA_DIRECTORY, LOG_FILENAME)
     WEATHER_PATH = os.path.join(DATA_DIRECTORY, WEATHER_FILENAME)
     OTA_FILE_DIRECTORY_PATH = os.path.join(DATA_DIRECTORY, OTA_DIRECTORY)
+    PROFILE_PICTURES_DIRECTORY_PATH = os.path.join(DATA_DIRECTORY, PROFILE_PICTURES_DIRECTORY)
+    DEFAULT_PROFILE_PICTURE_PATH = os.path.join(PROFILE_PICTURES_DIRECTORY_PATH, DEFAULT_PROFILE_PICTURE_FILENAME)
     CONFIGURATION_FILE_PATH = os.path.join(DATA_DIRECTORY, CONFIGURATION_FILENAME)
 
 #HTTP codes
@@ -321,12 +313,15 @@ WEATHER_SERVICE_ENABLED = False
 WEATHER_LOCATION = ""
 TELEGRAM_SERVICE_ENABLED = False
 RPI_RF_ENABLED = False
+RF_RECEIVER_PRESENT = False
+RF_TRANSMITTER_PRESENT = False
 
 WEATHER_API_KEY = ""
 TELEGRAM_BOT_TOKEN = ""
 TELEGRAM_CHAT_ID = ""
 FLASK_ENCRYPTION_KEY = ""
 MICROSERVICE_KEY = ""
+DATABASE_ENCRYPTION_KEY = ""
 
 ################################################################################
 #
@@ -338,6 +333,7 @@ def load_configuration():
     global WEATHER_LOCATION
     global TELEGRAM_SERVICE_ENABLED
     global RPI_RF_ENABLED
+    global RF_RECEIVER_PRESENT
     
     #Import configuration from configuration file
     with open(CONFIGURATION_FILE_PATH) as file:
@@ -348,6 +344,9 @@ def load_configuration():
     WEATHER_LOCATION = configuration["WEATHER_LOCATION"]
     TELEGRAM_SERVICE_ENABLED = configuration["TELEGRAM_SERVICE_ENABLED"] == 1
     RPI_RF_ENABLED = configuration["RPI_RF_ENABLED"] == 1
+    
+    if RPI_RF_ENABLED:
+        RF_RECEIVER_PRESENT = True
 
 ################################################################################
 #
@@ -360,6 +359,7 @@ def load_credentials():
     global TELEGRAM_CHAT_ID
     global FLASK_ENCRYPTION_KEY
     global MICROSERVICE_KEY
+    global DATABASE_ENCRYPTION_KEY
 
     #Import configuration from WinCred or GNOME Keyring
     WEATHER_API_KEY = keyring.get_password(APPLICATION_NAME, WEATHER_API_KEY_NAME)
@@ -367,4 +367,5 @@ def load_credentials():
     TELEGRAM_CHAT_ID = keyring.get_password(APPLICATION_NAME, TELEGRAM_CHAT_ID_NAME)
     FLASK_ENCRYPTION_KEY = keyring.get_password(APPLICATION_NAME, FLASK_ENCRYPTION_KEY_NAME)
     MICROSERVICE_KEY = keyring.get_password(APPLICATION_NAME, MICROSERVICE_KEY_NAME)
+    DATABASE_ENCRYPTION_KEY = keyring.get_password(APPLICATION_NAME, DATABASE_ENCRYPTION_KEY_NAME)
 #endregion

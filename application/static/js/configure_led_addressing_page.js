@@ -24,7 +24,6 @@ const drawingElementFieldElem = document.getElementById("drawingElementField");
 const clearBtnElem = document.getElementById("clearBtn");
 const resetBtnElem = document.getElementById("resetBtn");
 const resetAddressingBtnElem = document.getElementById("resetAddressingBtn");
-const toggleSegmentTypeBtnElem = document.getElementById("toggleSegmentTypeBtn");
 const saveBtnElem = document.getElementById("saveBtn");
 const cancelBtnElem = document.getElementById("cancelBtn");
 
@@ -212,13 +211,9 @@ function toggleSegmentType(type=undefined, drawingSegmentType=false) {
         if (drawSegmentType) {
             drawingElementFieldElem.textContent = TEXT_LED_SEGMENT;
             drawingElementIconElem.className = "fa-duotone fa-solid fa-lightbulb fa-lg";
-
-            toggleSegmentTypeBtnElem.textContent = TEXT_LED_SEGMENT;
         } else {
             drawingElementFieldElem.textContent = TEXT_INACTIVE_SEGMENT;
             drawingElementIconElem.className = "fa-duotone fa-solid fa-horizontal-rule fa-lg";
-
-            toggleSegmentTypeBtnElem.textContent = TEXT_INACTIVE_SEGMENT;
         }
     //}
 

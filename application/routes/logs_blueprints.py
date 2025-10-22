@@ -9,7 +9,7 @@
 #           https://github.com/LukedeMunk/zyrax-home-main-controller
 #
 ################################################################################
-from flask import Blueprint                                                     #Import flask blueprints and requests
+from flask import Blueprint, session                                            #Import flask blueprints and requests
 import configuration as c                                                       #Import application configuration variables
 from DeviceManager import DeviceManager                                         #Import device manager
 from server_manager import generate_json_http_response
@@ -25,6 +25,9 @@ logs_bp = Blueprint("logs_blueprints", __name__)
 ################################################################################
 @logs_bp.route("/mark_logs_read", methods=["POST"])
 def mark_logs_read():
+    if "account_id" not in session:
+        return generate_json_http_response(c.HTTP_CODE_UNAUTHORIZED)
+    
     reset_logs()
 
     return generate_json_http_response(c.HTTP_CODE_OK)

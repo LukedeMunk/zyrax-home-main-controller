@@ -18,6 +18,9 @@ import os                                                                       
 from datetime import datetime                                                   #For checking timed automations
 from apscheduler.schedulers.background import BackgroundScheduler               #For checking RF codes and timed automations
 from threading import Thread                                                    #For threading
+import database_utility as db_util                                              #Import utility for database functionality
+from routes.template_blueprints import initial_setup
+from populate_db import *
 
 rf_timestamp = 0
 last_rf_code = 0
@@ -77,20 +80,20 @@ def check_time():
 #
 ################################################################################
 @sm.app.before_request
-def application_configuration_page():
-    return #TODO: add user setup
-    if c.USER_PRESENT:
+def before_http_requests():
+    if len(db_util.get_accounts()) > 0:
         return
     
     if request.path.startswith("/static"):
         return
     
-    if request.path.startswith("/update_application_configuration"):
+    if request.path.startswith("/add_account"):
         return
     
-    return render_template("application_configuration.html", title="Application configuration",
-                            weather_api_key=c.WEATHER_API_KEY,
-                            telegram_bot_token=c.TELEGRAM_BOT_TOKEN)
+    if request.path.startswith("/get_default_profile_picture"):
+        return
+    
+    return initial_setup()
 #endregion
 
 ################################################################################
@@ -100,8 +103,6 @@ def application_configuration_page():
 #
 ################################################################################
 if __name__ == "__main__":
-    sm.register_blueprints(not c.USER_PRESENT)                                     #Register the HTTP routes
-
     sm.check_directories()
     sm.check_files()
     sm.check_credentials()
@@ -109,12 +110,23 @@ if __name__ == "__main__":
     c.load_credentials()
     sm.initialize_flask_application()
     sm.check_microservices()
+    sm.check_database()
+    sm.register_blueprints()                                                    #Register the HTTP routes
 
-    if not c.USER_PRESENT:
-        logi("Application started in configuration mode")
-    else:
-        sm.check_database()
+    with sm.app.app_context():
+        accounts_in_database = len(db_util.get_accounts())
         
+    configuration_mode = False
+    if accounts_in_database == 0:
+        configuration_mode = True
+
+    if configuration_mode:
+        logi("Application started in configuration mode")
+
+        #if len(db_util.get_devices()) == 0:
+        #    with sm.app.app_context():
+        #        populate_database()
+    else:
         sm.initialize_rf_receiver()
 
         dm.initialize()

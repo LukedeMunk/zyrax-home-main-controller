@@ -99,6 +99,16 @@ $(document).ready(function() {
         stripOrGroup.power_animation = device.power_animation;
     } else {
         stripOrGroup.color = modeConfigs[index].parameters[0].value;
+        
+        if (stripOrGroup.number_of_leds == 0) {
+            showBanner(
+                        TEXT_ACTION_REQUIRED,
+                        VAR_TEXT_LED_ADDRESSING_NOT_CONFIGURED_CLICK_TO_CONFIGURE(stripOrGroup.name),
+                        BANNER_TYPE_WARNING,
+                        0,
+                        "updateLedAddressing(" + stripOrGroup.id + ");"
+                    );
+        }
     }
 
     loadModeButtons();

@@ -9,7 +9,7 @@
 #           https://github.com/LukedeMunk/zyrax-home-main-controller
 #
 ################################################################################
-from flask import Blueprint, request                                            #Import flask blueprints and requests
+from flask import Blueprint, request, session                                   #Import flask blueprints and requests
 import configuration as c                                                       #Import application configuration variables
 from DeviceManager import DeviceManager                                         #Import device manager
 import database_utility as db_util                                              #Import utility for database functionality
@@ -26,6 +26,9 @@ dashboard_bp = Blueprint("dashboard_blueprints", __name__)
 ################################################################################
 @dashboard_bp.route("/add_dashboard_configuration", methods=["POST"])
 def add_dashboard_configuration():
+    if "account_id" not in session:
+        return generate_json_http_response(c.HTTP_CODE_UNAUTHORIZED)
+    
     config = {
         "name" : request.form.get("name"),
         "icon" : request.form.get("icon")
@@ -45,7 +48,11 @@ def add_dashboard_configuration():
 ################################################################################
 @dashboard_bp.route("/update_dashboard_configuration", methods=["POST"])
 def update_dashboard_configuration():
+    if "account_id" not in session:
+        return generate_json_http_response(c.HTTP_CODE_UNAUTHORIZED)
+    
     id = int(request.form.get("id"))
+
     config = {
         "name" : request.form.get("name"),
         "icon" : request.form.get("icon")
@@ -62,6 +69,9 @@ def update_dashboard_configuration():
 ################################################################################
 @dashboard_bp.route("/delete_dashboard_configuration", methods=["POST"])
 def delete_dashboard_configuration():
+    if "account_id" not in session:
+        return generate_json_http_response(c.HTTP_CODE_UNAUTHORIZED)
+    
     id = int(request.form.get("id"))
     
     db_util.delete_dashboard_configuration(id)
@@ -75,6 +85,9 @@ def delete_dashboard_configuration():
 ################################################################################
 @dashboard_bp.route("/add_dashboard_tile", methods=["POST"])
 def add_dashboard_tile():
+    if "account_id" not in session:
+        return generate_json_http_response(c.HTTP_CODE_UNAUTHORIZED)
+    
     config = {
         "configuration_id" : int(request.form.get("configuration_id")),
         "index" : int(request.form.get("index")),
@@ -101,6 +114,9 @@ def add_dashboard_tile():
 ################################################################################
 @dashboard_bp.route("/update_dashboard_tile", methods=["POST"])
 def update_dashboard_tile():
+    if "account_id" not in session:
+        return generate_json_http_response(c.HTTP_CODE_UNAUTHORIZED)
+    
     id = int(request.form.get("id"))
 
     config = {}
@@ -121,6 +137,9 @@ def update_dashboard_tile():
 ################################################################################
 @dashboard_bp.route("/delete_dashboard_tile", methods=["POST"])
 def delete_dashboard_tile():
+    if "account_id" not in session:
+        return generate_json_http_response(c.HTTP_CODE_UNAUTHORIZED)
+    
     id = int(request.form.get("id"))
 
     db_util.delete_dashboard_tile(id)
@@ -135,6 +154,9 @@ def delete_dashboard_tile():
 ################################################################################
 @dashboard_bp.route("/reset_dashboard_tile_order", methods=["POST"])
 def reset_dashboard_tile_order():
+    if "account_id" not in session:
+        return generate_json_http_response(c.HTTP_CODE_UNAUTHORIZED)
+    
     id = int(request.form.get("id"))
 
     db_util.reset_dashboard_tile_order(id)

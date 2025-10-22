@@ -44,6 +44,9 @@ const DATE_RE = /^\d{2}\-\d{2}\-\d{4}$/;
 const TIME_RE = /^\d{2}\:\d{2}$/;
 const VERSION_RE = /^v([0-9]+)\_([0-9]+)\_([0-9]+)$/;
 const PASSWORD_RE = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[#$^+=!*()@%&]).{8,64}$/;  //To check passwords according to NIST
+const EMAIL_RE = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;                   //To check emails
+
+const MAX_VISIBLE_BANNERS = 3; // Maximum number of banners to show at once
 
 /* Popup type classes */
 const BANNER_TYPE_SUCCESS = "success";
@@ -65,7 +68,7 @@ const BACK_END_UPDATE_INTERVAL_5S = 5000;
 const BACK_END_UPDATE_INTERVAL_1S = 1000;
 
 const MOBILE_VERSION = screen.width < 700;
-const CUSTOM_MOUSE_CONTEXT_MENU_ENABLED = true;
+const PREFERS_DARK = window.matchMedia("(prefers-color-scheme: dark)").matches;
 
 const LEFT_MOUSE_BUTTON = "click";
 const RIGHT_MOUSE_BUTTON = "contextmenu";
@@ -246,9 +249,11 @@ function hideOverlay() {
   @param    nestedJson          When true, nested JSON is sended
   @param    postRequest         When true, a POST request is sended, else a GET
                                 request is sended
+  @param    loginPageWhenUnauthorized   When true, the login page is shown when
+                                        HTTP_CODE_UNAUTHORIZED is returned
 */
 /******************************************************************************/
-function httpRequest(url, data={}, postRequest=false, nestedJson=false) {
+function httpRequest(url, data={}, postRequest=false, nestedJson=false, loginPageWhenUnauthorized=true) {
     console.log("Sending data to: " + url);
     console.log(data);
 
@@ -270,16 +275,22 @@ function httpRequest(url, data={}, postRequest=false, nestedJson=false) {
         contentType: contentType,
         success: function(response) {
             console.log(response);
+
+            if (loginPageWhenUnauthorized && response.status == HTTP_CODE_UNAUTHORIZED) {
+                if (window.location.pathname != "/login") {
+                    redirect("./login");
+                }
+            }
         },
-        error: function(xhr) {
-            if (xhr.status == HTTP_CODE_UNAUTHORIZED) {
+        error: function(response) {
+            if (loginPageWhenUnauthorized && response.status == HTTP_CODE_UNAUTHORIZED) {
                 localStorage.setItem("loggedIn", false);
                 if (window.location.pathname != "/login_page") {
                     redirect("./login_page");
                 }
             }
 
-            showBanner(TEXT_SERVER_ERROR, TEXT_ERROR + ": " + xhr.status, BANNER_TYPE_ERROR);
+            showBanner(TEXT_SERVER_ERROR, TEXT_ERROR + ": " + response.status, BANNER_TYPE_ERROR);
         }
     });
 }
@@ -290,10 +301,12 @@ function httpRequest(url, data={}, postRequest=false, nestedJson=false) {
   @param    url                 Endpoint to request
   @param    data                Data to send in JSON format
   @param    nestedJson          When true, nested JSON is sended
+  @param    loginPageWhenUnauthorized   When true, the login page is shown when
+                                        HTTP_CODE_UNAUTHORIZED is returned
 */
 /******************************************************************************/
-function httpPostRequest(url, data={}, nestedJson=false) {
-    httpRequest(url, data, true, nestedJson);
+function httpPostRequest(url, data={}, nestedJson=false, loginPageWhenUnauthorized=true) {
+    httpRequest(url, data, true, nestedJson, loginPageWhenUnauthorized);
 }
 
 /******************************************************************************/
@@ -306,9 +319,11 @@ function httpPostRequest(url, data={}, nestedJson=false) {
                             request is sended
   @param    async           When true, asynchronous function is used
   @param    nestedJson      When true, nested JSON is sended
+  @param    loginPageWhenUnauthorized   When true, the login page is shown when
+                                        HTTP_CODE_UNAUTHORIZED is returned
 */
 /******************************************************************************/
-function httpRequestJsonReturn(url, data={}, postRequest=false, async=false, nestedJson=false) {
+function httpRequestJsonReturn(url, data={}, postRequest=false, async=false, nestedJson=false, loginPageWhenUnauthorized=true) {
     console.log("Sending data to: " + url);
     console.log(data);
     
@@ -335,11 +350,11 @@ function httpRequestJsonReturn(url, data={}, postRequest=false, async=false, nes
             serverResponse = JSON.parse(response);
         },
         error: function(response) {
-            if (response.status == HTTP_CODE_UNAUTHORIZED) {
+            if (loginPageWhenUnauthorized && response.status == HTTP_CODE_UNAUTHORIZED) {
                 if (window.location.pathname != "/login") {
                     redirect("./login");
                 }
-            } 
+            }
 
             serverResponse = {
                 status_code: response.status,
@@ -350,6 +365,13 @@ function httpRequestJsonReturn(url, data={}, postRequest=false, async=false, nes
 
     console.log("serverResponse:");
     console.log(serverResponse);
+
+    if (loginPageWhenUnauthorized && serverResponse.status_code == HTTP_CODE_UNAUTHORIZED) {
+        if (window.location.pathname != "/login") {
+            redirect("./login");
+        }
+    }
+
     return serverResponse;
 }
 
@@ -360,10 +382,12 @@ function httpRequestJsonReturn(url, data={}, postRequest=false, async=false, nes
   @param    data            Data to send in JSON format
   @param    async           When true, asynchronous function is used
   @param    nestedJson      When true, nested JSON is sended
+  @param    loginPageWhenUnauthorized   When true, the login page is shown when
+                                        HTTP_CODE_UNAUTHORIZED is returned
 */
 /******************************************************************************/
-function httpPostRequestJsonReturn(url, data={}, async=false, nestedJson=false) {
-    return httpRequestJsonReturn(url, data, true, async, nestedJson);
+function httpPostRequestJsonReturn(url, data={}, async=false, nestedJson=false, loginPageWhenUnauthorized=true) {
+    return httpRequestJsonReturn(url, data, true, async, nestedJson, loginPageWhenUnauthorized);
 }
 //#endregion
 
@@ -432,27 +456,38 @@ function _generateBannerElement(title, message, onclickFunction=undefined) {
 */
 /******************************************************************************/
 function showBanner(title, message, type, timeout=SHOW_BANNER_TIME, onclickFunction=undefined) {
+    /* Get current banners */
+    const currentBanners = bannerStack.querySelectorAll(".banner-container");
+
+    /* If too many banners are shown, remove the oldest */
+    if (currentBanners.length >= MAX_VISIBLE_BANNERS) {
+        closeBanner(currentBanners[0]);
+    }
+
     const banner = _generateBannerElement(title, message, onclickFunction);
     const bannerIcon = banner.querySelector(".banner-icon");
     const bannerClose = banner.querySelector(".banner-close-button");
-    bannerClose.addEventListener("click", () => closeBanner(banner));
+    bannerClose.addEventListener("click", (e) => {
+                                                    e.stopPropagation();        //Don't execute 'onclickFunction' on close button
+                                                    closeBanner(banner)
+                                                });
 
     switch (type) {
         case BANNER_TYPE_INFO:
             bannerIcon.className = "banner-icon fa-solid fa-circle-info";
-            bannerIcon.style.color = "var(--icon_blue)";
+            bannerIcon.style.color = "var(--icon-blue)";
             break;
         case BANNER_TYPE_SUCCESS:
             bannerIcon.className = "banner-icon fa-solid fa-check-circle";
-            bannerIcon.style.color = "var(--icon_green)";
+            bannerIcon.style.color = "var(--icon-green)";
             break;
         case BANNER_TYPE_WARNING:
             bannerIcon.className = "banner-icon fa-solid fa-triangle-exclamation";
-            bannerIcon.style.color = "var(--icon_orange)";
+            bannerIcon.style.color = "var(--icon-orange)";
             break;
         case BANNER_TYPE_ERROR:
             bannerIcon.className = "banner-icon fa-solid fa-circle-xmark";
-            bannerIcon.style.color = "var(--icon_red)";
+            bannerIcon.style.color = "var(--icon-red)";
     }
 
     bannerStack.appendChild(banner);
@@ -647,19 +682,19 @@ function showPopup(title, message, buttons, type=BANNER_TYPE_SUCCESS) {
     switch (type) {
         case BANNER_TYPE_INFO:
             popupIconElem.className = "popup-icon fa-solid fa-circle-info";
-            popupIconElem.style.color = "var(--icon_blue)";
+            popupIconElem.style.color = "var(--icon-blue)";
             break;
         case BANNER_TYPE_SUCCESS:
             popupIconElem.className = "popup-icon fa-solid fa-check-circle";
-            popupIconElem.style.color = "var(--icon_green)";
+            popupIconElem.style.color = "var(--icon-green)";
             break;
         case BANNER_TYPE_WARNING:
             popupIconElem.className = "popup-icon fa-solid fa-triangle-exclamation";
-            popupIconElem.style.color = "var(--icon_orange)";
+            popupIconElem.style.color = "var(--icon-orange)";
             break;
         case BANNER_TYPE_ERROR:
             popupIconElem.className = "popup-icon fa-solid fa-circle-xmark";
-            popupIconElem.style.color = "var(--icon_red)";
+            popupIconElem.style.color = "var(--icon-red)";
             break;
     }
 
@@ -1146,10 +1181,10 @@ function showProgress(percentage, barElem) {
   @returns  int                 Array index of the playlist
 */
 /******************************************************************************/
-function getIndexFromId(array, id, idKey=true) {
+function getIndexFromId(array, id, key="id") {
     for (let index in array) {
-        if (idKey) {
-            if (array[index].id == id) {
+        if (key != undefined) {
+            if (array[index][key] == id) {
                 return index;
             }
         } else {
@@ -1175,12 +1210,13 @@ function generateNavigationBar(menuItems) {
     /*
      * Example
         [
-            {pages: ["CONFIGURATION"], text: "Configuration", icon: "fa-duotone fa-sliders", onclickFunction: "alert('Test')"},
+            {pages: ["CONFIGURATION"], text: "Configuration", icon: "fa-duotone fa-sliders", onclickFunction: "alert('Test');"},
             {pages: ["AUTOMATIONS"], text: "Automations", link: "./automations", icon: "fa-duotone fa-calendar-week"},
             {pages: ["DASHBOARD"], text: "Dashboard", link: "./", icon: "fa-duotone fa-grid-horizontal"},
             {pages: ["CONFIGURATION"], text: "Configuration", link: "./configuration", icon: "fa-duotone fa-sliders"},
             {pages: ["CONFIGURATION"], text: "", link: "./configuration", icon: "fa-duotone fa-sliders"},
-            {pages: ["CONFIGURATION"], text: "Configuration", icon: "fa-duotone fa-sliders", onclickFunction: "alert('Test')"}
+            {pages: ["CONFIGURATION"], text: "Configuration", icon: "fa-duotone fa-sliders", onclickFunction: "alert('Test');"},
+            {pages: [""], text: "", image: "./profile_picture.png", elementId: "profilePicture", onclickFunction: "alert('Test');"}
         ];
      *
      * */
@@ -1218,15 +1254,28 @@ function generateNavigationBar(menuItems) {
             let icon = document.createElement("i");
             icon.className = item.icon;
             element.appendChild(icon);
+        } else if (item.image) {
+            element.style.padding = "5px";
+            element.style.marginRight = "7px";
+            element.style.flexDirection = "column";
+            let image = document.createElement("img");
+            image.className = "button-item";
+            image.src = item.image;
+            element.appendChild(image);
         }
 
         if (item.text) {
             let title = document.createElement("p");
             title.textContent = item.text;
+            element.style.rowGap = "3px";
             title.className = "navigation-item-title";
             element.appendChild(title);
         }
 
+        if (item.elementId) {
+            element.id = item.elementId;
+        }
+        
         navigationBarContainerElem.appendChild(element);
 
         /* Update previous type */

@@ -8,15 +8,6 @@
  *          https://github.com/LukedeMunk/zyrax-home-main-controller
  */
 /******************************************************************************/
-/* Z-indexes */
-:root {
-  --z-base: 0;
-  --z-elements: 100;
-  --z-backdrop: 200;
-  --z-modal: 300;
-  --z-banner: 400;
-}
-
 body {
     background: var(--background1);
     font-family: "Century Gothic", "CenturyGothic", "AppleGothic", sans-serif !important;
@@ -62,7 +53,7 @@ body {
     color: var(--text);
     opacity: 0.5;
     font-family: "Century Gothic", "CenturyGothic", "AppleGothic", sans-serif !important;
-    font-size: 8pt;
+    font-size: var(--font-size-extra-small);
     padding-left: 2px;
     padding-top: 2px;
 }
@@ -83,7 +74,7 @@ body {
     text-align: left;
     padding: 0px 6px;
     width: fit-content;
-    font-size: 9pt;
+    font-size: var(--font-size-small);
     margin-left: 8px;
     cursor: default;
 }
@@ -100,6 +91,15 @@ body {
     margin: 0px;
     width: 100%;
     user-select: text;         /* Make text selectable */
+}
+
+.input-field.disabled {
+    cursor: not-allowed;
+    background: linear-gradient(0deg,
+                                var(--background4) 0%,
+                                var(--background4) 40%,
+                                var(--background3) 85%,
+                                var(--background3) 100%);
 }
 
 input, select,
@@ -128,7 +128,7 @@ textarea {
 }
 
 .invalid-input {
-    border: 2px solid var(--error_border) !important;
+    border: 2px solid var(--error-border) !important;
 }
 
 .warning-input {
@@ -150,11 +150,11 @@ select {
 }
 
 option:hover {
-    background: var(--row_background);
+    background: var(--row-background);
 }
 
 option.selected {
-    background: var(--row_background);
+    background: var(--row-background);
 }
 
 .big-select {
@@ -270,12 +270,12 @@ input[type="range"]::-moz-range-thumb {
 }
 
 input[type="range"]::-webkit-slider-runnable-track {
-    background: linear-gradient(var(--range_track) 0 0) scroll no-repeat center /
+    background: linear-gradient(var(--range-track) 0 0) scroll no-repeat center /
         100% calc(var(--track_height) + 1px);
 }
 
 input[type="range"]::-moz-range-track {
-    background: linear-gradient(var(--range_track) 0 0) scroll no-repeat center /
+    background: linear-gradient(var(--range-track) 0 0) scroll no-repeat center /
         100% calc(var(--track_height) + 1px);
 }
 
@@ -346,7 +346,7 @@ input[type="checkbox"]::before {
     transform: scale(0);
     transform-origin: bottom left;
     transition: transform 120ms ease-in-out;
-    box-shadow: inset 1em 1em var(--border1);
+    box-shadow: var(--shadow-small);
 }
   
 input[type="checkbox"]:checked::before {
@@ -364,7 +364,7 @@ input[type="checkbox"]:focus {
 
 .checkbox-label {
     margin-top: 4px;
-    font-size: 12px;
+    font-size: var(--font-size-small);
 }
 
 .checkbox-label-container {
@@ -414,11 +414,11 @@ input[type="checkbox"]:focus {
 }
   
 input:checked + .slider {
-    background-color: var(--success_text);
+    background-color: var(--success-text);
 }
   
 input:focus + .slider {
-    box-shadow: 0 0 1px var(--success_text);
+    box-shadow: 0 0 1px var(--success-text);
 }
 
 input:checked + .slider.no-color {
@@ -460,7 +460,7 @@ input:checked + .slider:before {
 /* #region Texts */
 p {
     margin-bottom: 10px;
-    font-size: 10pt;
+    font-size: var(--font-size-p);
 }
 
 h1, h2, h3 {
@@ -469,22 +469,22 @@ h1, h2, h3 {
 }
 
 h1 {
-    font-size: 20pt;
+    font-size: var(--font-size-h1);
 }
 
 h2 {
-    font-size: 16pt;
+    font-size: var(--font-size-h2);
 }
 
 h3 {
-    font-size: 14pt;
     margin-bottom: 15px;
+    font-size: var(--font-size-h3);
 }
 
 h4 {
-    font-size: 12pt;
     margin-top: 15px;
     margin-bottom: 3px;
+    font-size: var(--font-size-h4);
 }
 /* #endregion */
 
@@ -506,7 +506,7 @@ table {
 }
 
 thead {
-    background-color: var(--row_background);
+    background-color: var(--background4);
 }
 
 td {
@@ -516,7 +516,7 @@ td {
 th, td {
     margin: 0px;
     padding: 10px 10px;
-    font-size: 14px;
+    font-size: var(--font-size-p);
 }
 
 .small-table {
@@ -589,17 +589,17 @@ a {
 }
 
 a:link {
-    color: var(--link_text);
+    color: var(--link-text);
     text-decoration-style: dotted;
 }
 
 a:visited {
-    color: var(--link_text);
+    color: var(--link-text);
     text-decoration-style: dotted;
 }
 
 a:hover {
-    color: var(--link_text_hover);
+    color: var(--link-text-hover);
     text-decoration: underline;
 }
 
@@ -617,7 +617,7 @@ a:active {
 /* #region Messages */
 .message {
     font-weight: 600;
-    font-size: small;
+    font-size: var(--font-size-p);
     padding: 5px 10px;
     margin-top: 10px;
     margin-bottom: 10px;
@@ -649,8 +649,8 @@ a:active {
 }
 
 .error {
-    color: var(--error_text) !important;
-    background-color: var(--error_background) !important;
+    color: var(--error-text) !important;
+    background-color: var(--error-background) !important;
     opacity: 1;
 
     @starting-style {
@@ -659,8 +659,8 @@ a:active {
 }
 
 .warning {
-    color: var(--warning_text) !important;
-    background-color: var(--warning_background) !important;
+    color: var(--warning-text) !important;
+    background-color: var(--warning-background) !important;
     opacity: 1;
 
     @starting-style {
@@ -669,8 +669,8 @@ a:active {
 }
 
 .success {
-    color: var(--success_text) !important;
-    background-color: var(--success_background) !important;
+    color: var(--success-text) !important;
+    background-color: var(--success-background) !important;
     opacity: 1;
 
     @starting-style {
@@ -696,7 +696,7 @@ a:active {
     transition: max-height 200ms ease-out;
 }
   
-.wrap-form {
+.base-container {
     width: 100%;
     background-color: var(--background2);
     border-radius: 25px;
@@ -704,6 +704,7 @@ a:active {
     padding: 50px;
     margin-bottom: 50px !important;
     margin-top: 0;
+    box-shadow: var(--shadow-small);
 }
 
 .content-wrap {
@@ -716,7 +717,8 @@ a:active {
 /* #region Buttons */
 button, .button {
     color: var(--text);
-    background: var(--button_background1);
+    background: var(--button-background-1);
+    box-shadow: var(--shadow-medium);
     padding: 10px;
     border-radius: 10px;
     border: none;
@@ -730,12 +732,12 @@ button, .button {
     height: 40px;
     margin: 10px;
     font-family: "Century Gothic", "CenturyGothic", "AppleGothic", sans-serif !important;
-    font-size: 14px;
+    font-size: var(--font-size-p);
     font-weight: 600;
 }
 
 button:hover, .button:hover {
-    background: var(--button_background1_hover);
+    background: var(--button-background-1-hover);
     border-radius: 20px;
 }
 
@@ -750,7 +752,7 @@ button:hover, .button:hover {
 }
 
 .cell-button {
-    background: var(--row_background);
+    background: var(--row-background);
     text-align: center;
     cursor: pointer;
     transition: 300ms;
@@ -789,13 +791,13 @@ button:hover, .button:hover {
     display: flex;
     align-items: flex-start;
     gap: 12px;
-    background: var(--background6);
+    background: var(--background4);
     border: 1px solid var(--border3);
     border-radius: 8px;
     padding: 16px 20px;
     max-width: 450px;
     min-width: 300px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    box-shadow: var(--shadow-large);
     opacity: 0;
     transform: translateY(-8px);
     transition: opacity 300ms, transform 300ms;
@@ -811,7 +813,7 @@ button:hover, .button:hover {
 
 .banner-icon {
     font-size: 24px;
-    color: var(--icon_blue);
+    color: var(--icon-blue);
 }
 
 .banner-content {
@@ -822,7 +824,7 @@ button:hover, .button:hover {
 }
 
 .banner-title {
-    font-size: 15px;
+    font-size: var(--font-size-h4);
     font-weight: 600;
     color: var(--text);
     margin-top: 3px;
@@ -830,8 +832,8 @@ button:hover, .button:hover {
 
 .banner-message {
     margin: 0;
-    font-size: 14px;
-    color: var(--secondary_text);
+    font-size: var(--font-size-p);
+    color: var(--secondary-text);
     text-align: left;
 }
 
@@ -852,13 +854,13 @@ button:hover, .button:hover {
     flex-direction: column;       /* stack loader, message, progress vertically */
     align-items: flex-start;
     gap: 12px;
-    background: var(--background6);
+    background: var(--background4);
     border: 1px solid var(--border3);
     border-radius: 8px;
     padding: 16px 20px;
     max-width: 450px;
     min-width: 300px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    box-shadow: var(--shadow-large);
     opacity: 0;
     transform: translateY(-8px);
     transition: opacity 300ms, transform 300ms;
@@ -886,10 +888,10 @@ button:hover, .button:hover {
 .bar {
     border-radius: 15px;
     height: 20px;
-    background-color: var(--icon_red);
+    background-color: var(--icon-red);
     width: 0px;
     transition: 300ms;
-    font-size: 12px;
+    font-size: var(--font-size-small);
     line-height: 20px;
 }
 /* #endregion */
@@ -901,14 +903,14 @@ button:hover, .button:hover {
     left: 50%;
     transform: translate(-50%, -50%);
     display: inline-block;      /* ensures width is respected */
-    background: var(--background6);
+    background: var(--background4);
     border: 1px solid var(--border3);
     border-radius: 12px;
     padding: 24px;
     max-width: 500px;
     width: 90%;
     text-align: center;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    box-shadow: var(--shadow-large);
     opacity: 0;
     transition: opacity 300ms;
     z-index: var(--z-modal);
@@ -922,26 +924,27 @@ button:hover, .button:hover {
 
 .popup-icon {
     font-size: 24px;
-    color: var(--icon_blue);
+    color: var(--icon-blue);
 }
 
 .popup-title {
-    font-size: 20px;
+    font-size: var(--font-size-h2);
     font-weight: 600;
     margin-bottom: 8px;
     color: var(--text);
 }
 
 .popup-message {
-    font-size: 14px;
+    font-size: var(--font-size-p);
     margin-bottom: 20px;
-    color: var(--secondary_text);
+    color: var(--secondary-text);
 }
 
 .popup-button-container {
     display: flex;
     gap: 12px;
     width: 100%;
+    justify-content: center;
 }
 /* #endregion */
 
@@ -949,7 +952,8 @@ button:hover, .button:hover {
 .modal {
     background-color: var(--background3);
     border-radius: 15px;
-    border: 1px solid var(--border2);
+    border: none;
+    /*border: 1px solid var(--border2);*/
     color: var(--icon);
     width: 40%;
     margin: auto;
@@ -958,6 +962,7 @@ button:hover, .button:hover {
     transition: opacity 300ms;
     outline: 0px;
     z-index: var(--z-modal);
+    box-shadow: var(--shadow-medium);
 }
 
 .modal.show {
@@ -1001,17 +1006,17 @@ button:hover, .button:hover {
 
 /* #region Icons */
 .clickable {
-    color: var(--link_text) !important;
+    color: var(--link-text) !important;
     transition: 300ms;
 }
 
 .clickable:hover {
-    color: var(--link_text_hover) !important;
+    color: var(--link-text-hover) !important;
     cursor: pointer;
 }
 
 .disabled-icon {
-    color: var(--icon_disabled) !important;
+    color: var(--icon-disabled) !important;
 }
 
 /* #region Loader icons */
@@ -1027,16 +1032,16 @@ button:hover, .button:hover {
     content: "";
     grid-area: 1/1;
     background:
-        var(--dot_loading_icon) left,
-        var(--dot_loading_icon) right;
+        var(--dot-loading-icon) left,
+        var(--dot-loading-icon) right;
     background-size: 20% 100%;
     animation: dot-loader-1-keyframes 1s infinite; 
 }
 
 .dot-loader:after { 
     background:
-        var(--dot_loading_icon) calc(1 * 100% / 3),
-        var(--dot_loading_icon) calc(2 * 100% / 3);
+        var(--dot-loading-icon) calc(1 * 100% / 3),
+        var(--dot-loading-icon) calc(2 * 100% / 3);
     background-size: 20% 100%;
     animation-direction: reverse;
 }
@@ -1051,8 +1056,8 @@ button:hover, .button:hover {
     height: 6px;
     display: grid;
     background:
-        radial-gradient(farthest-side at bottom,var(--circle_loading_icon)) 0 0,
-        radial-gradient(farthest-side at top   ,var(--circle_loading_icon)) 100% 100%;
+        radial-gradient(farthest-side at bottom,var(--circle-loading-icon)) 0 0,
+        radial-gradient(farthest-side at top   ,var(--circle-loading-icon)) 100% 100%;
     background-size: calc(50% + 2px) 50%;
     background-repeat: no-repeat;
     animation: circle-loader-1-keyframes 2s infinite linear;
@@ -1099,12 +1104,12 @@ button:hover, .button:hover {
 /* Context menu container */
 .mouse-context-menu {
     position: fixed;
-    background: var(--background6);
+    background: var(--background4);
     border: 1px solid var(--border3);
     border-radius: 8px;
     padding: 4px 0;
     min-width: 180px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    box-shadow: var(--shadow-small);
     z-index: var(--z-modal);
 
     opacity: 0;
@@ -1126,8 +1131,8 @@ button:hover, .button:hover {
     align-items: center;
     gap: 8px;
     padding: 8px 16px;
-    font-size: 14px;
-    color: var(--secondary_text);
+    font-size: var(--font-size-p);
+    color: var(--text);
     cursor: pointer;
 }
 
@@ -1149,13 +1154,14 @@ button:hover, .button:hover {
     position: absolute;
     top: 0;
     left: 100%;
-    background: var(--background6);
+    background: var(--background4);
     border: 1px solid var(--border3);
     border-radius: 8px;
     padding: 4px 0;
     margin-left: 4px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    box-shadow: var(--shadow-small);
     min-width: 180px;
+    overflow: hidden;
 
     opacity: 0;
     transform: translateX(-5px);
@@ -1176,6 +1182,7 @@ button:hover, .button:hover {
 legend {
     padding: 0px 6px;
     font-size: 9pt;
+    font-size: var(--font-size-small);
     margin-left: 8px;
     cursor: default;
 }
@@ -1217,11 +1224,12 @@ nav {
 
     overflow: hidden;
     max-width: 90%;
-    background-color: var(--background6);
+    background-color: var(--background3);
     border-radius: 12px;
     font-size: 0;
     z-index: var(--z-elements);
     border: 1px solid var(--border3);
+    box-shadow: var(--shadow-small);
 }
 
 /* Vertical separator for navigation bar */
@@ -1250,7 +1258,7 @@ nav div.button-item::before {
     bottom: 8px;
     left: 8px;
     right: 8px;
-    background-color: var(--hover_item);
+    background-color: var(--hover-item);
     border-radius: 8px;
     z-index: -1;
     opacity: 0;                  /* start hidden */
@@ -1261,12 +1269,25 @@ nav div.button-item:hover::before {
     opacity: 1;                  /* fade in */
 }
 
+/* Navbar image items */
+nav img.button-item {
+    height: 35px;
+    cursor: pointer;
+    transition: 300ms;
+    border-radius: 50px;
+}
+
+nav img.button-item:hover {
+    transform: scale(0.90);
+}
+
+/* Navbar link items */
 nav a {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     height: 100%;
-    font-size: 15px;
+    font-size: var(--font-size-p);
     position: relative;
     z-index: 1;
     color: var(--text);
@@ -1283,7 +1304,7 @@ nav a::before {
     bottom: 8px;
     left: 8px;
     right: 8px;
-    background-color: var(--hover_item);
+    background-color: var(--hover-item);
     border-radius: 6px;
     z-index: -1;
     opacity: 0;                  /* start hidden */
@@ -1302,7 +1323,7 @@ nav a.selected::before {
     bottom: 8px;                        /* margin from bottom */
     left: 8px;                          /* margin from left */
     right: 8px;                         /* margin from right */
-    background-color: var(--active_item);
+    background-color: var(--active-item);
     border-radius: 8px;
     z-index: -1;                        /* behind text/icon */
     opacity: 1;

@@ -9,7 +9,7 @@
 #           https://github.com/LukedeMunk/zyrax-home-main-controller
 #
 ################################################################################
-from flask import Blueprint, request                                            #Import flask blueprints and requests
+from flask import Blueprint, request, session                                   #Import flask blueprints and requests
 import configuration as c                                                       #Import application configuration variables
 from DeviceManager import DeviceManager                                         #Import device manager
 from server_manager import generate_json_http_response
@@ -25,6 +25,9 @@ device_bp = Blueprint("device_blueprints", __name__)
 ################################################################################
 @device_bp.route("/set_device_power", methods=["POST"])
 def set_device_power():
+    if "account_id" not in session:
+        return generate_json_http_response(c.HTTP_CODE_UNAUTHORIZED)
+    
     id = int(request.form.get("id"))
     power = int(request.form.get("power"))
     dm.set_device_power(id, power)
@@ -38,6 +41,9 @@ def set_device_power():
 ################################################################################
 @device_bp.route("/set_group_power", methods=["POST"])
 def set_group_power():
+    if "account_id" not in session:
+        return generate_json_http_response(c.HTTP_CODE_UNAUTHORIZED)
+    
     id = int(request.form.get("id"))
     power = int(request.form.get("power"))
 

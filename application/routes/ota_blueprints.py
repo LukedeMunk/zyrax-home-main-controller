@@ -9,7 +9,7 @@
 #           https://github.com/LukedeMunk/zyrax-home-main-controller
 #
 ################################################################################
-from flask import Blueprint, request, send_file                                            #Import flask blueprints and requests
+from flask import Blueprint, request, send_file, session                        #Import flask blueprints and requests
 import configuration as c                                                       #Import application configuration variables
 from DeviceManager import DeviceManager                                         #Import device manager
 from server_manager import generate_json_http_response
@@ -26,6 +26,9 @@ ota_bp = Blueprint("ota_blueprints", __name__)
 ################################################################################
 @ota_bp.route("/upload_ota_file", methods=["POST"])
 def upload_ota_file():
+    if "account_id" not in session:
+        return generate_json_http_response(c.HTTP_CODE_UNAUTHORIZED)
+    
     file = request.files["otaFile"]
 
     #Check file
@@ -50,6 +53,9 @@ def upload_ota_file():
 ################################################################################
 @ota_bp.route("/get_ledstrip_ota_progress", methods=["GET"])
 def get_ledstrip_ota_progress():
+    if "account_id" not in session:
+        return generate_json_http_response(c.HTTP_CODE_UNAUTHORIZED)
+    
     progress = dm.get_ledstrip_ota_progress()
 
     return {"progress" : progress}

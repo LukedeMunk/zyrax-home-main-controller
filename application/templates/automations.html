@@ -2,15 +2,18 @@
 
 {% block content %}
 <script>
-    var page = AUTOMATIONS_PAGE;
+    let page = AUTOMATIONS_PAGE;
+    
+    const DEVICE_CATEGORIES = JSON.parse('{{ DEVICE_CATEGORIES | tojson | safe }}');
+    const DEVICE_MODELS = JSON.parse('{{ DEVICE_MODELS | tojson | safe }}');
+    const AUTOMATION_TRIGGERS = JSON.parse('{{ AUTOMATION_TRIGGERS | tojson | safe }}');
 
-    var automations = JSON.parse('{{ automations | tojson | safe }}');
-    var triggers = JSON.parse('{{ triggers | tojson | safe }}');
-    var actions = JSON.parse('{{ actions | tojson | safe }}');
-    var modes = JSON.parse('{{ modes | tojson | safe }}');
+    let automations = JSON.parse('{{ automations | tojson | safe }}');
+    let actions = JSON.parse('{{ actions | tojson | safe }}');
+    let modes = JSON.parse('{{ modes | tojson | safe }}');
 
-    var devices = JSON.parse('{{ devices | tojson | safe }}');
-    var groups = JSON.parse('{{ groups | tojson | safe }}');
+    let devices = JSON.parse('{{ devices | tojson | safe }}');
+    let groups = JSON.parse('{{ groups | tojson | safe }}');
 </script>
 
 <script src="../static/js/automations_page.js" defer></script>
@@ -57,7 +60,7 @@
     
         <div class="input-field-container input-tile-container">
             <p id="daysTitle" class="input-field-title input-tile-title">Days</p>
-            <div class="flex-grid" style="margin-bottom: 15px; justify-content: center;">
+            <div class="flex-grid" style="margin: 15px; margin-top: 0px; justify-content: center;">
                 <div id="dayTile0" class="tile single" onclick="toggleDaySelection(DAY_MONDAY);" style="background-color: var(--background2);">
                     <div id="dayTileTitle0" style="grid-column: span 2;">Monday</div>
                 </div>
@@ -83,14 +86,14 @@
         </div>
     </div>
 
-    <div id="sensorTriggerContainer">
+    <div id="triggerDevicesContainer">
         <div class="input-field-container input-tile-container">
-            <p id="triggerSensorTitle" class="input-field-title input-tile-title">Trigger sensors</p>
-            <div id="triggerDeviceContainer" class="flex-grid" style="justify-content: center; margin-bottom: 15px;"></div>
+            <p id="triggerDeviceTitle" class="input-field-title input-tile-title">Trigger devices</p>
+            <div id="triggerDeviceContainer" class="flex-grid" style="margin: 15px; margin-top: 0px; justify-content: center;"></div>
         </div>
         
         <div class="input-field-container">
-            <p id="triggerSensorStateTitle" class="input-field-title">Trigger sensor state</p>
+            <p id="triggerDeviceStateTitle" class="input-field-title">Trigger state</p>
             <select id="triggerDeviceStateSelect" class="input-field"></select>
         </div>
 
@@ -120,7 +123,7 @@
 
     <div id="targetDeviceContainerWrap" class="input-field-container input-tile-container" style="margin-top: 20px;">
         <p id="targetDeviceTitle" class="input-field-title input-tile-title">Target devices</p>
-        <div id="targetDeviceContainer" class="flex-grid" style="justify-content: center; margin-bottom: 15px;"></div>
+        <div id="targetDeviceContainer" class="flex-grid" style="margin: 15px; margin-top: 0px; justify-content: center;"></div>
     </div>
 
     <div class="input-field-container">

@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<script>
+    page = INITIAL_SETUP_PAGE;
+    
+    const SUPPORTED_UI_LANGUAGES = JSON.parse('{{ SUPPORTED_UI_LANGUAGES | tojson | safe }}');
+    let loginAccount = [];
+    let selectedProfile = {};
+</script>
+
+<script src="../static/js/user_and_module_utilities.js" defer></script>
+<script src="../static/js/initial_setup_page.js" defer></script>
+<link rel="stylesheet" href="../static/css/styles_welcome_screen.css">
+
+<div id="welcomeContainer" class="container-form" style="height: 100vh;">
+    <div class="welcome-container">
+        <div class="welcome-logo"><img src="../static/images/logo.png" alt="ZyraX Logo"></div>
+        <div id="welcomeTitle" class="welcome-title-container" style="margin-top: 32px;"></div>
+        <div id="welcomeSubtitle" class="welcome-subtitle">Let's get your home connected and personalized.</div>
+        <div class="get-started-button"><button id="getStartedBtn" onclick="scrollToSection('accountContainer');">Get Started</button></div>
+    </div>
+</div>
+
+<div id="accountContainer" class="container-form welcome" style="min-height: 100vh; width: 50%; margin: auto;">
+    <div class="base-container">
+        <h3 id="accountModalTitle" style="margin-top: 0px;">Add Account</h3>
+
+        <p id="errorMessageAccountField" class="message error" style="margin: 0px; margin-top: 15px;"></p>
+        
+        <div class="input-field-container" style="width: 100%;">
+            <p id="accountEmailTitle" class="input-field-title gradient-background">Email</p>
+            <input id="accountEmailTxt" class="input-field" type="text" placeholder="Email">
+        </div>
+
+        <div id="passwordValidationContainer" class="password-validation-container">
+            <div class="message-container">
+                <i id="pwdValidationIconLength" class="fa-solid fa-circle-xmark" style="transition: 300ms;"></i>
+                <p id="pwdValidationTitleLength" style="margin-bottom: 0px;">Between 8 and 64 characters</p>
+            </div>
+            <div class="message-container">
+                <i id="pwdValidationIconUpperCase" class="fa-solid fa-circle-xmark" style="transition: 300ms;"></i>
+                <p id="pwdValidationTitleUpperCase" style="margin-bottom: 0px;">At least one uppercase character</p>
+            </div>
+            <div class="message-container">
+                <i id="pwdValidationIconLowerCase" class="fa-solid fa-circle-xmark" style="transition: 300ms;"></i>
+                <p id="pwdValidationTitleLowerCase" style="margin-bottom: 0px;">At least one lowercase character</p>
+            </div>
+            <div class="message-container">
+                <i id="pwdValidationIconNumber" class="fa-solid fa-circle-xmark" style="transition: 300ms;"></i>
+                <p id="pwdValidationTitleNumber" style="margin-bottom: 0px;">At least one number</p>
+            </div>
+            <div class="message-container">
+                <i id="pwdValidationIconSymbol" class="fa-solid fa-circle-xmark" style="transition: 300ms;"></i>
+                <p id="pwdValidationTitleSymbol" >At least one symbol</p>
+            </div>
+        </div>
+
+        <div class="input-field-container" style="width: 100%;">
+            <p id="accountPasswordTitle" class="input-field-title gradient-background">Password</p>
+            <input id="accountPasswordTxt" class="input-field" type="password" placeholder="Password">
+        </div>
+
+        <div class="input-field-container" style="width: 100%;">
+            <p id="accountRetypePasswordTitle" class="input-field-title gradient-background">Retype Password</p>
+            <input id="accountRetypePasswordTxt" class="input-field" type="password" placeholder="Password">
+        </div>
+
+        <button id="nextBtn" onclick="createAccount();">Next</button>
+    </div>
+</div>
+
+<div id="profileContainer" class="container-form welcome" style="min-height: 100vh; width: 50%; margin: auto;">
+    <div class="base-container">
+        <h3 id="profileModalTitle" style="margin-top: 0px;">Add Profile</h3>
+
+        <div class="profile-picture-upload">
+            <label for="profilePictureUpload" class="profile-picture-upload-button">
+                <img id="profilePicturePreview" src="/get_default_profile_picture" alt="Profile Placeholder">
+            </label>
+            <input type="file" id="profilePictureUpload" accept="image/*" hidden>
+        </div>
+
+        <p id="errorMessageProfileField" class="message error" style="margin: 0px; margin-top: 15px;"></p>
+        
+        <div class="input-field-container" style="width: 100%;">
+            <p id="profileNameTitle" class="input-field-title gradient-background">Name</p>
+            <input id="profileNameTxt" class="input-field" type="text" placeholder="Name">
+        </div>
+
+        <div class="input-field-container full-width">
+            <p id="profileLanguageTitle" class="input-field-title gradient-background">Language</p>
+            <select id="profileLanguageSelect" class="input-field"></select>
+        </div>
+
+        <button id="nextBtn" onclick="createProfile();">Next</button>
+    </div>
+</div>
+
+<div id="moduleConfigurationContainer" class="container-form welcome" style="min-height: 100vh; width: 50%; margin: auto;">
+    <div class="base-container">
+        <h3 id="moduleConfigurationModalTitle" style="margin-top: 0px;">Configure modules</h3>
+        <p id="errorMessageModuleConfigurationField" class="message error" style="margin-top: 0px;"></p>
+
+        <div class="flex-wrap">
+            <fieldset style="margin-top: 0px; width: 30%; flex: auto; min-width: 250px; max-width: 500px;">
+                <legend id="weatherIntegrationTitle"><a href="https://www.visualcrossing.com/weather-api">VisualCrossing</a> weather integration</legend>
+
+                <div class="switch-input-container">
+                    <label class="switch" style="margin: 15px;">
+                        <input id="weatherServiceEnabledCb" type="checkbox" onclick="toggleWeatherServiceEnabled();">
+                        <span class="slider round"></span>
+                    </label>
+
+                    <div class="input-field-container" style="margin: 10px;">
+                        <p id="weatherApiKeyTitle" class="input-field-title gradient-background">API key</p>
+                        <input id="weatherApiKeyTxt" class="input-field disabled" type="text" placeholder="API key" onchange="submitWeatherModuleConfiguration();" disabled>
+                    </div>
+                </div>
+            </fieldset>
+
+            <fieldset style="margin-top: 0px; width: 30%; flex: auto; min-width: 250px; max-width: 500px;">
+                <legend id="telegramIntegrationTitle"><a href="https://core.telegram.org/bots/tutorial">Telegram</a> integration</legend>
+
+                <div class="switch-input-container">
+                    <label class="switch" style="margin: 15px;">
+                        <input id="telegramServiceEnabledCb" type="checkbox" onclick="toggleTelegramServiceEnabled();">
+                        <span class="slider round"></span>
+                    </label>
+
+                    <div class="input-field-container" style="margin: 10px;">
+                        <p id="telegramBotTokenTitle" class="input-field-title gradient-background">Bot Token</p>
+                        <input id="telegramBotTokenTxt" class="input-field disabled" type="text" placeholder="Telegram Bot Token" onchange="submitTelegramModuleConfiguration();" disabled>
+                    </div>
+                </div>
+            </fieldset>
+
+            <fieldset style="margin-top: 0px; width: 20%; flex: auto; min-width: 250px; max-width: 300px;">
+                <legend id="rpiRfModuleTitle">Raspberry Pi RF receiver enabled</legend>
+                <div class="centered-flex" style="margin: 10px 0px;">
+                    <label class="switch" style="margin: 15px;">
+                        <input id="rpiRfModuleEnabledCb" type="checkbox" onclick="submitRpiRfModuleEnabled();">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+            </fieldset>
+        </div>
+
+        <button id="finishBtn" onclick="redirect('/configuration?show_welcome_message');">Finish</button>
+    </div>
+</div>
+{% endblock %}

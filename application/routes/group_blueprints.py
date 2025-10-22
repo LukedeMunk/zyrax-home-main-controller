@@ -9,7 +9,7 @@
 #           https://github.com/LukedeMunk/zyrax-home-main-controller
 #
 ################################################################################
-from flask import Blueprint, request                                            #Import flask blueprints and requests
+from flask import Blueprint, request, session                                   #Import flask blueprints and requests
 import configuration as c                                                       #Import application configuration variables
 from DeviceManager import DeviceManager                                         #Import device manager
 from server_manager import generate_json_http_response
@@ -26,6 +26,9 @@ group_bp = Blueprint("group_blueprints", __name__)
 ################################################################################
 @group_bp.route("/add_group", methods=["POST"])
 def add_group():
+    if "account_id" not in session:
+        return generate_json_http_response(c.HTTP_CODE_UNAUTHORIZED)
+    
     config = {
         "name" : request.form.get("name"),
         "icon" : request.form.get("icon"),
@@ -44,6 +47,9 @@ def add_group():
 ################################################################################
 @group_bp.route("/update_group", methods=["POST"])
 def update_group():
+    if "account_id" not in session:
+        return generate_json_http_response(c.HTTP_CODE_UNAUTHORIZED)
+    
     id = int(request.form.get("id"))
 
     config = {}
@@ -68,6 +74,9 @@ def update_group():
 ################################################################################
 @group_bp.route("/delete_group", methods=["POST"])
 def delete_group():
+    if "account_id" not in session:
+        return generate_json_http_response(c.HTTP_CODE_UNAUTHORIZED)
+    
     id = int(request.form.get("id"))
     dm.delete_group(id)
 

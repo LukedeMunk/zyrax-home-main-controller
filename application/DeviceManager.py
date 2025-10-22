@@ -322,13 +322,17 @@ class DeviceManager:
         if ledstrip_db["id"] != ledstrip_config["id"]:
             ledstrip.set_id(ledstrip.id)
 
-        #if ledstrip_db["hostname"] != ledstrip_config["hostname"]: TODO
-            #ledstrip.set_hostname(ledstrip_db["hostname"])
-        #    logw("Hostname different")
+        if ledstrip_db["hostname"] != ledstrip_config["hostname"]:#TODO test
+            ledstrip.set_hostname(ledstrip_db["hostname"])
+            logw("Hostname different")
+            #Controller reboots
+            return (True)
 
-        if ledstrip_db["driver"] != ledstrip_config["driver"]:
-            #ledstrip.set_driver(ledstrip_db["driver"])
-            logw("driver different")
+        if ledstrip_db["model_id"] != ledstrip_config["model_id"]:
+            ledstrip.set_model(ledstrip_db["model_id"])
+            logw("model different")
+            #Controller reboots
+            return (True)
 
         if ledstrip_db["number_of_leds"] != ledstrip_config["number_of_leds"]:
             ledstrip.update_led_addressing()
@@ -510,30 +514,30 @@ class DeviceManager:
     #
     ################################################################################
     def process_rf_signal(self, rf_code):
-        sensors = self.get_devices_dict(type=c.DEVICE_TYPE_SENSOR)
+        rf_devices = self.get_devices_dict(type=c.DEVICE_TYPE_RF_DEVICE)
 
-        for sensor in sensors:
-            for code in sensor["rf_codes"]:
+        for rf_device in rf_devices:
+            for code in rf_device["rf_codes"]:
                 if code["rf_code"] == rf_code:
-                    if code["type"] == c.RF_CODE_TYPE_OPENED:
-                        if sensor["state"] != True:
-                            db_util.add_sensor_triggered(sensor["id"])
-                            self.set_sensor_state(sensor["id"], True)
-                            logi("[" + sensor["name"] + "] opened")
+                    if code["type"] == c.RF_CODE_TYPE_ACTIVE:
+                        if rf_device["state"] != True:
+                            db_util.add_sensor_triggered(rf_device["id"])
+                            self.set_rf_device_state(rf_device["id"], True)
+                            logi("[" + rf_device["name"] + "] opened")
                 
-                    if code["type"] == c.RF_CODE_TYPE_CLOSED:
-                        if sensor["state"] != False:
-                            self.set_sensor_state(sensor["id"], False)
-                            logi("[" + sensor["name"] + "] closed")
+                    if code["type"] == c.RF_CODE_TYPE_INACTIVE:
+                        if rf_device["state"] != False:
+                            self.set_rf_device_state(rf_device["id"], False)
+                            logi("[" + rf_device["name"] + "] closed")
                 
                     if code["type"] == c.RF_CODE_TYPE_TRIGGERED:
-                        db_util.add_sensor_triggered(sensor["id"])
-                        self.set_sensor_state(sensor["id"], True)
-                        logi("[" + sensor["name"] + "] triggered")
+                        db_util.add_sensor_triggered(rf_device["id"])
+                        self.set_rf_device_state(rf_device["id"], True)
+                        logi("[" + rf_device["name"] + "] triggered")
                 
                     if code["type"] == c.RF_CODE_TYPE_LOW_BATTERY:
-                        db_util.update_device(sensor["id"], {"rf_code_low_battery" : True})
-                        logi("[" + sensor["name"] + "] low battery triggered")
+                        db_util.update_device(rf_device["id"], {"rf_code_low_battery" : True})
+                        logi("[" + rf_device["name"] + "] low battery triggered")
                         
                     return
 #endregion
@@ -541,20 +545,20 @@ class DeviceManager:
 #region Sensor functionality
     ################################################################################
     #
-    #   @brief  Updates the state of the specified sensor and executes actions if
+    #   @brief  Updates the state of the specified RF device and executes actions if
     #           needed.
     #   @param  id                  Device ID
     #   @param  state               Opened(1) / Closed(0)
     #
     ################################################################################
-    def set_sensor_state(self, id, state):
-        sensor = db_util.get_device(id)
+    def set_rf_device_state(self, id, state):
+        rf_device = db_util.get_device(id)
 
-        if sensor["type"] == c.RF_DEVICE_TYPE_MOTION_SENSOR:
+        if rf_device["category"] == c.DEVICE_CATEGORY_MOTION_SENSOR:
             self._set_motion_sensor_state(id, state)
             return
         
-        if sensor["state"] == state:
+        if rf_device["state"] == state:
             return
         
         db_util.update_device(id, {"state" : state})
@@ -616,8 +620,8 @@ class DeviceManager:
     def set_device_group_power(self, id, power):
         group = db_util.get_group(id=id)
 
-        if group["type"] == c.DEVICE_TYPE_SENSOR or group["type"] == c.DEVICE_TYPE_IP_CAMERA:
-            logw("Sensors and cameras cannot be turned off")
+        if group["type"] == c.DEVICE_TYPE_RF_DEVICE or group["type"] == c.DEVICE_TYPE_IP_CAMERA:
+            logw("RF devices and cameras cannot be turned off")
             return
         
         for device in group["device_ids"]:
@@ -736,10 +740,12 @@ class DeviceManager:
     #
     ################################################################################
     def check_sensor_automations(self, id, state):
-        automations = db_util.get_automations(c.AUTOMATION_TRIGGER_DOOR_SENSOR, True)
-        automations += db_util.get_automations(c.AUTOMATION_TRIGGER_MOTION_SENSOR, True)
+        automations = db_util.get_automations(None, True)
         
         for automation in automations:
+            if automation["trigger"] != c.AUTOMATION_TRIGGER_SENSOR or automation["trigger"] != c.AUTOMATION_TRIGGER_SWITCH:
+                continue
+
             #Next automation if disabled
             if not automation["enabled"]:
                 continue
@@ -1050,12 +1056,12 @@ class DeviceManager:
 #region Sensor database functionality
     ################################################################################
     #
-    #   @brief  Adds a sensor to the database.
+    #   @brief  Adds an RF device to the database.
     #   @param  config_dict         Configuration dictionary
     #
     ################################################################################
-    def add_sensor(self, config_dict):
-        config_dict["type"] = c.DEVICE_TYPE_SENSOR
+    def add_rf_device(self, config_dict):
+        config_dict["type"] = c.DEVICE_TYPE_RF_DEVICE
         return db_util.add_device(config_dict)
 #endregion
 
@@ -1110,7 +1116,7 @@ class DeviceManager:
         for device in group["device_ids"]:
             if group["type"] == c.DEVICE_TYPE_LEDSTRIP:
                 self.update_ledstrip(device, config_dict)
-            elif group["type"] == c.DEVICE_TYPE_SENSOR:
+            elif group["type"] == c.DEVICE_TYPE_RF_DEVICE:
                 db_util.update_device(device, config_dict)
 
     ################################################################################
@@ -1262,6 +1268,9 @@ class DeviceManager:
                 self.ledstrips.append(Ledstrip(device))
             if device["type"] == c.DEVICE_TYPE_IP_CAMERA:
                 self.cameras.append(IpCamera(device))
+            if device["type"] == c.DEVICE_TYPE_RF_BRIDGE:
+                c.RF_RECEIVER_PRESENT = True
+                c.RF_TRANSMITTER_PRESENT = True
 #endregion
 
 #region Utilities functionalty

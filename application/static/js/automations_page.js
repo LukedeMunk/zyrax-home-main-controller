@@ -25,8 +25,8 @@ const dayTileTitle4Elem = document.getElementById("dayTileTitle4");
 const dayTileTitle5Elem = document.getElementById("dayTileTitle5");
 const dayTileTitle6Elem = document.getElementById("dayTileTitle6");
 
-const triggerSensorTitleElem = document.getElementById("triggerSensorTitle");
-const triggerSensorStateTitleElem = document.getElementById("triggerSensorStateTitle");
+const triggerDeviceTitleElem = document.getElementById("triggerDeviceTitle");
+const triggerDeviceStateTitleElem = document.getElementById("triggerDeviceStateTitle");
 const delayThisAutomationTitleElem = document.getElementById("delayThisAutomationTitle");
 const delayInvertedAutomationTitleElem = document.getElementById("delayInvertedAutomationTitle");
 const targetDeviceTitleElem = document.getElementById("targetDeviceTitle");
@@ -75,7 +75,7 @@ const automationModalElem = document.getElementById("automationModal");
 const preconditionsContainerElem = document.getElementById("preconditionsContainer");
 const timeWindowContainerElem = document.getElementById("timeWindowContainer");
 const timeTriggerContainerElem = document.getElementById("timeTriggerContainer");
-const sensorTriggerContainerElem = document.getElementById("sensorTriggerContainer");
+const triggerDevicesContainerElem = document.getElementById("triggerDevicesContainer");
 const triggerDeviceContainerElem = document.getElementById("triggerDeviceContainer");
 const delayTimeTogglesContainerElem = document.getElementById("delayTimeTogglesContainer"); 
 const targetDeviceContainerWrapElem = document.getElementById("targetDeviceContainerWrap");
@@ -475,18 +475,18 @@ function getSelectedTargetDeviceIds() {
 */
 /******************************************************************************/
 function getSelectedTriggerDeviceIds() {
-    let triggers = [];
+    let triggerDeviceIds = [];
     for (let device of devices) {
-        if (device.type != DEVICE_TYPE_SENSOR) {
+        if (device.type != DEVICE_TYPE_RF_DEVICE) {
             continue;
         }
         const tileElem = document.getElementById("triggerDeviceTile" + device.id);
         if (tileElem != undefined && tileElem.classList.contains("tile-selected")) {
-            triggers.push(device.id)
+            triggerDeviceIds.push(device.id)
         }
     }
 
-    return triggers;
+    return triggerDeviceIds;
 }
 
 /******************************************************************************/
@@ -653,12 +653,12 @@ function loadTimeWindowRangeFieldEnd() {
 */
 /******************************************************************************/
 function updateTimeWindowRangeField() {
-    let sliderColor = "var(--success_text)";
+    let sliderColor = "var(--success-text)";
     let rangeColor = "var(--background2)";
 
     if (timeWindowTypeToggleElem.checked) {
         sliderColor = "var(--background2)";
-        rangeColor = "var(--success_text)";
+        rangeColor = "var(--success-text)";
     }
 
     let rangeDistance = timeWindowEndRangeElem.max - timeWindowEndRangeElem.min;
@@ -704,8 +704,8 @@ function loadText() {
     dayTileTitle4Elem.textContent = TEXT_FRIDAY;
     dayTileTitle5Elem.textContent = TEXT_SATURDAY;
     dayTileTitle6Elem.textContent = TEXT_SUNDAY;
-    triggerSensorTitleElem.textContent = TEXT_TRIGGER_SENSORS;
-    triggerSensorStateTitleElem.textContent = TEXT_TRIGGER_SENSOR_STATE;
+    triggerDeviceTitleElem.textContent = TEXT_TRIGGER_DEVICES;
+    triggerDeviceStateTitleElem.textContent = TEXT_TRIGGER_STATE;
     delayThisAutomationTitleElem.textContent = TEXT_DELAY_THIS_AUTOMATION;
     delayInvertedAutomationTitleElem.textContent = TEXT_DELAY_INVERTED_AUTOMATION;
     targetDeviceTitleElem.textContent = TEXT_TARGET_DEVICES;
@@ -784,7 +784,7 @@ function loadModal(event, id=undefined) {
         timeWindowToggleElem.style.display = "none";
         timeWindowToggleElem.checked = false;
         timeWindowToggleElem.textContent = TEXT_ACTIVATE_TIME_WINDOW;
-        timeWindowToggleElem.style.color = "var(--success_text)";
+        timeWindowToggleElem.style.color = "var(--success-text)";
         toggleTimeWindowActiveState(true);
         timeWindowStartBand = 0;
         timeWindowEndBand = 1439;
@@ -803,7 +803,6 @@ function loadModal(event, id=undefined) {
         loadActionSelectOptions();
         loadActionParameters();
         loadTriggerSensorStateOptions();
-        triggerDeviceStateSelectElem.selectedIndex = 0;
         timeTxtElem.value = "00:00";
 
         for (let day = 0; day < DAYS_IN_WEEK; day++) {
@@ -813,7 +812,7 @@ function loadModal(event, id=undefined) {
         submitAutomationBtnElem.setAttribute("onclick", "addAutomation();");
         deleteAutomationBtnElem.style.display = "none";
         timeTriggerContainerElem.style.display = "none";
-        sensorTriggerContainerElem.style.display = "none";
+        triggerDevicesContainerElem.style.display = "none";
 
         toggleCopyAutomationInvertedTriggerAndPower(false);
         timeInvertedActionContainerElem.style.display = "none";
@@ -832,8 +831,14 @@ function loadModal(event, id=undefined) {
     triggerSelectElem.value = automation.trigger;
     loadTargetDevices();
     loadActionSelectOptions();
+    loadTrigger();
 
-    delayTimeRangeElem.value = Math.max(automation.delay_minutes, automation.inverted_delay_minutes);
+    if (automation.inverted_automation_copy_id != -1) {
+        delayTimeRangeElem.value = Math.max(automation.delay_minutes, automation.inverted_delay_minutes);
+    } else {
+        delayTimeRangeElem.value = automation.delay_minutes;
+    }
+
     updateDelayTimeField();
     actionSelectElem.value = automation.action;
     loadActionParameters();
@@ -844,7 +849,7 @@ function loadModal(event, id=undefined) {
         toggleCopyAutomationInvertedTriggerAndPower(automation.inverted_automation_copy_id != -1);
         timeWindowToggleElem.style.display = "none";
         timeTriggerContainerElem.style.display = "block";
-        sensorTriggerContainerElem.style.display = "none";
+        triggerDevicesContainerElem.style.display = "none";
         delayThisAutomationCbElem.checked = false;
         delayInvertedAutomationCbElem.checked = false;
         timeTxtElem.value = automation.time;
@@ -859,15 +864,24 @@ function loadModal(event, id=undefined) {
             timeInvertedActionContainerElem.style.display = "block";
             timeInvertedActionTxtElem.value = automation.inverted_action_time;
         }
-    } else if (automation.trigger == AUTOMATION_TRIGGER_DOOR_SENSOR || automation.trigger == AUTOMATION_TRIGGER_MOTION_SENSOR) {
+    } else if (automation.trigger == AUTOMATION_TRIGGER_SENSOR) {
         toggleCopyAutomationInvertedTriggerAndPower(automation.inverted_automation_copy_id != -1);
         timeWindowToggleElem.style.display = "block";
         timeTriggerContainerElem.style.display = "none";
-        sensorTriggerContainerElem.style.display = "block";
+        triggerDevicesContainerElem.style.display = "block";
         delayThisAutomationCbElem.checked = automation.delay_minutes > 0;
         delayInvertedAutomationCbElem.checked = automation.inverted_delay_minutes > 0;
         timeInvertedActionContainerElem.style.display = "none";
-        loadTriggerSensorStateOptions();
+        loadTriggerSensorStateOptions(automation.trigger_device_ids[0]);
+    } else if (automation.trigger == AUTOMATION_TRIGGER_SWITCH) {
+        toggleCopyAutomationInvertedTriggerAndPower(automation.inverted_automation_copy_id != -1);
+        timeWindowToggleElem.style.display = "none";
+        timeTriggerContainerElem.style.display = "none";
+        triggerDevicesContainerElem.style.display = "block";
+        delayThisAutomationCbElem.checked = automation.delay_minutes > 0;
+        delayInvertedAutomationCbElem.checked = automation.inverted_delay_minutes > 0;
+        timeInvertedActionContainerElem.style.display = "none";
+        loadTriggerSensorStateOptions(automation.trigger_device_ids[0]);
     }
 
     timeWindowStartBand = automation.time_window_start_minutes;
@@ -880,17 +894,15 @@ function loadModal(event, id=undefined) {
         preconditionsContainerElem.style.display = "block";
         timeWindowToggleElem.checked = true;
         timeWindowToggleElem.textContent = TEXT_DEACTIVATE_TIME_WINDOW;
-        timeWindowToggleElem.style.color = "var(--error_text)";
+        timeWindowToggleElem.style.color = "var(--error-text)";
         timeWindowContainerElem.style.display = "block";
     } else {
         preconditionsContainerElem.style.display = "none";
         timeWindowToggleElem.checked = false;
         timeWindowToggleElem.textContent = TEXT_ACTIVATE_TIME_WINDOW;
-        timeWindowToggleElem.style.color = "var(--success_text)";
+        timeWindowToggleElem.style.color = "var(--success-text)";
         timeWindowContainerElem.style.display = "none";
     }
-
-    loadTrigger()
 
     submitAutomationBtnElem.setAttribute("onclick", "updateAutomation(" + id + ");");
     deleteAutomationBtnElem.style.display = "inline";
@@ -917,7 +929,7 @@ function loadTrigger() {
         preconditionsContainerElem.style.display = "none";
         timeWindowToggleElem.style.display = "none";
         timeTriggerContainerElem.style.display = "block";
-        sensorTriggerContainerElem.style.display = "none";
+        triggerDevicesContainerElem.style.display = "none";
         if (index != -1) {
             if (automations[index].time != undefined) {
                 timeTxtElem.value = automations[index].time;
@@ -927,17 +939,25 @@ function loadTrigger() {
             timeTxtElem.value = "";
             loadDays();
         }
-    } else {
+    } else if (triggerSelectElem.value == AUTOMATION_TRIGGER_SENSOR) {
         preconditionsContainerElem.style.display = "block";
         timeWindowToggleElem.style.display = "block";
         timeTriggerContainerElem.style.display = "none";
-        sensorTriggerContainerElem.style.display = "block";
+        triggerDevicesContainerElem.style.display = "block";
         loadTriggerDevices();
         loadTriggerSensorStateOptions();
         if (index != -1) {
             triggerDeviceStateSelectElem.value = automations[index].trigger_state;
-        } else {
-            triggerDeviceStateSelectElem.value = 0;
+        }
+    } else if (triggerSelectElem.value == AUTOMATION_TRIGGER_SWITCH) {
+        preconditionsContainerElem.style.display = "none";
+        timeWindowToggleElem.style.display = "none";
+        timeTriggerContainerElem.style.display = "none";
+        triggerDevicesContainerElem.style.display = "block";
+        loadTriggerDevices();
+        loadTriggerSensorStateOptions();
+        if (index != -1) {
+            triggerDeviceStateSelectElem.value = automations[index].trigger_state;
         }
     }
 
@@ -1027,7 +1047,7 @@ function loadAutomationTriggerSelectOptions() {
     option.text = "";
     triggerSelectElem.appendChild(option);
     
-    for (let trigger of triggers) {
+    for (let trigger of AUTOMATION_TRIGGERS) {
         option = document.createElement("option");
         option.value = trigger.id;
         option.text = trigger.name;
@@ -1169,11 +1189,10 @@ function loadTargetDevices(targetDevices=undefined) {
 
     targetDeviceContainerWrapElem.style.display = "block";
 
+    let numberOfTargetDevices = 0;
     for (let device of devices) {
-        if (triggerSelectElem.value == AUTOMATION_TRIGGER_DOOR_SENSOR || triggerSelectElem.value == AUTOMATION_TRIGGER_MOTION_SENSOR) {
-            if (device.type == DEVICE_TYPE_SENSOR) {
-                continue;
-            }
+        if (device.category != DEVICE_CATEGORY_LEDSTRIP && device.category != DEVICE_CATEGORY_POWER_OUTLET) {
+            continue;
         }
 
         tile = document.createElement("div");
@@ -1206,7 +1225,34 @@ function loadTargetDevices(targetDevices=undefined) {
         grid = document.createElement("div");
         icon = document.createElement("i");
         icon.className = device.icon + " fa-2x";
+        if (MOBILE_VERSION) {
+            icon.style.fontSize = "var(--font-size-h3)";
+        }
         
+        grid.appendChild(icon);
+        tile.appendChild(grid);
+
+        targetDeviceContainerElem.appendChild(tile);
+        numberOfTargetDevices++;
+    }
+
+    if (numberOfTargetDevices == 0) {
+        tile = document.createElement("div");
+        tile.id = "targetDeviceTile";
+        tile.className = "tile single";
+        tile.style.backgroundColor = "var(--background2)";
+
+        grid = document.createElement("div");
+        grid.style.gridColumn = "span 2";
+        title = document.createTextNode(TEXT_NO_TARGET_DEVICES_AVALABLE);
+
+        grid.appendChild(title);
+        tile.appendChild(grid);
+
+        grid = document.createElement("div");
+        icon = document.createElement("i");
+        icon.className = "fa-solid fa-square-xmark fa-xl";
+
         grid.appendChild(icon);
         tile.appendChild(grid);
 
@@ -1217,32 +1263,30 @@ function loadTargetDevices(targetDevices=undefined) {
 /******************************************************************************/
 /*!
   @brief    Loads the trigger sensor state options based on the sensor type.
+  @parsm    id                  Device ID
 */
 /******************************************************************************/
-function loadTriggerSensorStateOptions() {
+function loadTriggerSensorStateOptions(id=undefined) {
     triggerDeviceStateSelectElem.innerHTML = "";
 
     let option;
 
-    if (triggerSelectElem.value == AUTOMATION_TRIGGER_DOOR_SENSOR) {
+    if (id == undefined) {
         option = document.createElement("option");
-        option.value = 0;
-        option.text = TEXT_CLOSED;
+        option.value = -1;
+        option.text = TEXT_CHOOSE_TRIGGER_DEVICE_FIRST;
         triggerDeviceStateSelectElem.appendChild(option);
+        triggerDeviceStateSelectElem.value = -1;
+        return;
+    }
 
-        option = document.createElement("option");
-        option.value = 1;
-        option.text = TEXT_OPENED;
-        triggerDeviceStateSelectElem.appendChild(option);
-    } else if (triggerSelectElem.value == AUTOMATION_TRIGGER_MOTION_SENSOR) {
-        option = document.createElement("option");
-        option.value = 0;
-        option.text = TEXT_ROOM_CLEARED;
-        triggerDeviceStateSelectElem.appendChild(option);
+    let device = devices[getIndexFromId(devices, id)];
+    let deviceModel = DEVICE_MODELS[device.model_id];
 
+    for (let state of deviceModel.states) {
         option = document.createElement("option");
-        option.value = 1;
-        option.text = TEXT_PRESENCE_DETECTED;
+        option.value = state.state;
+        option.text = state.name;
         triggerDeviceStateSelectElem.appendChild(option);
     }
 }
@@ -1263,21 +1307,20 @@ function loadTriggerDevices() {
     }
 
     if (triggerSelectElem.value == -1) {
-        sensorTriggerContainerElem.style.display = "none";
+        triggerDevicesContainerElem.style.display = "none";
         return;
     }
 
+    let numberOfTriggerDevices = 0;
     for (let device of devices) {
-        if (device.type == DEVICE_TYPE_IP_CAMERA) {
-            continue;
-        }
-        
-        if (triggerSelectElem.value == AUTOMATION_TRIGGER_DOOR_SENSOR && device.model != RF_DEVICE_MODEL_OPEN_CLOSE) {
-            continue;
-        }
-
-        if (triggerSelectElem.value == AUTOMATION_TRIGGER_MOTION_SENSOR && device.model != RF_DEVICE_MODEL_PIR_SENSOR1) {
-            continue;
+        if (triggerSelectElem.value == AUTOMATION_TRIGGER_SENSOR) {
+            if (device.category != DEVICE_CATEGORY_MOTION_SENSOR && device.category != DEVICE_CATEGORY_DOOR_SENSOR) {
+                continue;
+            }
+        } else if (triggerSelectElem.value == AUTOMATION_TRIGGER_SWITCH) {
+            if (device.category != DEVICE_CATEGORY_SWITCH && device.category != DEVICE_CATEGORY_REMOTE) {
+                continue;
+            }
         }
 
         tile = document.createElement("div");
@@ -1304,6 +1347,33 @@ function loadTriggerDevices() {
         grid = document.createElement("div");
         icon = document.createElement("i");
         icon.className = device.icon + " fa-2x";
+        if (MOBILE_VERSION) {
+            icon.style.fontSize = "var(--font-size-h3)";
+        }
+
+        grid.appendChild(icon);
+        tile.appendChild(grid);
+
+        triggerDeviceContainerElem.appendChild(tile);
+        numberOfTriggerDevices++;
+    }
+
+    if (numberOfTriggerDevices == 0) {
+        tile = document.createElement("div");
+        tile.id = "triggerDeviceTile";
+        tile.className = "tile single";
+        tile.style.backgroundColor = "var(--background2)";
+
+        grid = document.createElement("div");
+        grid.style.gridColumn = "span 2";
+        title = document.createTextNode(TEXT_NO_TRIGGER_DEVICES_AVALABLE);
+
+        grid.appendChild(title);
+        tile.appendChild(grid);
+
+        grid = document.createElement("div");
+        icon = document.createElement("i");
+        icon.className = "fa-solid fa-square-xmark fa-xl";
 
         grid.appendChild(icon);
         tile.appendChild(grid);
@@ -1354,7 +1424,7 @@ function validateAutomationInput(id=-1) {
         return false;
     }
 
-    /* Validate group */
+    /* Validate target */
     if (targetDeviceIds.length < 1) {
         automationValidationMessageFieldElem.textContent = TEXT_SELECT_AT_LEAST_ONE_TARGET;
         automationValidationMessageFieldElem.style.display = "inline-block";
@@ -1401,7 +1471,6 @@ function validateAutomationInput(id=-1) {
         lastAutomationData.parameters = parameters;
     }
     
-
     if (id != -1) {
         if (action == AUTOMATION_ACTION_SET_DEVICE_POWER) {
             let invertedAutomationCopyId = parseInt(automations[getIndexFromId(automations, id)].inverted_automation_copy_id);
@@ -1474,7 +1543,7 @@ function validateAutomationInput(id=-1) {
 
             lastAutomationData.inverted_action_time = invertedActionTime;
         }
-    } else if (trigger == AUTOMATION_TRIGGER_DOOR_SENSOR || trigger == AUTOMATION_TRIGGER_MOTION_SENSOR) {
+    } else if (trigger == AUTOMATION_TRIGGER_SENSOR) {
         lastAutomationData.delay_minutes = delayTimeRangeElem.value;
         lastAutomationData.time_window_activated = timeWindowToggleElem.checked;
         lastAutomationData.activate_during_time_window = timeWindowTypeToggleElem.checked;
@@ -1516,6 +1585,42 @@ function validateAutomationInput(id=-1) {
         }
         lastAutomationData.trigger_device_ids = triggerDeviceIds;
         lastAutomationData.trigger_state = +triggerState;
+    } else if (trigger == AUTOMATION_TRIGGER_SWITCH) {
+        lastAutomationData.delay_minutes = delayTimeRangeElem.value;
+
+        /* Check delays with inverted automation */
+        if (lastAutomationData.inverted_automation_copy_id != -1) {
+            if (delayInvertedAutomationCbElem.checked) {
+                lastAutomationData.inverted_delay_minutes = lastAutomationData.delay_minutes;
+            } else {
+                lastAutomationData.inverted_delay_minutes = 0;
+            }
+
+            if (!delayThisAutomationCbElem.checked) {
+                lastAutomationData.delay_minutes = 0;
+            }
+        }
+
+        let triggerDeviceIds = getSelectedTriggerDeviceIds();
+        let triggerState = triggerDeviceStateSelectElem.value;
+        
+        /* Validate  */
+        if (triggerDeviceIds.length < 1) {
+            automationValidationMessageFieldElem.textContent = TEXT_SELECT_AT_LEAST_ONE_TRIGGER;
+            automationValidationMessageFieldElem.style.display = "inline-block";
+            return false;
+        }
+
+        /* Validate  */
+        if (triggerState == "") {
+            triggerDeviceStateSelectElem.classList.add("invalid-input");
+            automationValidationMessageFieldElem.textContent = TEXT_FIELD_REQUIRED;
+            automationValidationMessageFieldElem.style.display = "inline-block";
+            return false;
+        }
+
+        lastAutomationData.trigger_device_ids = triggerDeviceIds;
+        lastAutomationData.trigger_state = +triggerState;
     }
     
     return true;
@@ -1532,11 +1637,35 @@ function validateAutomationInput(id=-1) {
 /******************************************************************************/
 function toggleTriggerDeviceSelection(id) {
     const tileElem = document.getElementById("triggerDeviceTile" + id);
+    /* Disable */
     if (tileElem.classList.contains("tile-selected")) {
         tileElem.classList.remove("tile-selected");
-    } else {
-        tileElem.classList.add("tile-selected");
+        let selectedTiles = document.querySelectorAll(".tile-selected");
+        if (selectedTiles.length == 0) {
+            loadTriggerSensorStateOptions();
+        }
+        return;
     }
+
+    /* Enable */
+    let device = devices[getIndexFromId(devices, id)];
+    let selectedTiles = document.querySelectorAll(".tile-selected");
+    for (let tile of selectedTiles) {
+        /* Only trigger devices */
+        if (!tile.id.includes("triggerDeviceTile")) {
+            continue;
+        }
+
+        let deviceId = parseInt(tile.id.replace("triggerDeviceTile", ""));
+        let tileDevice = devices[getIndexFromId(devices, deviceId)];
+        console.log(tile.id)
+        if (tileDevice.category != device.category) {
+            showBanner(TEXT_INVALID_MODEL, TEXT_ONLY_SENSORS_OF_SAME_CATEGORY_ALLOWED, BANNER_TYPE_WARNING);
+            return;
+        }
+    }
+    tileElem.classList.add("tile-selected");
+    loadTriggerSensorStateOptions(id);
 }
 
 /******************************************************************************/
@@ -1549,11 +1678,11 @@ function toggleTimeWindow() {
 
     if (timeWindowToggleElem.checked) {
         timeWindowToggleElem.textContent = TEXT_DEACTIVATE_TIME_WINDOW;
-        timeWindowToggleElem.style.color = "var(--error_text)";
+        timeWindowToggleElem.style.color = "var(--error-text)";
         timeWindowContainerElem.style.display = "block";
     } else {
         timeWindowToggleElem.textContent = TEXT_ACTIVATE_TIME_WINDOW;
-        timeWindowToggleElem.style.color = "var(--success_text)";
+        timeWindowToggleElem.style.color = "var(--success-text)";
         timeWindowContainerElem.style.display = "none";
     }
 }
@@ -1611,7 +1740,17 @@ function toggleCopyAutomationInvertedTriggerAndPower(state=undefined) {
             copyAutomationInvertedTriggerAndPowerToggleElem.className = "fa-solid fa-circle-xmark clickable";
             copyAutomationInvertedTriggerAndPowerToggleElem.title = TEXT_INVERTED_AUTOMATION_POWER_COPY_INACTIVE;
         }
-    } else if (triggerSelectElem.value == AUTOMATION_TRIGGER_DOOR_SENSOR || triggerSelectElem.value == AUTOMATION_TRIGGER_MOTION_SENSOR) {
+    } else if (triggerSelectElem.value == AUTOMATION_TRIGGER_SENSOR) {
+        if (copyAutomationInvertedTriggerAndPowerToggleElem.checked) {
+            delayTimeTogglesContainerElem.style.display = "flex";
+            copyAutomationInvertedTriggerAndPowerToggleElem.className = "fa-solid fa-circle-check clickable";
+            copyAutomationInvertedTriggerAndPowerToggleElem.title = TEXT_INVERTED_AUTOMATION_STATES_COPY_ACTIVE;
+        } else {
+            delayTimeTogglesContainerElem.style.display = "none";
+            copyAutomationInvertedTriggerAndPowerToggleElem.className = "fa-solid fa-circle-xmark clickable";
+            copyAutomationInvertedTriggerAndPowerToggleElem.title = TEXT_INVERTED_AUTOMATION_STATES_COPY_INACTIVE;
+        }
+    } else if (triggerSelectElem.value == AUTOMATION_TRIGGER_SWITCH) {
         if (copyAutomationInvertedTriggerAndPowerToggleElem.checked) {
             delayTimeTogglesContainerElem.style.display = "flex";
             copyAutomationInvertedTriggerAndPowerToggleElem.className = "fa-solid fa-circle-check clickable";

@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<script>
+    var page = LOGIN_PAGE;
+    var message = "{{ message }}";
+</script>
+
+<script src="../static/js/user_and_module_utilities.js" defer></script>
+<script src="../static/js/login_page.js" defer></script>
+<link rel="stylesheet" href="../static/css/styles_welcome_screen.css">
+
+<div id="welcomeContainer" class="container-form" style="height: 100vh;">
+    <div class="welcome-container">
+        <div id="welcomePicture" class="welcome-logo"><img src="../static/images/logo.png" alt="ZyraX Logo"></div>
+        <div id="welcomeTitle" class="welcome-title-container" style="margin-top: 32px;"></div>
+        <div class="get-started-button" style="animation: buttonFadeIn 2s ease 1.2s forwards;"><button onclick="scrollToSection('loginContainer');">Login</button></div>
+    </div>
+</div>
+
+<div id="loginContainer" class="container-form full-width" style="min-height: 100vh; width: 50%; margin: auto;">
+    <div class="base-container">
+        <p id="messageField" class="message" style="margin: 0px;"></p>
+
+        <div>
+            <input id="emailTxt" type="email" placeholder="Email" required>
+            <i id="rememberEmailIcon" class="fas fa-floppy-disk clickable" onclick="toggleRememberMe();" style="margin-left: 5px;"></i>
+        </div>
+
+        <div>
+            <input id="passwordTxt" type="password" placeholder="Password" required>
+            <i id="showPasswordIcon" class="fas fa-eye clickable" onclick="showPassword();" style="margin-left: 5px;"></i>
+        </div>
+        <div style="display: flex; justify-content: center;">
+            <button onclick="login();">Login</button>
+        </div>
+    </div>
+</div>
+
+<div id="profileContainer" class="container-form" style="min-height: 100vh; width: 50%; margin: auto;">
+    <div id="profileSelectContainer" style="display: flex; gap: 30px; flex-wrap: wrap; justify-content: center;"></div>
+</div>
+
+<div id="emptyContainer" class="container-form" style="min-height: 100vh; width: 50%; margin: auto;">
+    <div id="personalWelcomeTitle" class="welcome-title-container" style="margin-top: 32px;"></div>
+</div>
+
+{% endblock %}

@@ -40,15 +40,21 @@
 
     <body>
         <script>
-            var alarmActivated = "{{ alarm_activated }}" == "True";
+            const APPLICATION_VERSION = "{{ APPLICATION_VERSION }}";
+            const RF_RECEIVER_PRESENT = "{{ RF_RECEIVER_PRESENT }}" == "True";
+            const RF_TRANSMITTER_PRESENT = "{{ RF_TRANSMITTER_PRESENT }}" == "True";
+            let alarmActivated = "{{ alarm_activated }}" == "True";
+            let userProfiles = JSON.parse('{{ user_profiles | tojson | safe }}');
 
+            const INITIAL_SETUP_PAGE = "INITIAL_SETUP_PAGE";
+            const ACCOUNT_PAGE = "ACCOUNT_PAGE";
+            const LOGIN_PAGE = "LOGIN_PAGE";
             const AUTOMATIONS_PAGE = "AUTOMATIONS_PAGE";
             const DASHBOARD_PAGE = "DASHBOARD_PAGE";
             const CONFIGURATION_PAGE = "CONFIGURATION_PAGE";
             const LEDSTRIP_PAGE = "LEDSTRIP_PAGE";
             const SENSOR_PAGE = "SENSOR_PAGE";
             const ALARM_PAGE = "ALARM_PAGE";
-
         </script>
 
         <script src="../static/js/language_pack_english.js"></script>
@@ -65,7 +71,7 @@
         </div>
         
     </body>
-    
+
     <footer>                                                                <!-- Begin of the navigation bar -->
         <nav id="navigationBarContainer"></nav>
     </footer>                                                               <!-- End of the navigation bar -->

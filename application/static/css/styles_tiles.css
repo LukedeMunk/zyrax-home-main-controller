@@ -12,19 +12,17 @@
 /******************************************************************************/
 .flex-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, 180px);
-    grid-template-rows: repeat(auto-fill, 45px);
-    grid-gap: 10px;
+    gap: 10px;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
 }
 
 .tile {
     height: 60px;
-    width: 140px;
     grid-row: span 2;
 
     cursor: pointer;
     padding: 20px;
-    font-size: 10pt;
+    font-size: var(--font-size-p);
     text-align: left;
     background-color: var(--background3);
     border-radius: 15px;
@@ -35,17 +33,17 @@
     justify-content: center;
     align-items: center;
     transition: 200ms;
-    box-shadow: 0 6px 12px var(--shadow-color);
+    box-shadow: var(--shadow-small);
 }
 
 .dark-shadow {
-    box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px
+    box-shadow: var(--shadow-small);
 }
 
 .tile-selected {
-    color: var(--secondary_text);
+    color: var(--secondary-text);
     background: var(--background4);
-    outline: 2px solid var(--icon_green) !important;
+    outline: 2px solid var(--icon-green) !important;
     border-radius: 15px;
 }
 
@@ -68,7 +66,6 @@
 }
 
 .double-horizontal-centered {
-    width: 330px;       /*2*140 +15 from gap +40 for padding */
     grid-column: span 2;
     display: flex;
     flex-direction: column;
@@ -76,7 +73,6 @@
 }
   
 .double-horizontal {
-    width: 330px;       /*2*140 +15 from gap +40 for padding */
     height: 60px;
     grid-row: span 2;
     grid-column: span 2;
@@ -94,7 +90,6 @@
 }
 
 .double-horizontal-vertical {
-    width: 330px;       /*2*140 +15 from gap +40 for padding */
     height: 170px;       /*2*180 +15 from gap*/
     grid-row: span 4;
     grid-column: span 2;

@@ -156,7 +156,7 @@ function generateTiles() {
         tileContainer = document.getElementById("tile" + index);
         tileContainer.style.cursor = "pointer";
         tileContainer.style.backgroundColor = "var(--background3)";
-        tileContainer.style.boxShadow = "0 6px 12px var(--shadow-color)";
+        tileContainer.style.boxShadow = "var(--shadow-small)";
         tileContainer.className = "tile single";
         tileContainer.setAttribute("onclick", "loadAddTileModal();");
     
@@ -186,32 +186,32 @@ function generateTilePreviews() {
     
     if (tileTypeSelectElem.value == TILE_TYPE_DEVICE) {
         let device = devices[getIndexFromId(devices, tileTargetSelectElem.value)];
-        generateDevice1x1Tile(device.name, undefined, undefined, undefined, true, device.icon + " fa-xl");
+        generateDevice1x1Tile(device, undefined, undefined, undefined, true, device.icon + " fa-xl");
         if (device.type != DEVICE_TYPE_IP_CAMERA) {
             if (device.type == DEVICE_TYPE_LEDSTRIP) {
-                generateDevice1x2Tile(device.name, undefined, "", undefined, undefined, undefined, true, device.icon + " fa-xl");
+                generateDevice1x2Tile(device, undefined, "", undefined, undefined, undefined, true, device.icon + " fa-xl");
             } else {
-                generateDevice1x2Tile(device.name, undefined, undefined, undefined, undefined, undefined, true, device.icon + " fa-xl");
+                generateDevice1x2Tile(device, undefined, undefined, undefined, undefined, undefined, true, device.icon + " fa-xl");
             }
         }
         if (device.type == DEVICE_TYPE_LEDSTRIP) {
-            generateDevice4x2TileSlider(device.name, undefined, "", undefined, undefined, undefined, undefined, undefined, true, device.icon + " fa-xl");
+            generateDevice4x2TileSlider(device, undefined, "", undefined, undefined, undefined, undefined, undefined, true, device.icon + " fa-xl");
         }
         if (device.type == DEVICE_TYPE_IP_CAMERA) {
-            generateDevice4x4TileCamera(device.name, undefined, undefined, true);
+            generateDevice4x4TileCamera(device, undefined, undefined, true);
         }
     } else if (tileTypeSelectElem.value == TILE_TYPE_GROUP) {
         let group = groups[getIndexFromId(groups, tileTargetSelectElem.value)];
-        generateDevice1x1Tile(group.name, undefined, undefined, undefined, true, group.icon + " fa-xl");
+        generateDevice1x1Tile(group, undefined, undefined, undefined, true, group.icon + " fa-xl");
         if (group.type != DEVICE_TYPE_IP_CAMERA) {
             if (group.type == DEVICE_TYPE_LEDSTRIP) {
-                generateDevice1x2Tile(group.name, undefined, "", undefined, undefined, undefined, true, group.icon + " fa-xl");
+                generateDevice1x2Tile(group, undefined, "", undefined, undefined, undefined, true, group.icon + " fa-xl");
             } else {
-                generateDevice1x2Tile(group.name, undefined, undefined, undefined, undefined, undefined, true, group.icon + " fa-xl");
+                generateDevice1x2Tile(group, undefined, undefined, undefined, undefined, undefined, true, group.icon + " fa-xl");
             }
         }
         if (group.type == DEVICE_TYPE_LEDSTRIP) {
-            generateDevice4x2TileSlider(group.name, undefined, "", undefined, undefined, undefined, undefined, undefined, true, group.icon + " fa-xl");
+            generateDevice4x2TileSlider(group, undefined, "", undefined, undefined, undefined, undefined, undefined, true, group.icon + " fa-xl");
         }
         if (group.type == DEVICE_TYPE_IP_CAMERA) {
             generateDevice4x4TileCamera(group.name, undefined, undefined, true);
@@ -304,8 +304,8 @@ function generateDeviceTile(tile) {
             rangeFunction = "setLedstripBrightness(" + device.id + ");";
             redirectFunction = "visitPage(event, 'control_leds?id=" + device.id + "');";
             break;
-        case DEVICE_TYPE_SENSOR:
-            redirectFunction = "visitPage(event, 'control_sensors');";
+        case DEVICE_TYPE_RF_DEVICE:
+            redirectFunction = "visitPage(event, 'control_rf_devices');";
             break;
         case DEVICE_TYPE_IP_CAMERA:
             redirectFunction = "visitPage(event, 'control_camera?id=" + device.id + "');";
@@ -313,11 +313,11 @@ function generateDeviceTile(tile) {
     }
 
     if (tile.size == TILE_SIZE_1X1) {
-        generateDevice1x1Tile(device.name, tile, redirectFunction, "deviceIcon" + device.id);
+        generateDevice1x1Tile(device, tile, redirectFunction, "deviceIcon" + device.id);
     } else if (tile.size == TILE_SIZE_1X2) {
-        generateDevice1x2Tile(device.name, tile, redirectFunction, powerFunction, "devicePowerCb" + device.id, "deviceIcon" + device.id);
+        generateDevice1x2Tile(device, tile, redirectFunction, powerFunction, "devicePowerCb" + device.id, "deviceIcon" + device.id);
     } else if (tile.size == TILE_SIZE_4X2) {
-        generateDevice4x2TileSlider(device.name,
+        generateDevice4x2TileSlider(device,
                                     tile,
                                     redirectFunction,
                                     powerFunction,
@@ -333,7 +333,7 @@ function generateDeviceTile(tile) {
 /******************************************************************************/
 /*!
   @brief    Generates a 1x1 device tile.
-  @param    name                Device name
+  @param    device              Device object
   @param    tile                Tile to generate
   @param    redirectFunction    Function for redirecting to the device
   @param    iconElementId       ID of the icon DOM element
@@ -341,11 +341,12 @@ function generateDeviceTile(tile) {
   @param    iconClass           Icon class for the preview tile
 */
 /******************************************************************************/
-function generateDevice1x1Tile(name, tile=undefined, redirectFunction=undefined, iconElementId=undefined, previewTile=false, iconClass=undefined) {
+function generateDevice1x1Tile(device, tile=undefined, redirectFunction=undefined, iconElementId=undefined, previewTile=false, iconClass=undefined) {
     let tileItem;
     let icon;
     let tileContainer;
     let tileName;
+    let tileRfWarningIcon;
 
     if (previewTile) {
         tileContainer = document.createElement("div");
@@ -361,7 +362,7 @@ function generateDevice1x1Tile(name, tile=undefined, redirectFunction=undefined,
     }
 
     tileContainer.className = getClassFromSize(TILE_SIZE_1X1);
-    tileContainer.style.boxShadow = "0 6px 12px var(--shadow-color)";
+    tileContainer.style.boxShadow = "var(--shadow-small)";
 
     if (!previewTile && configureDashboardMode) {
         tileContainer.style.backgroundColor = "var(--background5)";
@@ -370,12 +371,23 @@ function generateDevice1x1Tile(name, tile=undefined, redirectFunction=undefined,
 
     /* Name */
     tileItem = document.createElement("div");
+    tileItem.style.display = "flex";
+    tileItem.style.gap = "10px";
+    tileItem.style.alignItems = "baseline";
     tileItem.style.gridColumn = "span 2";
 
     tileName = document.createElement("p");
-    tileName.textContent = name;
-    
+    tileName.textContent = device.name;
     tileItem.appendChild(tileName);
+
+    tileRfWarningIcon = document.createElement("i");
+    tileRfWarningIcon.className = "fa-duotone fa-solid fa-circle-exclamation";
+    tileRfWarningIcon.title = TEXT_NO_RF_RECEIVER_PRESENT;
+    
+    if (!RF_RECEIVER_PRESENT && device.type == DEVICE_TYPE_RF_DEVICE) {
+        tileItem.appendChild(tileRfWarningIcon);
+    }
+    
     tileContainer.appendChild(tileItem);
 
     /* Icon */
@@ -398,7 +410,7 @@ function generateDevice1x1Tile(name, tile=undefined, redirectFunction=undefined,
 /******************************************************************************/
 /*!
   @brief    Generates a 1x2 device tile.
-  @param    name                Device name
+  @param    device              Device object
   @param    tile                Tile to generate
   @param    redirectFunction    Function for redirecting to the device
   @param    powerFunction       Function for setting the power
@@ -408,7 +420,7 @@ function generateDevice1x1Tile(name, tile=undefined, redirectFunction=undefined,
   @param    iconClass           Icon class for the preview tile
 */
 /******************************************************************************/
-function generateDevice1x2Tile(name,
+function generateDevice1x2Tile(device,
                                 tile=undefined,
                                 redirectFunction=undefined,
                                 powerFunction=undefined,
@@ -420,6 +432,7 @@ function generateDevice1x2Tile(name,
     let icon;
     let tileContainer;
     let tileName;
+    let tileRfWarningIcon;
 
     if (previewTile) {
         tileContainer = document.createElement("div");
@@ -435,7 +448,7 @@ function generateDevice1x2Tile(name,
     }
 
     tileContainer.className = getClassFromSize(TILE_SIZE_1X2);
-    tileContainer.style.boxShadow = "0 6px 12px var(--shadow-color)";
+    tileContainer.style.boxShadow = "var(--shadow-small)";
 
     if (!previewTile && configureDashboardMode) {
         tileContainer.style.backgroundColor = "var(--background5)";
@@ -444,12 +457,23 @@ function generateDevice1x2Tile(name,
 
     /* Name */
     tileItem = document.createElement("div");
+    tileItem.style.display = "flex";
+    tileItem.style.gap = "10px";
+    tileItem.style.alignItems = "baseline";
     tileItem.style.gridColumn = "span 2";
 
     tileName = document.createElement("p");
-    tileName.textContent = name;
-    
+    tileName.textContent = device.name;
     tileItem.appendChild(tileName);
+
+    tileRfWarningIcon = document.createElement("i");
+    tileRfWarningIcon.className = "fa-duotone fa-solid fa-circle-exclamation";
+    tileRfWarningIcon.title = TEXT_NO_RF_RECEIVER_PRESENT;
+    
+    if (!RF_RECEIVER_PRESENT && device.type == DEVICE_TYPE_RF_DEVICE) {
+        tileItem.appendChild(tileRfWarningIcon);
+    }
+    
     tileContainer.appendChild(tileItem);
 
     /* Icon */
@@ -508,7 +532,7 @@ function generateDevice1x2Tile(name,
 /******************************************************************************/
 /*!
   @brief    Generates a 4x2 device tile with slider.
-  @param    name                Device name
+  @param    device              Device object
   @param    tile                Tile to generate
   @param    redirectFunction    Function for redirecting to the device
   @param    powerFunction       Function for setting the power
@@ -519,7 +543,7 @@ function generateDevice1x2Tile(name,
   @param    iconClass           Icon class for the preview tile
 */
 /******************************************************************************/
-function generateDevice4x2TileSlider(name,
+function generateDevice4x2TileSlider(device,
                                         tile,
                                         redirectFunction,
                                         powerFunction,
@@ -548,7 +572,7 @@ function generateDevice4x2TileSlider(name,
     }
 
     tileContainer.className = getClassFromSize(TILE_SIZE_4X2);
-    tileContainer.style.boxShadow = "0 6px 12px var(--shadow-color)";
+    tileContainer.style.boxShadow = "var(--shadow-small)";
     tileContainer.style.gridTemplateColumns = "repeat(3, 33%)";
 
     if (!previewTile && configureDashboardMode) {
@@ -560,7 +584,7 @@ function generateDevice4x2TileSlider(name,
     tileItem = document.createElement("div");
 
     tileName = document.createElement("p");
-    tileName.textContent = name;
+    tileName.textContent = device.name;
     
     tileItem.appendChild(tileName);
     tileContainer.appendChild(tileItem);
@@ -625,6 +649,7 @@ function generateDevice4x2TileSlider(name,
         rangeInput.id = rangeElementId;
         rangeInput.max = MAX_LEDSTRIP_BRIGHTNESS;
         rangeInput.style.width = "100%";
+        rangeInput.style.maxWidth = "none";
         if (onchangeFunction != undefined) {
             rangeInput.setAttribute("onchange", onchangeFunction);
             if (tile.type == TILE_TYPE_GROUP) {
@@ -692,7 +717,7 @@ function generateDevice4x4TileCamera(name, tile, redirectFunction, previewTile=f
     }
 
     tileContainer.className = getClassFromSize(TILE_SIZE_4X4);
-    tileContainer.style.boxShadow = "0 6px 12px var(--shadow-color)";
+    tileContainer.style.boxShadow = "var(--shadow-small)";
 
     if (!previewTile && configureDashboardMode) {
         tileContainer.style.backgroundColor = "var(--background5)";
@@ -749,7 +774,7 @@ function generateWeatherTile(tile, previewTile=false, size=TILE_SIZE_4X2) {
     }
 
     tileContainer.className = "tile weather-tile";
-    tileContainer.style.boxShadow = "0 6px 12px var(--shadow-color)";
+    tileContainer.style.boxShadow = "var(--shadow-small)";
         
     switch (size) {
         case TILE_SIZE_4X2:
@@ -978,7 +1003,7 @@ function generateDateTimeTile(tile, previewTile=false, size=TILE_SIZE_4X2) {
         }
     }
 
-    tileContainer.style.boxShadow = "0 6px 12px var(--shadow-color)";
+    tileContainer.style.boxShadow = "var(--shadow-small)";
 
     if (!previewTile && configureDashboardMode) {
         tileContainer.style.backgroundColor = "var(--background5)";
@@ -1039,8 +1064,8 @@ function generateGroupTile(tile) {
             rangeFunction = "setLedstripGroupBrightness(" + group.id + ");";
             redirectFunction = "visitPage(event, 'control_ledstrip_group?id=" + group.id + "');";
             break;
-        case DEVICE_TYPE_SENSOR:
-            redirectFunction = "visitPage(event, 'control_sensors');";
+        case DEVICE_TYPE_RF_DEVICE:
+            redirectFunction = "visitPage(event, 'control_rf_devices');";
             break;
         case DEVICE_TYPE_IP_CAMERA:
             redirectFunction = "visitPage(event, 'control_camera_groups?id=" + group.id + "');";
@@ -1048,11 +1073,11 @@ function generateGroupTile(tile) {
     }
 
     if (tile.size == TILE_SIZE_1X1) {
-        generateDevice1x1Tile(group.name, tile, redirectFunction, "deviceGroupIcon" + group.id);
+        generateDevice1x1Tile(group, tile, redirectFunction, "deviceGroupIcon" + group.id);
     } else if (tile.size == TILE_SIZE_1X2) {
-        generateDevice1x2Tile(group.name, tile, redirectFunction, powerFunction, "deviceGroupPowerCb" + group.id, "deviceGroupIcon" + group.id);
+        generateDevice1x2Tile(group, tile, redirectFunction, powerFunction, "deviceGroupPowerCb" + group.id, "deviceGroupIcon" + group.id);
     } else if (tile.size == TILE_SIZE_4X2) {
-        generateDevice4x2TileSlider(group.name,
+        generateDevice4x2TileSlider(group,
                                     tile,
                                     redirectFunction,
                                     powerFunction,
@@ -1104,7 +1129,7 @@ function generateAlarmTile(tile, previewTile=false, size) {
     }
 
     tileContainer.className = getClassFromSize(size);
-    tileContainer.style.boxShadow = "0 6px 12px var(--shadow-color)";
+    tileContainer.style.boxShadow = "var(--shadow-small)";
 
     if (!previewTile && configureDashboardMode) {
         tileContainer.style.backgroundColor = "var(--background5)";
@@ -1207,7 +1232,7 @@ function generateAlarm1x2Tile(tile, previewTile=false) {
     }
 
     tileContainer.className = "tile alarm-tile";
-    tileContainer.style.boxShadow = "0 6px 12px var(--shadow-color)";
+    tileContainer.style.boxShadow = "var(--shadow-small)";
 
     /* When in dashboard configuration mode */
     if (!previewTile && configureDashboardMode) {
@@ -1885,7 +1910,7 @@ function loadDashboardConfiguration(id=undefined, save=true) {
 
     generateGrid();
     generateTiles();
-    updateTileStates();
+    updateTileStates(true);
     loadTopBar();
 
     if (configureDashboardMode) {
@@ -2064,14 +2089,16 @@ function pauseRefreshes(seconds=2) {
 /******************************************************************************/
 /*!
   @brief    Updates the tile states.
+  @param    showErrorMessages   If true, banners with possible tile error
+            messages are shown.
 */
 /******************************************************************************/
-function updateTileStates() {
+function updateTileStates(showErrorMessages=false) {
     let configuration = dashboardConfigurations[getIndexFromId(dashboardConfigurations, selectedDashboard)];
     
     for (let tile of configuration.tiles) {
         if (tile.type == TILE_TYPE_DEVICE) {
-            updateDeviceTileStates(tile);
+            updateDeviceTileStates(tile, showErrorMessages);
         } else if (tile.type == TILE_TYPE_GROUP) {
             updateGroupTileStates(tile);
         } else if (tile.type == TILE_TYPE_ALARM) {
@@ -2084,9 +2111,11 @@ function updateTileStates() {
 /*!
   @brief    Updates the specified device tile states.
   @param    tile                Tile object
+  @param    showErrorMessages   If true, banners with possible tile error
+            messages are shown.
 */
 /******************************************************************************/
-function updateDeviceTileStates(tile) {
+function updateDeviceTileStates(tile, showErrorMessages=false) {
     let device = devices[getIndexFromId(devices, tile.device_id)];
 
     if (device.type == DEVICE_TYPE_LEDSTRIP) {
@@ -2098,19 +2127,38 @@ function updateDeviceTileStates(tile) {
             document.getElementById("ledstripBrightnessRange" + device.id).value = device.brightness;
         }
 
-        document.getElementById("deviceIcon" + device.id).className = "fas fa-exclamation-circle fa-xl";
+        let iconElem = document.getElementById("deviceIcon" + device.id);
 
-        if (device.connection_status) {
-            if (device.power) {
-                document.getElementById("deviceIcon" + device.id).className = device.icon + " fa-xl";
-            } else {
-                document.getElementById("deviceIcon" + device.id).className = device.icon_low_state + " fa-xl";
+        if (device.number_of_leds == 0) {
+            iconElem.className = "fa-duotone fa-solid fa-circle-exclamation fa-xl";
+            iconElem.title = TEXT_LED_ADDRESSING_NOT_CONFIGURED;
+            if (showErrorMessages) {
+                showBanner(
+                            TEXT_ACTION_REQUIRED,
+                            VAR_TEXT_LED_ADDRESSING_NOT_CONFIGURED_CLICK_TO_CONFIGURE(device.name),
+                            BANNER_TYPE_WARNING,
+                            0,
+                            "updateLedAddressing(" + device.id + ");"
+                        );
             }
+            return;
+        }
+
+        if (!device.connection_status) {
+            iconElem.className = "fa-duotone fa-solid fa-circle-exclamation fa-xl";
+            iconElem.title = TEXT_NOT_CONNECTED;
+            return;
+        }
+        
+        if (device.power) {
+            iconElem.className = device.icon + " fa-xl";
+        } else {
+            iconElem.className = device.icon_low_state + " fa-xl";
         }
         return;
     }
     
-    if (device.type == DEVICE_TYPE_SENSOR) {
+    if (device.type == DEVICE_TYPE_RF_DEVICE) {
         if (device.state) {
             document.getElementById("deviceIcon" + device.id).className = device.icon + " fa-xl";
         } else {
@@ -2127,7 +2175,7 @@ function updateDeviceTileStates(tile) {
         if (device.connection_status) {
             document.getElementById("deviceIcon" + device.id).className = device.icon + " fa-xl";
         } else {
-            document.getElementById("deviceIcon" + device.id).className = "fas fa-exclamation-circle fa-xl";
+            document.getElementById("deviceIcon" + device.id).className = "fa-duotone fa-solid fa-circle-exclamation fa-xl";
         }
         return;
     }
@@ -2338,7 +2386,7 @@ function getCompatibleTileSizes(tile) {
         let device = devices[getIndexFromId(devices, tile.device_id)];
         if (device.type == DEVICE_TYPE_LEDSTRIP) {
             return [TILE_SIZES[0], TILE_SIZES[1], TILE_SIZES[2]];
-        } else if (device.type == DEVICE_TYPE_SENSOR) {
+        } else if (device.type == DEVICE_TYPE_RF_DEVICE) {
             return [TILE_SIZES[0], TILE_SIZES[1]];
         } else {
             return TILE_SIZES;
@@ -2349,7 +2397,7 @@ function getCompatibleTileSizes(tile) {
         let group = groups[getIndexFromId(groups, tile.group_id)];
         if (group.type == DEVICE_TYPE_LEDSTRIP) {
             return [TILE_SIZES[0], TILE_SIZES[1], TILE_SIZES[2]];
-        } else if (group.type == DEVICE_TYPE_SENSOR) {
+        } else if (group.type == DEVICE_TYPE_RF_DEVICE) {
             return [TILE_SIZES[0], TILE_SIZES[1]];
         } else {
             return TILE_SIZES;

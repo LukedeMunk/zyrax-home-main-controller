@@ -9,7 +9,7 @@
 #           https://github.com/LukedeMunk/zyrax-home-main-controller
 #
 ################################################################################
-from flask import Blueprint, request                                            #Import flask blueprints and requests
+from flask import Blueprint, request, session                                   #Import flask blueprints and requests
 import configuration as c                                                       #Import application configuration variables
 from DeviceManager import DeviceManager                                         #Import device manager
 from server_manager import generate_json_http_response
@@ -26,6 +26,9 @@ ledstrip_bp = Blueprint("ledstrip_blueprints", __name__)
 ################################################################################
 @ledstrip_bp.route("/add_ledstrip", methods=["POST"])
 def add_ledstrip():
+    if "account_id" not in session:
+        return generate_json_http_response(c.HTTP_CODE_UNAUTHORIZED)
+    
     config = {
         "name" : request.form.get("name"),
         "hostname" : request.form.get("hostname"),
@@ -36,7 +39,7 @@ def add_ledstrip():
         "sensor_inverted" : int(request.form.get("sensor_inverted")),
         "sensor_model" : c.LEDSTRIP_SENSOR_MODEL_CONTACT_SWITCH,
         "number_of_leds" : 0,
-        "driver" : int(request.form.get("driver")),
+        "model_id" : int(request.form.get("model_id")),
     }
 
     if "sensor_model" in request.form.get("sensor_model"):
@@ -55,6 +58,9 @@ def add_ledstrip():
 ################################################################################
 @ledstrip_bp.route("/update_ledstrip", methods=["POST"])
 def update_ledstrip():
+    if "account_id" not in session:
+        return generate_json_http_response(c.HTTP_CODE_UNAUTHORIZED)
+    
     id = int(request.form.get("id"))
     
     config = {}
@@ -69,8 +75,8 @@ def update_ledstrip():
         config["icon_low_state"] = request.form.get("icon_low_state")
     if request.form.get("ip_address") is not None:
         config["ip_address"] = request.form.get("ip_address")
-    if request.form.get("driver") is not None:
-        config["driver"] = int(request.form.get("driver"))
+    if request.form.get("model_id") is not None:
+        config["model_id"] = int(request.form.get("model_id"))
 
     if request.form.get("has_sensor") is not None:
         config["has_sensor"] = int(request.form.get("has_sensor"))
@@ -91,6 +97,9 @@ def update_ledstrip():
 ################################################################################
 @ledstrip_bp.route("/update_ledstrip_leds", methods=["POST"])
 def update_ledstrip_leds():
+    if "account_id" not in session:
+        return generate_json_http_response(c.HTTP_CODE_UNAUTHORIZED)
+    
     request_data = request.json
 
     id = int(request_data.get("id"))
@@ -109,6 +118,9 @@ def update_ledstrip_leds():
 ################################################################################
 @ledstrip_bp.route("/delete_ledstrip", methods=["POST"])
 def delete_ledstrip():
+    if "account_id" not in session:
+        return generate_json_http_response(c.HTTP_CODE_UNAUTHORIZED)
+    
     id = int(request.form.get("id"))
     dm.delete_device(id)
 
@@ -121,6 +133,9 @@ def delete_ledstrip():
 ################################################################################
 @ledstrip_bp.route("/reboot_ledstrip", methods=["POST"])
 def reboot_ledstrip():
+    if "account_id" not in session:
+        return generate_json_http_response(c.HTTP_CODE_UNAUTHORIZED)
+    
     id = int(request.form.get("id"))
     dm.reboot_ledstrip(id)
 
@@ -135,6 +150,9 @@ def reboot_ledstrip():
 ################################################################################
 @ledstrip_bp.route("/draw_realtime_leds", methods=["POST"])
 def draw_realtime_leds():
+    if "account_id" not in session:
+        return generate_json_http_response(c.HTTP_CODE_UNAUTHORIZED)
+    
     request_data = request.json
 
     id = int(request_data.get("id"))
@@ -150,6 +168,9 @@ def draw_realtime_leds():
 ################################################################################
 @ledstrip_bp.route("/set_ledstrip_color", methods=["POST"])
 def set_ledstrip_color():
+    if "account_id" not in session:
+        return generate_json_http_response(c.HTTP_CODE_UNAUTHORIZED)
+    
     id = int(request.form.get("id"))
     dm.set_ledstrip_color(id, request.form.get("color"))
         
@@ -162,6 +183,9 @@ def set_ledstrip_color():
 ################################################################################
 @ledstrip_bp.route("/set_ledstrip_group_color", methods=["POST"])
 def set_ledstrip_group_color():
+    if "account_id" not in session:
+        return generate_json_http_response(c.HTTP_CODE_UNAUTHORIZED)
+    
     id = int(request.form.get("id"))
     dm.set_ledstrip_group_color(id, request.form.get("color"))
         
@@ -174,6 +198,9 @@ def set_ledstrip_group_color():
 ################################################################################
 @ledstrip_bp.route("/set_ledstrip_brightness", methods=["POST"])
 def set_ledstrip_brightness():
+    if "account_id" not in session:
+        return generate_json_http_response(c.HTTP_CODE_UNAUTHORIZED)
+    
     id = int(request.form.get("id"))
     brightness = int(request.form.get("brightness"))
     dm.set_ledstrip_brightness(id, brightness)
@@ -187,6 +214,9 @@ def set_ledstrip_brightness():
 ################################################################################
 @ledstrip_bp.route("/set_ledstrip_group_brightness", methods=["POST"])
 def set_ledstrip_group_brightness():
+    if "account_id" not in session:
+        return generate_json_http_response(c.HTTP_CODE_UNAUTHORIZED)
+    
     id = int(request.form.get("id"))
     brightness = int(request.form.get("brightness"))
     dm.set_ledstrip_group_brightness(id, brightness)
@@ -200,6 +230,9 @@ def set_ledstrip_group_brightness():
 ################################################################################
 @ledstrip_bp.route("/set_ledstrip_mode", methods=["POST"])
 def set_ledstrip_mode():
+    if "account_id" not in session:
+        return generate_json_http_response(c.HTTP_CODE_UNAUTHORIZED)
+    
     id = int(request.form.get("id"))
     mode = int(request.form.get("mode"))
     dm.set_ledstrip_mode(id, mode)
@@ -213,6 +246,9 @@ def set_ledstrip_mode():
 ################################################################################
 @ledstrip_bp.route("/set_ledstrip_group_mode", methods=["POST"])
 def set_ledstrip_group_mode():
+    if "account_id" not in session:
+        return generate_json_http_response(c.HTTP_CODE_UNAUTHORIZED)
+    
     id = int(request.form.get("id"))
     mode = int(request.form.get("mode"))
     dm.set_ledstrip_group_mode(id, mode)
@@ -227,6 +263,9 @@ def set_ledstrip_group_mode():
 ################################################################################
 @ledstrip_bp.route("/config_mode", methods=["POST"])
 def config_mode():
+    if "account_id" not in session:
+        return generate_json_http_response(c.HTTP_CODE_UNAUTHORIZED)
+    
     request_data = request.json
 
     mode_id = int(request_data.get("mode_id"))
@@ -245,6 +284,9 @@ def config_mode():
 ################################################################################
 @ledstrip_bp.route("/config_group_mode", methods=["POST"])
 def config_group_mode():
+    if "account_id" not in session:
+        return generate_json_http_response(c.HTTP_CODE_UNAUTHORIZED)
+    
     request_data = request.json
 
     mode_id = int(request_data.get("mode_id"))
@@ -262,6 +304,9 @@ def config_group_mode():
 ################################################################################
 @ledstrip_bp.route("/set_ledstrip_power_animation", methods=["POST"])
 def set_ledstrip_power_animation():
+    if "account_id" not in session:
+        return generate_json_http_response(c.HTTP_CODE_UNAUTHORIZED)
+    
     id = int(request.form.get("id"))
     power_animation = int(request.form.get("power_animation"))
     dm.set_ledstrip_power_animation(id, power_animation)
@@ -275,6 +320,9 @@ def set_ledstrip_power_animation():
 ################################################################################
 @ledstrip_bp.route("/set_ledstrip_group_power_animation", methods=["POST"])
 def set_ledstrip_group_power_animation():
+    if "account_id" not in session:
+        return generate_json_http_response(c.HTTP_CODE_UNAUTHORIZED)
+    
     id = int(request.form.get("id"))
     power_animation = int(request.form.get("power_animation"))
     dm.set_ledstrip_group_power_animation(id, power_animation)
@@ -288,6 +336,9 @@ def set_ledstrip_group_power_animation():
 ################################################################################
 @ledstrip_bp.route("/check_ledstrip_connection_status", methods=["GET"])
 def check_ledstrip_connection_status():
+    if "account_id" not in session:
+        return generate_json_http_response(c.HTTP_CODE_UNAUTHORIZED)
+    
     id = int(request.args.get("id"))
     status = dm.check_ledstrip_connection_status(id)
 
@@ -303,6 +354,9 @@ def check_ledstrip_connection_status():
 #
 ################################################################################
 def generate_mode_config_dict_from_request(request_data):
+    if "account_id" not in session:
+        return generate_json_http_response(c.HTTP_CODE_UNAUTHORIZED)
+    
     config_dict = []
 
     for parameter in request_data["parameters"]:

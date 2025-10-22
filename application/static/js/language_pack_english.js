@@ -34,6 +34,11 @@ const TEXT_CANCEL = "Cancel";
 const TEXT_CHANGES_SAVED_SUCCESSFULLY = "The changes are saved successfully";
 const TEXT_CHECK_STATUS = "Check connection status";
 const TEXT_CHOOSE_TARGET_DEVICE_FIRST = "Choose a target device first";
+const TEXT_CHOOSE_TRIGGER_DEVICE_FIRST = "Choose a trigger device first";
+
+const TEXT_INVALID_MODEL = "Invalid device model";
+const TEXT_ONLY_SENSORS_OF_SAME_CATEGORY_ALLOWED = "Only sensors of the same category are allowed";
+
 const TEXT_CLEAR = "Clear";
 const TEXT_CLOSE = "Close";
 const TEXT_CLOSE_FORM = "Close form";
@@ -81,6 +86,7 @@ const TEXT_FIELD_NO_SYMBOLS = "This field can not contain any symbols";
 const TEXT_FIELD_ONLY_CHARS = "This field can only contain characters";
 const TEXT_FIELD_ONLY_NUMBERS = "This field can only contain numbers";
 const TEXT_FIELD_REQUIRED = "This field is required";
+const TEXT_PASSWORD_NOT_STRONG = "The password is not strong enough";
 const TEXT_FIELD_SAME_COLOR = "Please pick unique colors";
 const TEXT_FIELD_UNIQUE = "This field needs to be unique";
 const TEXT_FILE_NOT_SUPPORTED = "This file is not supported. File formats supported: WAV, MP3, AAC, OGG, FLAC and OPUS.";
@@ -108,7 +114,9 @@ const TEXT_INVERTED_AUTOMATION_STATES_COPY_ACTIVE = "Automation with inverted st
 const TEXT_INVERTED_AUTOMATION_STATES_COPY_INACTIVE = "Automation with inverted states (power and trigger) inactive";
 const TEXT_IP = "IP";
 const TEXT_ITEM_ADDED_SUCCESSFULLY = "The item is added successfully";
+const TEXT_PROFILE_ADDED_SUCCESSFULLY = "The profile is added successfully";
 const TEXT_ITEM_DELETED_SUCCESSFULLY = "The item is deleted successfully";
+const TEXT_PROFILE_DELETED_SUCCESSFULLY = "The profile is deleted successfully";
 const TEXT_KEY_NOT_VALID = "Key is not valid"
 const TEXT_LEDSTRIP = "Ledstrip";
 const TEXT_LEDSTRIP_RESETTED = "Ledstrip resetted successfully";
@@ -188,8 +196,10 @@ const TEXT_TIME_TURNING_OFF = "Time turning off";
 const TEXT_TIME_TURNING_ON = "Time turning on";
 const TEXT_TRIGGER = "Trigger";
 const TEXT_TRIGGER_LOGS = "Trigger logs";
-const TEXT_TRIGGER_SENSOR_STATE = "Trigger sensor state";
-const TEXT_TRIGGER_SENSORS = "Trigger sensors";
+const TEXT_TRIGGER_STATE = "Trigger state";
+const TEXT_TRIGGER_DEVICES = "Trigger devices";
+const TEXT_NO_RF_RECEIVER_PRESENT = "No RF receiver is present in the system, no RF codes can be received";
+
 const TEXT_TUESDAY = "Tuesday";
 const TEXT_TYPE = "Type";
 const TEXT_UPDATE_AUTOMATION = "Update automation";
@@ -209,7 +219,7 @@ const TEXT_VERSION_ALREADY_EXISTS = "Version already exists";
 const TEXT_WARNING = "Warning";
 const TEXT_WEDNESDAY = "Wednesday";
 const TEXT_WIND = "Wind";
-
+const TEXT_INVALID_EMAIL = "Invalid email"
 const TEXT_GROUP_DELETED = "Group deleted";
 const TEXT_LEDSTRIP_ADDED_CLICK_TO_CONFIGURE = "LED strip added succesfully, click here to configure the LED strip.";
 const TEXT_NO_ADDRESSING_CONFIGURATION_START_DRAWING = "No LED setup configuration present, start drawing the LED setup.";
@@ -222,12 +232,14 @@ const TEXT_DASHBOARD = "Dashboard";
 const TEXT_CHANGE_TILE_SIZE = "Change tile size";
 
 const TEXT_ADD_CODE = "Add code";
-const TEXT_LISTENING_TO_RF_CODES = "Listening to RF codes, trigger the sensor you want to add";
+const TEXT_LISTENING_TO_RF_CODES = "Listening to RF codes, trigger the RF device that you want to add";
 const TEXT_INVALID_ADDRESSING_NO_ADDRESSES = "Invalid LED addressing, no addresses assigned yet";
 const TEXT_MAXIMUM_NUMBER_OF_LEDS_REACHED = "Too many LEDs, maximum number of LEDs is XX";
 const TEXT_NO_OF_LEDS_CONFIGURED = "Configure the LEDs before saving";
+const TEXT_WELCOME = "Welcome";
+const TEXT_WELCOME_TO_THE_CONFIGURATION_PAGE = "Welcome to the configuration page. Here you can add new devices, see logs and configure the system.";
 
-
+const TEXT_PASSWORDS_DONT_MATCH = "The two passwords don't match";
 const TEXT_Q_ARE_YOU_SURE = "Are you sure?";
 const TEXT_Q_DEACTIVATE_ALARM = "The alarm is activated. Deactivate alarm?";
 const TEXT_Q_DELETE_APPLICATION_CONFIGURATION = "Do you want to reset the application configuration? This cannot be undone"
@@ -238,7 +250,29 @@ const TEXT_Q_DELETE_DASHBOARD = "Do you want to delete this dashboard?";
 const TEXT_ALARM = "Alarm";
 const TEXT_AUTO_ARM_ENABLED = "Auto-arm enabled";
 const TEXT_AUTO_ARM_DISABLED = "Auto-arm disabled";
+const TEXT_NO_TRIGGER_DEVICES_AVALABLE = "No trigger devices available";
+const TEXT_NO_TARGET_DEVICES_AVALABLE = "No target devices available";
+const TEXT_WRONG_CREDENTIALS = "Wrong email or password";
+const TEXT_WELCOME_BACK_LOGIN = "Welcome back, please log in";
+const TEXT_WELCOME_BACK_CHOOSE_PROFILE = "Welcome back, please choose profile";
+const TEXT_DONT_SHOW_PASSWORD = "Don't show password";
+const TEXT_SHOW_PASSWORD = "Show password";
 
+const TEXT_DONT_REMEMBER_ME = "I will remember you the next time. Click to disable that";
+const TEXT_REMEMBER_ME = "I won't know who you are the next time. Click so that I remember you";
+const TEXT_ADD_PROFILE = "Add profile";
+const TEXT_NO_FILE_SELECTED = "No file selected";
+const TEXT_DONT_CONFIGURE = "Don't configure";
+const TEXT_LED_ADDRESSING_NOT_CONFIGURED = "The LED addresses of this strip are not configured";
+const TEXT_ACTION_REQUIRED = "Action required";
+const TEXT_RF_DEVICES = "RF Devices"
+const TEXT_GROUPS = "Groups";
+
+function VAR_TEXT_LED_ADDRESSING_NOT_CONFIGURED_CLICK_TO_CONFIGURE(strip) {return "The LED addresses of " + strip + " are not configured. Click here to configure.";}
+
+function VAR_TEXT_WELCOME_BACK(name) {return "Hi " + name + ", welcome back";}
+function VAR_TEXT_ADD(name) {return "Add " + name;}
+function VAR_TEXT_UPDATE(name) {return "Update " + name;}
 
 function VAR_TEXT_ACTIVE_FROM(startTime, endTime) {return "Active from " + startTime + " until " + endTime;}
 function VAR_TEXT_AUTOMATION_DELAY_TIME(minutes) {return "The automation gets delayed with " + minutes + " minutes";}

@@ -581,7 +581,7 @@ function loadTriggerDeviceTiles() {
     triggerDeviceContainerElem.innerHTML = "";
     console.log(alarm)
     for (let device of devices) {
-        if (device.type != DEVICE_TYPE_SENSOR) {
+        if (device.type != DEVICE_TYPE_RF_DEVICE) {
             continue;
         }
         

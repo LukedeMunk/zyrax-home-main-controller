@@ -9,7 +9,7 @@
 #           https://github.com/LukedeMunk/zyrax-home-main-controller
 #
 ################################################################################
-from flask import Blueprint, request, after_this_request                        #Import flask blueprints and requests
+from flask import Blueprint, request, after_this_request, session               #Import flask blueprints and requests
 import configuration as c                                                       #Import application configuration variables
 from logger import logi, logw, loge                                             #Import logging functions
 from server_manager import generate_json_http_response
@@ -32,6 +32,9 @@ telegram_client = TelegramServiceClient()
 ################################################################################
 @configuration_bp.route("/update_rpi_rf_module", methods=["POST"])
 def update_rpi_rf_module():
+    if "account_id" not in session:
+        return generate_json_http_response(c.HTTP_CODE_UNAUTHORIZED)
+    
     with open(c.CONFIGURATION_FILE_PATH, "r") as file:
         configuration = json.load(file)
 
@@ -62,6 +65,9 @@ def update_rpi_rf_module():
 ################################################################################
 @configuration_bp.route("/update_weather_configuration", methods=["POST"])
 def update_weather_configuration():
+    if "account_id" not in session:
+        return generate_json_http_response(c.HTTP_CODE_UNAUTHORIZED)
+    
     with open(c.CONFIGURATION_FILE_PATH, "r") as file:
         configuration = json.load(file)
 
@@ -110,6 +116,9 @@ def update_weather_configuration():
 ################################################################################
 @configuration_bp.route("/update_telegram_configuration", methods=["POST"])
 def update_telegram_configuration():
+    if "account_id" not in session:
+        return generate_json_http_response(c.HTTP_CODE_UNAUTHORIZED)
+    
     with open(c.CONFIGURATION_FILE_PATH, "r") as file:
         configuration = json.load(file)
 
@@ -133,6 +142,9 @@ def update_telegram_configuration():
 ################################################################################
 @configuration_bp.route("/reset_configuration", methods=["POST"])
 def reset_configuration():
+    if "account_id" not in session:
+        return generate_json_http_response(c.HTTP_CODE_UNAUTHORIZED)
+    
     if os.path.exists(c.CONFIGURATION_FILE_PATH):
         os.remove(c.CONFIGURATION_FILE_PATH)
         logw("Configuration file resetted")

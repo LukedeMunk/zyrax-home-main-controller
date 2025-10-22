@@ -1,0 +1,107 @@
+/******************************************************************************/
+/*
+ * File:    styles_welcome_screen.css
+ * Author:  Luke de Munk
+ * Version: 0.9.0
+ * 
+ * Brief:   Additional styles for the welcome screen of the application.
+ *
+ *          More information:
+ *          https://github.com/LukedeMunk/zyrax-home-main-controller
+ */
+/******************************************************************************/
+html, body {
+    overflow: hidden;
+}
+
+nav {
+    display: none;
+}
+
+.welcome-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Logo */
+.welcome-logo {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    background: linear-gradient(145deg, #00b4d888, #0076b688);
+    box-shadow: 0 0 30px #0096c7aa;
+    animation: logoFadeIn 2s ease forwards;
+    opacity: 0;
+}
+
+.welcome-logo img {
+    width: 90px;
+    height: 90px;
+}
+
+@keyframes logoFadeIn {
+    0% { transform: scale(0.8); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* Title */
+.welcome-title-container {
+    min-height: 50px;
+    min-width: 450px;
+    font-size: var(--font-size-h1);
+    font-weight: 600;
+    text-align: center;
+    background: linear-gradient(90deg, #ffffff, #a0c4ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    opacity: 0;
+    transition: opacity 1000ms ease-in-out;
+}
+
+.welcome-subtitle {
+    color: var(--secondary-text);
+    opacity: 0;
+    animation: textFadeIn 2s ease 2s forwards;
+}
+
+@keyframes textFadeIn {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Button */
+.get-started-button {
+    opacity: 0;
+    animation: buttonFadeIn 2s ease 3s forwards;
+}
+
+button, .button {
+    width: 150px;
+    height: 50px;
+    font-size: var(--font-size-p);
+    margin-top: 32px;
+    border-radius: 50px;
+    background: linear-gradient(90deg, #00b4d8, #0096c7);
+    cursor: pointer;
+    animation: pulse 3s infinite ease-in-out;
+    transition: transform 0.2s ease, box-shadow 0.3s ease !important;
+}
+
+button:hover, .button:hover {
+    transform: scale(1.05) !important;
+    box-shadow: 0 0 30px #00b4d8cc !important;
+    border-radius: 50px;
+    background: linear-gradient(90deg, #00b4d8, #0096c7);
+}
+
+@keyframes buttonFadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse {
+    0%, 100% { box-shadow: 0 0 20px #00b4d888; }
+    50% { box-shadow: 0 0 40px #00b4d8aa; }
+}

@@ -35,7 +35,7 @@ class Ledstrip:
         self.brightness = init_dict["brightness"]
         self.mode = init_dict["mode"]
         self.power_animation = init_dict["power_animation"]
-        self.driver = init_dict["driver"]
+        self.model_id = init_dict["model_id"]
         self.has_sensor = init_dict["has_sensor"]
         self.sensor_inverted = init_dict["sensor_inverted"]
         self.sensor_model = init_dict["sensor_model"]

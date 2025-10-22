@@ -10,8 +10,8 @@
 #           https://github.com/LukedeMunk/zyrax-home-main-controller
 #
 ################################################################################
-from flask import Flask                                                         #Import Flask FlaskSQLAlchemy
-from flask_sqlalchemy import SQLAlchemy
+from flask import Flask, session                                                #Import Flask and session
+from flask_sqlalchemy import SQLAlchemy                                         #Import Flask FlaskSQLAlchemy
 import os
 import configuration as c                                                       #Import application configuration variables
 from datetime import datetime
@@ -39,6 +39,37 @@ last_received_rf_codes[0] = 0
 telegram_service_state = None#Can be removed?
 weather_service_state = None#Can be removed?
 
+#region Account tables
+class Account(db.Model):
+    __tablename__ = "Account"
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(256), unique=True, nullable=False)              #Encrypted
+    password = db.Column(db.String(256), nullable=False)                        #Hashed
+    created_at = db.Column(db.DateTime(timezone=True), default=datetime.now(c.TIME_ZONE), nullable=False)
+    last_logged_in_at = db.Column(db.DateTime(timezone=True), default=datetime.now(c.TIME_ZONE), nullable=False)
+
+class Profile(db.Model):
+    __tablename__ = "Profile"
+    id = db.Column(db.Integer, primary_key=True)
+    account_id = db.Column(db.Integer, nullable=False)
+    profile_picture = db.Column(db.String(256), nullable=False, default=c.DEFAULT_PROFILE_PICTURE_FILENAME)
+    name = db.Column(db.String(256), nullable=False)
+    language = db.Column(db.Integer, nullable=False)
+    ui_theme = db.Column(db.Integer, nullable=False, default=c.UI_THEME_DARK_BLUE)
+    created_at = db.Column(db.DateTime(timezone=True), default=datetime.now(c.TIME_ZONE), nullable=False)
+
+class ProfileHasFavouriteDashboardConfiguration(db.Model):
+    __tablename__ = "ProfileHasFavouriteDashboardConfiguration"
+    id = db.Column(db.Integer, primary_key=True)
+    profile_id = db.Column(db.Integer, nullable=False)
+    configuration_id = db.Column(db.Integer, nullable=False)
+
+#class AccountHasDashboardConfiguration(db.Model): For not unimplemented
+#    __tablename__ = "AccountHasDashboardConfiguration"
+#    id = db.Column(db.Integer, primary_key=True)
+#    account_id = db.Column(db.Integer, nullable=False)
+#    configuration_id = db.Column(db.Integer, nullable=False)
+
 class DashboardConfiguration(db.Model):
     __tablename__ = "DashboardConfiguration"
     id = db.Column(db.Integer, primary_key=True)
@@ -54,7 +85,9 @@ class DashboardHasTile(db.Model):
     index = db.Column(db.Integer, nullable=False)
     type = db.Column(db.Integer, nullable=False)
     size = db.Column(db.Integer, nullable=False)
+#endregion
 
+#region Alarm tables
 class Alarm(db.Model):
     __tablename__ = "Alarm"
     id = db.Column(db.Integer, primary_key=True)
@@ -82,7 +115,9 @@ class AlarmHasDeactivationDevice(db.Model):
     name = db.Column(db.String(50), nullable=False)
     ip_address = db.Column(db.String(50), nullable=False)
     mac_address = db.Column(db.String(50), nullable=False)
+    #endregion
     
+#region Device tables
 class Device(db.Model):
     __tablename__ = "Device"
     id = db.Column(db.Integer, primary_key=True)
@@ -90,6 +125,8 @@ class Device(db.Model):
     name = db.Column(db.String(50), unique=True, nullable=False)
     icon = db.Column(db.String(50), nullable=False, default="fa-duotone fa-solid fa-microchip")
     type = db.Column(db.Integer, nullable=False)
+    model_id = db.Column(db.Integer, nullable=False)##
+    category = db.Column(db.Integer, nullable=False)##
 
 class Location(db.Model):
     __tablename__ = "Location"
@@ -97,17 +134,15 @@ class Location(db.Model):
     name = db.Column(db.String(50), unique=True, nullable=False)
     icon = db.Column(db.String(50), nullable=False, default="fa-duotone fa-solid fa-person-shelter")
 
-class RfSensor(db.Model):
-    __tablename__ = "RfSensor"
+class RfDevice(db.Model):
+    __tablename__ = "RfDevice"
     id = db.Column(db.Integer, primary_key=True)
-    sensor_type = db.Column(db.Integer, nullable=False)                             #Doorsensor = 0, Motion sensor = 1, remote = 2
-    model = db.Column(db.String(50), nullable=False)                                #Doorsensor = 0, Motion sensor = 1, remote = 2 FOR SUPPORTED RF CODE TYPES
     state = db.Column(db.Boolean, nullable=False, default=False)
     icon_low_state = db.Column(db.String(50), nullable=False, default="fa-duotone fa-solid fa-microchip")
     low_battery = db.Column(db.Boolean, nullable=False, default=False)
 
-class RfSensorIsTriggered(db.Model):
-    __tablename__ = "RfSensorIsTriggered"
+class RfDeviceIsTriggered(db.Model):
+    __tablename__ = "RfDeviceIsTriggered"
     id = db.Column(db.Integer, primary_key=True)
     device_id = db.Column(db.Integer, nullable=False)
     datetime = db.Column(db.DateTime(timezone=True), default=datetime.now(c.TIME_ZONE), nullable=False)
@@ -116,8 +151,9 @@ class RfDeviceHasRfCode(db.Model):
     __tablename__ = "RfDeviceHasRfCode"
     id = db.Column(db.Integer, primary_key=True)
     device_id = db.Column(db.Integer, nullable=False)
+    name = db.Column(db.String(50), nullable=False)
     rf_code = db.Column(db.Integer, nullable=False, unique=True)
-    type = db.Column(db.Integer, nullable=False)                                    #precence detected, opened, closed, low battery, remotecontrolBtn
+    type = db.Column(db.Integer, nullable=False)                                    #presence detected, opened, closed, low battery, remotecontrolBtn
 
 class IpCamera(db.Model):
     __tablename__ = "IpCamera"
@@ -141,7 +177,7 @@ class LedstripDB(db.Model):
     firmware_version = db.Column(db.String(20), nullable=False, default=c.DEFAULT_FIRMWARE_VERSION)
     sd_card_inserted = db.Column(db.Boolean, nullable=False, default=False)
     number_of_leds = db.Column(db.Integer, nullable=False, default=0)
-    driver = db.Column(db.Integer, nullable=False, default=c.LEDSTRIP_MODEL_WS2801)
+    #driver = db.Column(db.Integer, nullable=False, default=c.LEDSTRIP_MODEL_WS2801)
     brightness = db.Column(db.Integer, nullable=False, default=255)
     mode = db.Column(db.Integer, nullable=False, default=1)
     power_animation = db.Column(db.Integer, nullable=False, default=c.POWER_ANIMATION_FADE)
@@ -182,7 +218,9 @@ class GroupHasDevice(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     group_id = db.Column(db.Integer, nullable=False)
     device_id = db.Column(db.Integer, nullable=False)
+#endregion
 
+#region Automations
 class Automation(db.Model):
     __tablename__ = "Automation"
     id = db.Column(db.Integer, primary_key=True)
@@ -224,7 +262,9 @@ class AutomationHasTriggerTime(db.Model):
     automation_id = db.Column(db.Integer, nullable=False)
     days = db.Column(db.String(7), nullable=False, default="0000000")
     time = db.Column(db.String(5), nullable=False, default="00:00")
+#endregion
 
+#region Modes
 class Mode(db.Model):
     __tablename__ = "Mode"
     id = db.Column(db.Integer, primary_key=True)
@@ -247,6 +287,7 @@ class ModeHasModeParameter(db.Model):
     mode_id = db.Column(db.Integer, nullable=False)
     mode_parameter_id = db.Column(db.Integer, nullable=False)
     value = db.Column(db.String(50), nullable=False, default="")
+#endregion
 
 ################################################################################
 #
@@ -346,16 +387,9 @@ def generate_json_http_response(http_code, message=""):
 ################################################################################
 #
 #   @brief  Registers all of the blueprints of the webserver.
-#   @param  configuration_mode  If True, only the application configuration page
-#           is registered
 #
 ################################################################################
-def register_blueprints(configuration_mode):
-    if configuration_mode:
-        from routes.user_blueprints import user_bp
-        app.register_blueprint(user_bp)
-        return
-
+def register_blueprints():
     from routes.alarm_blueprints import alarm_bp
     from routes.configuration_blueprints import configuration_bp
     from routes.user_blueprints import user_bp
@@ -367,7 +401,7 @@ def register_blueprints(configuration_mode):
     from routes.ledstrip_blueprints import ledstrip_bp
     from routes.logs_blueprints import logs_bp
     from routes.ota_blueprints import ota_bp
-    from routes.sensor_blueprints import sensor_bp
+    from routes.rf_device_blueprints import rf_device_bp
     from routes.system_blueprints import system_bp
     from routes.template_blueprints import template_bp
 
@@ -382,7 +416,7 @@ def register_blueprints(configuration_mode):
     app.register_blueprint(ledstrip_bp)
     app.register_blueprint(logs_bp)
     app.register_blueprint(ota_bp)
-    app.register_blueprint(sensor_bp)
+    app.register_blueprint(rf_device_bp)
     app.register_blueprint(system_bp)
     app.register_blueprint(template_bp)
 
@@ -478,10 +512,14 @@ def check_files():
 ################################################################################
 def check_credentials():
     key = keyring.get_password(c.APPLICATION_NAME, c.FLASK_ENCRYPTION_KEY_NAME)
-
     if key is None:
         logi("Created Flask encryption key")
         keyring.set_password(c.APPLICATION_NAME, c.FLASK_ENCRYPTION_KEY_NAME, Fernet.generate_key().decode())
+
+    key = keyring.get_password(c.APPLICATION_NAME, c.DATABASE_ENCRYPTION_KEY_NAME)
+    if key is None:
+        logi("Created database encryption key")
+        keyring.set_password(c.APPLICATION_NAME, c.DATABASE_ENCRYPTION_KEY_NAME, Fernet.generate_key().decode())
 
     key = keyring.get_password(c.APPLICATION_NAME, c.MICROSERVICE_KEY_NAME)
     if key is None:

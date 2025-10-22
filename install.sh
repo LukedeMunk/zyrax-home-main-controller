@@ -54,8 +54,8 @@ if [ "$full_install" = "Y" ] || [ "$full_install" = "y" ]; then
     sudo mkdir -p "$DATA_PATH"
     sudo mkdir -p "$DATA_PATH/.zyrax_temp"
 
-    # Set data directory owner to ZyraXHome
-    sudo chown -R ZyraXHome:ZyraXHome $RUNTIME_PATH
+    # Set data directory owner to user
+    sudo chown -R $USER:$USER $RUNTIME_PATH
 
     # Set permissions for data directory
     sudo chmod -R 700 $DATA_PATH

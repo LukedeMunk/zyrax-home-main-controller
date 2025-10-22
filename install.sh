@@ -88,6 +88,10 @@ if [ "$full_install" = "Y" ] || [ "$full_install" = "y" ]; then
     sudo cp "$INSTALL_PATH/services/zyrax_home_telegram.service" /etc/systemd/system/
     sudo cp "$INSTALL_PATH/services/zyrax_home_weather.service" /etc/systemd/system/
 
+    # Stop services
+    sudo systemctl stop apache2
+    sudo systemctl disable apache2
+
     # Enable and start services
     sudo systemctl daemon-reload
     sudo systemctl enable zyrax_home.service

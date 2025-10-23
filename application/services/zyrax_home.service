@@ -11,7 +11,7 @@ WorkingDirectory=/etc/ZyraX_Home
 ExecStart=/etc/ZyraX_Home/venv/bin/python3 /etc/ZyraX_Home/application/main.py
 User=zyraxhome
 Restart=always
-RestartSec=2
+RestartSec=1
 StandardOutput=journal
 StandardError=journal
 Environment="PATH=/etc/ZyraX_Home/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"

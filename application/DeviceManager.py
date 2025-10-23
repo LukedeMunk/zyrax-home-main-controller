@@ -237,7 +237,7 @@ class DeviceManager:
         
         all_success = True
         for ledstrip in self.ledstrips:
-            if not ledstrip.update_ledstrip_firmware(version)[0]:
+            if not ledstrip.update_ledstrip_firmware(version):
                 all_success = False
                 
         if all_success:

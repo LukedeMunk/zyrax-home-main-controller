@@ -1845,6 +1845,7 @@ function loadLedstripModal(id=undefined, modelId=undefined, hostname=undefined) 
     ledstripHostnameTxtElem.value= ledstrip.hostname;
     ledstripIconTxtElem.className = ledstrip.icon + " fa-xl";
     ledstripIconLowStateTxtElem.className = ledstrip.icon_low_state + " fa-xl";
+    ledstripModelSelectElem.value = ledstrip.model_id;
 
     ledstripHasSensorCbElem.checked = ledstrip.has_sensor;
     ledstripSensorIsInvertedCbElem.checked = ledstrip.sensor_inverted;

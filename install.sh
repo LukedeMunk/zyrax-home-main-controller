@@ -46,32 +46,40 @@ if [ "$full_install" = "Y" ] || [ "$full_install" = "y" ]; then
 
     # Update system and install Nginx & venv tools
     sudo apt update
-    sudo apt install -y nginx python3-venv python3-pip
+    sudo apt install -y nginx python3-venv python3-pip liblgpio-dev swig python3-dev build-essential
+    
+    # Remove default Nginx config
     sudo rm /etc/nginx/sites-enabled/default
 
     # Create production folder
     sudo mkdir -p "$INSTALL_PATH"
     sudo mkdir -p "$DATA_PATH"
+    sudo mkdir -p "$DATA_PATH/profile_pictures"
     sudo mkdir -p "$DATA_PATH/.zyrax_temp"
 
     # Set data directory owner to user
-    sudo chown -R $USER:$USER $RUNTIME_PATH
-
-    # Set permissions for data directory
-    sudo chmod -R 700 $DATA_PATH
+    sudo chown -R $USER:$USER "$RUNTIME_PATH"
+    sudo chown -R $USER:$USER "$INSTALL_PATH"
+    sudo chmod -R 750 $RUNTIME_PATH
 
     # Copy application files
     sudo cp -R application/* "$INSTALL_PATH/"
+    sudo cp -R application/data/profile_pictures/default_profile_picture.png "$DATA_PATH/profile_pictures/"
 
     # Create virtual environment
     sudo python3 -m venv "$VENV_PATH"
     sudo chown -R $USER:$USER "$VENV_PATH"
 
     # Install dependencies inside venv using absolute paths
-    "$VENV_PATH/bin/python3" -m pip install --upgrade pip
-    "$VENV_PATH/bin/pip3" install -r "$INSTALL_PATH/requirements.txt"
-    "$VENV_PATH/bin/pip3" install rpi-lgpio keyrings.cryptfile
-
+    sudo -u "$USER" /bin/bash -c "
+    source '$VENV_PATH/bin/activate'
+    pip install --upgrade pip
+    pip install -r '$INSTALL_PATH/requirements.txt'
+    pip install keyrings.cryptfile
+    pip install --no-binary=:all: lgpio
+    pip install rpi-lgpio
+    "
+    
     # Generate self-signed SSL keys
     sudo mkdir -p /etc/ssl/zyrax
     sudo openssl req -x509 -nodes -days 365 \

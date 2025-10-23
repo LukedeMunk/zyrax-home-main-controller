@@ -1281,7 +1281,7 @@ function loadTriggerSensorStateOptions(id=undefined) {
     }
 
     let device = devices[getIndexFromId(devices, id)];
-    let deviceModel = DEVICE_MODELS[device.model_id];
+    let deviceModel = DEVICE_MODELS[getIndexFromId(DEVICE_MODELS, device.model_id, "model_id")];
 
     for (let state of deviceModel.states) {
         option = document.createElement("option");

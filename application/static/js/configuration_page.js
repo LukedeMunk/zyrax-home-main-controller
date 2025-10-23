@@ -1104,7 +1104,8 @@ function updateRfDeviceSuccess(result) {
         updated = true;
     }
 
-    let model = DEVICE_MODELS[lastRfDeviceData.model_id];
+    let modelIndex = getIndexFromId(DEVICE_MODELS, lastRfDeviceData.model_id, "model_id");
+    let model = DEVICE_MODELS[modelIndex];
 
     if (updated) {
         let device = devices[getIndexFromId(devices, lastRfDeviceData.id)];
@@ -1656,11 +1657,11 @@ function loadDeviceModels(deviceCategory) {
 */
 /******************************************************************************/
 function loadDeviceAddModal(modelId) {
-    if (DEVICE_MODELS[modelId].type == DEVICE_TYPE_LEDSTRIP) {
+    if (DEVICE_MODELS[getIndexFromId(DEVICE_MODELS, modelId, "model_id")].type == DEVICE_TYPE_LEDSTRIP) {
         loadLedstripModal(undefined, modelId);
-    } else if (DEVICE_MODELS[modelId].type == DEVICE_TYPE_RF_DEVICE) {
+    } else if (DEVICE_MODELS[getIndexFromId(DEVICE_MODELS, modelId, "model_id")].type == DEVICE_TYPE_RF_DEVICE) {
         loadRfDeviceModal(undefined, modelId);
-    } else if (DEVICE_MODELS[modelId].type == DEVICE_TYPE_IP_CAMERA) {
+    } else if (DEVICE_MODELS[getIndexFromId(DEVICE_MODELS, modelId, "model_id")].type == DEVICE_TYPE_IP_CAMERA) {
         //
     }
 }
@@ -1877,14 +1878,16 @@ function loadRfDeviceModal(id=undefined, modelId=undefined) {
     rfDeviceIconBtnElem.classList.remove("invalid-input");
     rfDeviceIconLowStateBtnElem.classList.remove("invalid-input");
 
+    let modelIndex;
     if (id == undefined) {
-        rfDeviceModalTitleElem.textContent = VAR_TEXT_ADD(DEVICE_MODELS[modelId].name);
+        modelIndex = getIndexFromId(DEVICE_MODELS, modelId, "model_id");
+        rfDeviceModalTitleElem.textContent = VAR_TEXT_ADD(DEVICE_MODELS[modelIndex].name);
         rfDeviceNameTxtElem.value = "";
-        rfDeviceIconTitleElem.textContent = DEVICE_MODELS[modelId].icons[0].name;
+        rfDeviceIconTitleElem.textContent = DEVICE_MODELS[modelIndex].icons[0].name;
         rfDeviceIconTxtElem.className = "";
-        if (DEVICE_MODELS[modelId].icons.length > 1) {
+        if (DEVICE_MODELS[modelIndex].icons.length > 1) {
             rfDeviceIconLowStateContainerElem.style.display = "block";
-            rfDeviceIconLowStateTitleElem.textContent = DEVICE_MODELS[modelId].icons[1].name;
+            rfDeviceIconLowStateTitleElem.textContent = DEVICE_MODELS[modelIndex].icons[1].name;
         } else {
             rfDeviceIconLowStateContainerElem.style.display = "none";
         }
@@ -1901,14 +1904,15 @@ function loadRfDeviceModal(id=undefined, modelId=undefined) {
 
     let device = devices[getIndexFromId(devices, id)];
     modelId = device.model_id;
+    modelIndex = getIndexFromId(DEVICE_MODELS, modelId, "model_id");
 
     rfDeviceModalTitleElem.textContent = VAR_TEXT_UPDATE(device.name);
     rfDeviceNameTxtElem.value = device.name;
     rfDeviceIconTxtElem.className = device.icon + " fa-xl";
-    rfDeviceIconTitleElem.textContent = DEVICE_MODELS[modelId].icons[0].name;
-    if (DEVICE_MODELS[modelId].icons.length > 1) {
+    rfDeviceIconTitleElem.textContent = DEVICE_MODELS[modelIndex].icons[0].name;
+    if (DEVICE_MODELS[modelIndex].icons.length > 1) {
         rfDeviceIconLowStateContainerElem.style.display = "block";
-        rfDeviceIconLowStateTitleElem.textContent = DEVICE_MODELS[modelId].icons[1].name;
+        rfDeviceIconLowStateTitleElem.textContent = DEVICE_MODELS[modelIndex].icons[1].name;
         rfDeviceIconLowStateTxtElem.className = device.icon_low_state + " fa-xl";
     } else {
         rfDeviceIconLowStateContainerElem.style.display = "none";
@@ -1916,7 +1920,7 @@ function loadRfDeviceModal(id=undefined, modelId=undefined) {
     loadRfCodeFields(device.id, device.model_id);
     submitRfDeviceBtnElem.setAttribute("onclick", "updateRfDevice(" + device.id + ");");
 
-    for (let codeType of DEVICE_MODELS[modelId].rf_code_types) {
+    for (let codeType of DEVICE_MODELS[modelIndex].rf_code_types) {
         console.log(codeType)
         document.getElementById(codeType.type + "RfCodeTxt").value = getRfCode(device, codeType.type).rf_code;
     }
@@ -1936,7 +1940,7 @@ function loadRfDeviceModal(id=undefined, modelId=undefined) {
 function loadRfCodeFields(deviceId=undefined, modelId=undefined) {
     rfCodesContainerElem.innerText = "";
 
-    let model = DEVICE_MODELS[modelId];
+    let model = DEVICE_MODELS[getIndexFromId(DEVICE_MODELS, modelId, "model_id")];
 
     if (model.category == DEVICE_CATEGORY_REMOTE) {
         if (deviceId == undefined) {
@@ -2328,7 +2332,8 @@ function validateRfDevice(id=-1, modelId=undefined) {
     if (id != -1) {
         modelId = devices[getIndexFromId(devices, id)].model_id;
     }
-    let model = DEVICE_MODELS[modelId];
+
+    let model = DEVICE_MODELS[getIndexFromId(DEVICE_MODELS, modelId, "model_id")];
 
     /* Get user input */
     let name = rfDeviceNameTxtElem.value;
@@ -2372,7 +2377,7 @@ function validateRfDevice(id=-1, modelId=undefined) {
         errorMessageRfDeviceFieldElem.style.display = "inline-block";
         return false;
     }
-    if (DEVICE_MODELS[modelId].icons.length > 1 && iconLowState == "") {
+    if (DEVICE_MODELS[getIndexFromId(DEVICE_MODELS, modelId, "model_id")].icons.length > 1 && iconLowState == "") {
         rfDeviceIconLowStateBtnElem.classList.add("invalid-input");
         rfDeviceIconLowStateBtnElem.focus();
         errorMessageRfDeviceFieldElem.textContent = TEXT_FIELD_REQUIRED;

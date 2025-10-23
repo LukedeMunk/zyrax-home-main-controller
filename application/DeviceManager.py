@@ -1030,11 +1030,11 @@ class DeviceManager:
         result = ledstrip.configure(config_dict)
 
         if not result[0]:
-            return False
+            return result
         
         self.load_devices()
 
-        return True
+        return result
 
     ################################################################################
     #

@@ -85,8 +85,9 @@ def update_ledstrip():
     if request.form.get("sensor_model") is not None:
         config["sensor_model"] = int(request.form.get("sensor_model"))
 
-    if not dm.update_ledstrip(id, config):
-        return generate_json_http_response(c.HTTP_CODE_BAD_REQUEST)
+    result = dm.update_ledstrip(id, config)
+    if not result[0]:
+        return generate_json_http_response(c.HTTP_CODE_BAD_REQUEST, result[1])
 
     return generate_json_http_response(c.HTTP_CODE_OK)
 

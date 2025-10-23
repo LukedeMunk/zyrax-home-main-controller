@@ -145,7 +145,6 @@ const CONFIGURATION_OPTIONS_SENSOR = [CONFIGURATION_OPTION_UPDATE_SENSOR,
 
 const CONFIGURATION_OPTIONS_GROUP = [CONFIGURATION_OPTION_UPDATE_GROUP,
                                         CONFIGURATION_OPTION_DELETE_GROUP,
-                                        CONFIGURATION_OPTION_REFRESH_STATUS,
                                         ]
 //#endregion
 
@@ -934,6 +933,9 @@ function updateLedstripSuccess(result) {
         let ledstrip = devices[getIndexFromId(devices, lastLedstripData.id)];
         if (lastLedstripData.name != undefined) {
             ledstrip.name = lastLedstripData.name;
+        }
+        if (lastLedstripData.hostname != undefined) {
+            ledstrip.ip_address = lastLedstripData.hostname;
         }
         if (lastLedstripData.ip_address != undefined) {
             ledstrip.ip_address = lastLedstripData.ip_address;
@@ -2111,6 +2113,7 @@ function updateGroupDevices(group=undefined) {
         tile.appendChild(grid);
 
         groupDevicesContainerElem.appendChild(tile);
+        numberOfDevices++;
     }
 
     if (numberOfDevices == 0) {

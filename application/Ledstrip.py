@@ -107,7 +107,7 @@ class Ledstrip:
             self.check_connection_status(False)
             loge(url + " could not be sended to [" + self.name + "]")
             print(parameters_dict)
-            return (False, "")
+            return (False, "No device connection")
 
         logi("Sent [" + url + "] to [" + self.name + "]")
         print(parameters_dict)

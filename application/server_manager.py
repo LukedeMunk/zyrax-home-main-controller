@@ -549,7 +549,6 @@ def initialize_flask_application():
 
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + os.path.join(c.DB_PATH)
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-    app.config["UPLOAD_FOLDER"] = c.OTA_FILE_DIRECTORY_PATH                     #Only file uploads for OTA
 
     app.config["SECRET_KEY"] = c.FLASK_ENCRYPTION_KEY
     app.config["FLASK_DEBUG"] = 1

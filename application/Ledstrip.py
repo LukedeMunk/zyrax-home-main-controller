@@ -361,6 +361,18 @@ class Ledstrip:
 
     ################################################################################
     #
+    #   @brief  Updates the model.
+    #   @param  model_id                Model ID to set
+    #   @return bool                    True if successful
+    #
+    ################################################################################
+    def set_model(self, model_id):
+        self.model_id = int(model_id)
+        result = self.send_post_command(c.CMD_SET_CONFIGURATION, {"model_id" : self.model_id})
+        return result[0]
+
+    ################################################################################
+    #
     #   @brief  Updates the (real-time) ledstrip coloring.
     #   @param  leds                    List of HEX color strings for the
     #                                   corresponding LEDs

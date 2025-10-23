@@ -69,7 +69,7 @@ def get_ledstrip_ota_progress():
 def get_ota_file():
     version = request.args.get("version")
     filename = version.replace(".", "_") + ".bin"
-    path = os.path.join(ota_bp.config["UPLOAD_FOLDER"], filename)
+    path = os.path.join(c.OTA_FILE_DIRECTORY_PATH, filename)
 
     if not os.path.exists(path):
         return generate_json_http_response(c.HTTP_CODE_INTERNAL_SERVER_ERROR, "No file to download")
@@ -78,6 +78,6 @@ def get_ota_file():
 
     return send_file(
                 path,
-                mimetype = "ota_bplication/octet-stream",
+                mimetype = "application/octet-stream",
                 download_name = filename
             )

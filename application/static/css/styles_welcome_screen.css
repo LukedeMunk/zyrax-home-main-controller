@@ -10,6 +10,58 @@
  *          https://github.com/LukedeMunk/zyrax-home-main-controller
  */
 /******************************************************************************/
+/* Dark theme (default) */
+:root,
+:root.dark {
+    /* Brand colors */
+    --color-primary-light: #00b4d8;
+    --color-primary-dark: #0096c7;
+    --color-primary-mid: #0076b6;
+
+    /* Transparent variants */
+    --color-primary-light-50: #00b4d888;
+    --color-primary-dark-50: #0076b688;
+    --color-primary-mid-66: #0096c7aa;
+    --color-primary-light-80: #00b4d8cc;
+    --color-primary-light-1-pulse: #00b4d888;
+    --color-primary-light-2-pulse: #00b4d8aa;
+
+    /* Text colors */
+    --color-text-gradient-start: #ffffff;
+    --color-text-gradient-end: #a0c4ff;
+    --button-text: var(--text);
+
+    /* Shadows */
+    --shadow-primary: 0 0 30px var(--color-primary-mid-66);
+    --shadow-hover: 0 0 30px var(--color-primary-light-80);
+}
+
+/* Light theme */
+:root.light {
+    /* Brand colors */
+    --color-primary-light: #6bb3d4;
+    --color-primary-dark: #4ba3c7;
+    --color-primary-mid: #66b3d1;
+
+    /* Transparent variants */
+    --color-primary-light-50: #89cff088;
+    --color-primary-dark-50: #4ba3c788;
+    --color-primary-mid-66: #66b3d1aa;
+    --color-primary-light-80: #89cff0cc;
+    --color-primary-light-1-pulse: #00b4d888;
+    --color-primary-light-2-pulse: #00b4d8aa;
+
+    /* Text colors */
+    --color-text-gradient-start: #001f3f;
+    --color-text-gradient-end: #0077b6;
+    --button-text: #ffffff;
+
+    /* Shadows */
+    --shadow-primary: 0 0 30px var(--color-primary-mid-66);
+    --shadow-hover: 0 0 30px var(--color-primary-light-80);
+}
+
+/* General layout */
 html, body {
     overflow: hidden;
 }
@@ -30,8 +82,8 @@ nav {
     width: 90px;
     height: 90px;
     border-radius: 50%;
-    background: linear-gradient(145deg, #00b4d888, #0076b688);
-    box-shadow: 0 0 30px #0096c7aa;
+    background: linear-gradient(145deg, var(--color-primary-light-50), var(--color-primary-dark-50));
+    box-shadow: var(--shadow-primary);
     animation: logoFadeIn 2s ease forwards;
     opacity: 0;
 }
@@ -53,7 +105,7 @@ nav {
     font-size: var(--font-size-h1);
     font-weight: 600;
     text-align: center;
-    background: linear-gradient(90deg, #ffffff, #a0c4ff);
+    background: linear-gradient(90deg, var(--color-text-gradient-start), var(--color-text-gradient-end));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     opacity: 0;
@@ -78,12 +130,13 @@ nav {
 }
 
 button, .button {
+    color: var(--button-text);
     width: 150px;
     height: 50px;
     font-size: var(--font-size-p);
     margin-top: 32px;
     border-radius: 50px;
-    background: linear-gradient(90deg, #00b4d8, #0096c7);
+    background: linear-gradient(90deg, var(--color-primary-light), var(--color-primary-dark));
     cursor: pointer;
     animation: pulse 3s infinite ease-in-out;
     transition: transform 0.2s ease, box-shadow 0.3s ease !important;
@@ -91,9 +144,9 @@ button, .button {
 
 button:hover, .button:hover {
     transform: scale(1.05) !important;
-    box-shadow: 0 0 30px #00b4d8cc !important;
+    box-shadow: var(--shadow-hover) !important;
     border-radius: 50px;
-    background: linear-gradient(90deg, #00b4d8, #0096c7);
+    background: linear-gradient(90deg, var(--color-primary-light), var(--color-primary-dark));
 }
 
 @keyframes buttonFadeIn {
@@ -102,6 +155,6 @@ button:hover, .button:hover {
 }
 
 @keyframes pulse {
-    0%, 100% { box-shadow: 0 0 20px #00b4d888; }
-    50% { box-shadow: 0 0 40px #00b4d8aa; }
+    0%, 100% { box-shadow: 0 0 20px var(--color-primary-light-1-pulse); }
+    50% { box-shadow: 0 0 40px var(--color-primary-light-2-pulse); }
 }

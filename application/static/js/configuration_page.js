@@ -1607,7 +1607,7 @@ function loadLedstripSensorModelSelectOptions() {
     
     for (let model of LEDSTRIP_SENSOR_MODELS) {
         option = document.createElement("option");
-        option.value = model.model;
+        option.value = model.model_id;
         option.text = model.name;
         
         ledstripSensorModelSelectElem.appendChild(option);

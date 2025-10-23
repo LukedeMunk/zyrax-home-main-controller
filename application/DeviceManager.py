@@ -557,6 +557,10 @@ class DeviceManager:
         if rf_device["category"] == c.DEVICE_CATEGORY_MOTION_SENSOR:
             self._set_motion_sensor_state(id, state)
             return
+
+        #When tap switch, toggle state
+        if rf_device["model_id"] == c.RF_SWITCH_MODEL_ID_TAP:
+            state = not rf_device["state"]
         
         if rf_device["state"] == state:
             return
@@ -743,7 +747,7 @@ class DeviceManager:
         automations = db_util.get_automations(None, True)
         
         for automation in automations:
-            if automation["trigger"] != c.AUTOMATION_TRIGGER_SENSOR or automation["trigger"] != c.AUTOMATION_TRIGGER_SWITCH:
+            if automation["trigger"] != c.AUTOMATION_TRIGGER_SENSOR and automation["trigger"] != c.AUTOMATION_TRIGGER_SWITCH:
                 continue
 
             #Next automation if disabled

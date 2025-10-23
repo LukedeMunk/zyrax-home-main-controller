@@ -1177,8 +1177,8 @@ function showProgress(percentage, barElem) {
   @brief    Returns the index of the specified specified ID
   @param    array               Array to look in
   @param    id                  ID to look for
-  @param    idKey               If true, the array is a JSON object with ID key
-  @returns  int                 Array index of the playlist
+  @param    key                 Key to look in
+  @returns  int                 Array index
 */
 /******************************************************************************/
 function getIndexFromId(array, id, key="id") {

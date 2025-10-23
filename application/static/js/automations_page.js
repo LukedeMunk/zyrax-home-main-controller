@@ -1244,7 +1244,7 @@ function loadTargetDevices(targetDevices=undefined) {
 
         grid = document.createElement("div");
         grid.style.gridColumn = "span 2";
-        title = document.createTextNode(TEXT_NO_TARGET_DEVICES_AVALABLE);
+        title = document.createTextNode(TEXT_NO_TARGET_DEVICES_AVAILABLE);
 
         grid.appendChild(title);
         tile.appendChild(grid);

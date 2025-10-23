@@ -33,7 +33,9 @@ ph = PasswordHasher(hash_len=128, salt_len=128)                                 
 #
 ################################################################################
 def add_device(config_dict):
-    config_dict["category"] = c.DEVICE_MODELS[config_dict["model_id"]]["category"]
+    index = _get_index_from_id(c.DEVICE_MODELS, config_dict["model_id"], "model_id")
+
+    config_dict["category"] = c.DEVICE_MODELS[index]["category"]
 
     with app.app_context():
         device = Device(name=config_dict["name"],
@@ -551,7 +553,8 @@ def _add_rf_device(config_dict):
         
         db.session.add(rf_device)
 
-        model_dict = c.DEVICE_MODELS[config_dict["model_id"]]
+        index = _get_index_from_id(c.DEVICE_MODELS, config_dict["model_id"], "model_id")
+        model_dict = c.DEVICE_MODELS[index]
         print(model_dict)
         
         for i, code in enumerate(model_dict["rf_code_types"]):
@@ -596,7 +599,8 @@ def _update_rf_device(id, config_dict):
             rf_device.low_battery = config_dict["low_battery"]
         
         device = Device.query.filter_by(id=id).first()
-        model_dict = c.DEVICE_MODELS[int(device.model_id)]
+        index = _get_index_from_id(c.DEVICE_MODELS, device.model_id, "model_id")
+        model_dict = c.DEVICE_MODELS[index]
         
         if "rf_codes" in config_dict:
             for i, code in enumerate(model_dict["rf_code_types"]):
@@ -2464,6 +2468,28 @@ def get_profile(id):
 
 
 #region Utilities
+################################################################################
+#
+#   @brief  Searches for the index of an item in a list of dicts or a list of
+#           values.
+#   @param  array               Array to look in
+#   @param  id_value            ID to look for
+#   @param  key                 Key to look in
+#   @return int                 Array index
+#
+################################################################################
+def _get_index_from_id(array, id_value, key="id"):
+    for index, item in enumerate(array):
+        if key is not None:
+            if isinstance(item, dict) and item.get(key) == id_value:
+                return index
+        else:
+            if item == id_value:
+                return index
+
+    print("get_index_from_id failed")
+    return -1
+
 ################################################################################
 #
 #   @brief  Converts a database row to a dictionary.

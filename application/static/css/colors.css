@@ -184,7 +184,7 @@
     --card-color: rgb(240, 245, 250);
     
     --shadow-color: rgba(0, 0, 0, 0.08);
-    --range-band-track: rgb(210, 180, 80); /*TODO change _ to -*/
+    --range-band-track: rgb(210, 180, 80);
     --range-track: rgba(0, 0, 0, 0.15);
     /* End of custom colors */
 }

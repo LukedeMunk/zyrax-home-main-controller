@@ -169,7 +169,7 @@ class LedstripDB(db.Model):
     __tablename__ = "Ledstrip"
     id = db.Column(db.Integer, primary_key=True)
     hostname = db.Column(db.String(20), nullable=False)
-    ip_address = db.Column(db.String(20), nullable=False, default="0.0.0.0")
+    ip_address = db.Column(db.String(20), nullable=False, default=c.DEFAULT_IP_ADDRESS)
     icon_low_state = db.Column(db.String(50), nullable=False, default="fa-duotone fa-solid fa-microchip")
     port = db.Column(db.Integer, nullable=False, default=80)
     connection_status = db.Column(db.Boolean, nullable=False, default=False)

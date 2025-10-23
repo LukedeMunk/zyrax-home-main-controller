@@ -307,6 +307,12 @@ $(document).ready(function() {
         }
     }
 
+    if (page != LOGIN_PAGE && page != INITIAL_SETUP_PAGE) {
+        if (profileId == undefined) {
+            redirect("/login")
+        }
+    }
+
     loadModalCloseButtons();
 
     let buttons = [

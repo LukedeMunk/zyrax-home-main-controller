@@ -583,7 +583,7 @@ function loadLanguageSelectOptions() {
   @param    onclickFunction     Function to execute on click
 */
 /******************************************************************************/
-function loadProfiles(profiles, generateAddProfileTile=false, onclickFunction="pickProfile", highlightProfileId=undefined) {
+function loadProfiles(profiles, generateAddProfileTile=false, onclickFunction="changeProfile", highlightProfileId=undefined) {
     profileSelectContainerElem.innerHTML = "";
 
     for (let profile of profiles) {

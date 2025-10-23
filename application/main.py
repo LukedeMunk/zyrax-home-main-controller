@@ -20,7 +20,6 @@ from apscheduler.schedulers.background import BackgroundScheduler               
 from threading import Thread                                                    #For threading
 import database_utility as db_util                                              #Import utility for database functionality
 from routes.template_blueprints import initial_setup
-#from populate_db import *
 
 rf_timestamp = 0
 last_rf_code = 0
@@ -124,8 +123,11 @@ if __name__ == "__main__":
         logi("Application started in configuration mode")
 
         #if len(db_util.get_devices()) == 0:
+        #    from populate_db import *
         #    with sm.app.app_context():
         #        populate_database()
+        #    logi("Populated database, restarting now")
+        #    exit(0)
     else:
         sm.initialize_rf_receiver()
 

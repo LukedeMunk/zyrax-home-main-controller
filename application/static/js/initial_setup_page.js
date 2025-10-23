@@ -134,6 +134,11 @@ async function createProfile() {
         });
     }
 
+    if (remember) {
+        localStorage.setItem("profileId", lastProfileData.id);
+    } else {
+        sessionStorage.setItem("profileId", lastProfileData.id);
+    }
     selectedProfile.name = lastProfileData.name;
     selectedProfile.language = lastProfileData.language;
     userProfiles.push(lastProfileData);

@@ -1,6 +1,6 @@
 # ZyraX Home | Main controller
 
-[ZyraX Home](https://zyraxhome.munkservices.com/) is an open-source platform engineered as a unified smart home system. It provides centralized control and real-time monitoring of home electronics, integrates sensor data, and manages programmable LED lighting. The platform supports extensible modules and automation rules, enabling fine-grained control over connected devices.
+[ZyraX Home](https://zyraxhome.munkservices.com/) is an open-source platform (in early-stage of development) engineered as a unified smart home system. It provides centralized control and real-time monitoring of energy consumption, integrates sensor data, and manages lighting. The platform supports extensible modules and automation rules, enabling fine-grained control over your whole home.
 
 ![banner_image](documentation/images/banner.png)
 
@@ -10,25 +10,51 @@ See `documentation/images` for more product images.
 
 ### Features
 
-ZyraX Home is in early-stage development, with continuous improvements planned. See section `7.2 Roadmap` for a complete overview of upcoming features and components. Key features in version `0.9.0 Beta` include:
+ZyraX Home is in early-stage of development, with continuous improvements planned. See section `8.2 Roadmap` for a complete overview of upcoming features and components. Key features in version `0.9.0 Beta` include:
 
 - **Easy device onboarding and configuration**
+    - Automatic WiFi device scans
+    - Real-time RF signal listening for RF code mapping
+
+- **Multiple user profiles to suit the needs and preferences**
+    - Use one account with multiple profiles
+
 - **Customizable dashboards:**
     - Device and group widgets with detailed status and controls
-    - Date/time and weather forecast widgets
+    - Date/time and weather forecast widgets, more coming soon
+
 - **Device grouping:**
     - Synchronize devices or assign groups as automation targets
+
 - **RF sensor support. Tested models:**
     - Contact sensors:
         - [433MHz Two-way Intelligent Door/Window Sensor](https://nl.aliexpress.com/item/4000780196360.html)
     - PIR motion sensors
         - [Sonoff PIR RF Motion Sensor](https://nl.aliexpress.com/item/1005008632282924.html)
         - [TAIBOAN 433MHz PIR Motion Sensor](https://nl.aliexpress.com/item/1005005510159304.html)
+
+- **RF switch support. Tested models:**
+    - [433Mhz Wall Panel Touch Switch](https://nl.aliexpress.com/item/1005002572663479.html)
+
+- **RF remote support. Tested models:**
+    - [433Mhz 4 Keys Remote Control](https://nl.aliexpress.com/item/1005006725173688.html)
+
 - **Automation engine:**
-    - **Triggers:** scheduled events, sensor input
+    - **Triggers:** scheduled events, sensor input, switch input
     - **Targets:** individual devices, device groups
-- **Alarm:** Alarm can be triggered by RF sensors and can send real-time messages via Telegram
-- **Over-The-Air LED strip updates:** LED strip firmware can be updated remotely
+
+- **Alarm:**
+    - Alarm can be triggered by sensors and can send real-time messages via Telegram
+
+- **Fully feature suite for addressable (ZyraX Home) RGBW LED strips:**
+    - Easy LED addressing configuration through the GUI
+    - Real-time LED coloring
+    - More than 16 fully customizable animations
+    - 4 power animations
+    - 10 color palettes
+    
+- **Over-The-Air LED strip updates:**
+    - LED strip firmware can be updated remotely
 
 ### About the ZyraX Home platform
 
@@ -89,7 +115,7 @@ Use the schematic to connect the RF receiver to the Raspberry Pi, to be able to 
 1. Flash the [Raspi OS Lite (64-bit)](https://www.raspberrypi.com/software/) image on the SD card (with the imager):
     - Configure OS:
         * Hostname: `mastercontroller`
-        * Username: `ZyraXHome`
+        * Username: `zyraxhome`
         * Password: Use a strong password (At least one upper case character, one lowercase character, one number and one symbol. At least 8 characters long.)
         * Using Wifi:
             * SSID: Network with internet
@@ -105,7 +131,7 @@ Use the schematic to connect the RF receiver to the Raspberry Pi, to be able to 
 
 1. Download the latest [release](https://github.com/LukedeMunk/zyrax-home-main-controller/releases).
 2. Run `install.sh`:
-    - `sudo sh install.sh`
+    - `sh install.sh`
     - Unexpected end of file error? -> `sudo dos2unix install.sh`
 3. Navigate to [mastercontroller.local](mastercontroller.local)
 4. (Optional) To configure the weather API, check [Visual Crossing website](https://github.com/LukedeMunk/zyrax-home-main-controller/releases).
@@ -113,27 +139,58 @@ Use the schematic to connect the RF receiver to the Raspberry Pi, to be able to 
 
 > Note: When visiting [mastercontroller.local](mastercontroller.local), a browser security notification will appear because local SSL keys are being used. This warning can be safely ignored.
 
+> Note: Running into problems? Go to **8. Throubleshooting**.
+
 ## 4. Configure RF sensors (optional)
 
-A few RF sensors have been tested, but any 433 MHz sensor should work. On the configuration page, you can select the model that matches your sensor, map its RF codes, and use the sensor in automations or with the alarm.
+A few RF sensors have been tested, but any 433 MHz sensor should work. On the configuration page, you can select the model that matches your sensor, map its RF codes, and use the sensor for automations or with the alarm.
 
-## 5. Configure ledstrips (optional)
+> Note: Visit [ZyraX Home | Documentation](https://zyraxhome.munkservices.com/documentation/) for more in depth instructions including screenshots.
+
+## 5. Configure RF switches (optional)
+
+A few RF switches have been tested, but any 433 MHz switch should work. On the configuration page, you can select the model that matches your switch, map its RF code, and use the switch for automations.
+
+> Note: Visit [ZyraX Home | Documentation](https://zyraxhome.munkservices.com/documentation/) for more in depth instructions including screenshots.
+
+## 6. Configure ledstrips (optional)
 
 To add new [RGBW LED strip controllers](https://github.com/LukedeMunk/zyrax-home-rgbw-led-strip-controller/releases) to the system, please boot the LED controller (with a compatible firmware version) and connect it to the same network as the main controller.
 
 At the configuration page -> Add device -> Choose device or choose `My accessory is not shown here` -> Configure options -> Configure LED addressing
 
-## 6. Documentation
+> Note: Visit [ZyraX Home | Documentation](https://zyraxhome.munkservices.com/documentation/) for more in depth instructions including screenshots.
+
+## 7. Documentation
 
 Several documentation files describe this project and system. The list of these files is provided below.
 
 - [Circuit diagram](documentation/hardware/schematic_v0_1.png)
 - [Entity Relation Diagram](documentation/software/ERD_v0_9_0_Beta.png)
 - [Full platform overview](documentation/software/overview_v0.1.png)
+- [ZyraX Home | Documentation](https://zyraxhome.munkservices.com/documentation)
 
-## 7. Remarks
+## 8. Troubleshooting
 
-### 7.1 Risk assessment
+### 8.1 Known bugs
+
+| **Bug**    | **Version**    | **Planned Fix Version**     |
+|------------|----------------|-----------------------------|
+| Server becomes unavailable (HTTP code `502`) for a minute after enabling RF receiver | v0.9.0 | v1.0.0 |
+| RF remote control loads only 1 code | v0.9.0 | v1.0.0 |
+
+### 8.2 Errors
+
+- When the interface does not load in the browser, the Nginx server is not running correctly:
+    - Use `sudo systemctl status nginx` for the service status. The service needs to be running and enabled
+
+- When the interface returns an HTTP `502` error, it indicates that the Nginx server is running, but the Flask application is currently unavailable:
+    - Use `sudo systemctl status zyrax_home` for the service status. The service needs to be running and enabled
+    - Use `sudo journalctl -u zyrax_home -f` for the log list. Usually an error is displayed
+
+## 9. Remarks
+
+### 9.1 Risk assessment
 
 This security risk assessment evaluates potential threats and vulnerabilities related to the Zyrax Home application. The goal is to identify key risks, assess their impact and likelihood, and provide guidance on appropriate mitigation measures. This ensures the application remains secure and reliable for its users.
 
@@ -143,47 +200,55 @@ This security risk assessment evaluates potential threats and vulnerabilities re
 | Data exfiltration     | Exposure of credentials and data | Weak encryption    | Rare    | Moderate | Use of strong encryption and hash algorithms     |
 | MITM attacks     | Exposure of credentials and data | Use of HTTP    | Unlikely    | Moderate | Use of HTTPS     |
 
-### 7.2 Roadmap
+### 9.2 Roadmap
 
 Below is a roadmap for the ZyraX Home main controller, highlighting the key versions. Minor updates are not included, as listing every change would be impractical. This roadmap is intended as a brainstorming outline, and all features are subject to change. Any suggestions? Please contact Luke de Munk.
 
 | **Version**   | **Expected release**  | **Key features**                      |
 |-------------  |---------------------- |------------------------------------   |
-| v0.9.0 Beta   | 10-2025               | First public release                                                      |
-| v1.0.0        | 11-2025               | User management, login page, improved security                            |
+| v0.9.0 Beta   | 11-2025               | First public test release                                                 |
+| v1.0.0        | 12-2025               | Improved security                                                         |
 |               |                       | Improved LED strip addressing configuration UI                            |
-|               |                       | Improved OTA update functionality                                         |
-|               |                       | Improved alarm functionality                                              |
+|               |                       | Improved LED strip addressing, real-time LED feedback                     |
+|               |                       | Real-time LED feedback. Capable of showing real-time LED states in the UI |
+|               |                       | Automatic software update notification and improved software update routine |
+|               |                       | Improved OTA LED strip update functionality                               |
+|               |                       | Improved alarm functionality & security                                   |
 |               |                       | Device location and location based automation targets                     |
 |               |                       | Tap-to-run dashboard shortcut and automation, multiple actions            |
-|               |                       | Scenarios: configure scenarios for  LED strip groups                      |
-|               |                       | Language pack support                                                     |
-|               |                       | Multiple UI languages                                                     |
+|               |                       | Scenarios: create color scenarios for LED strip groups                    |
 |               |                       | Sender verification (by hash) for HTTPS commands                          |
-| v1.1.0        | 2026                  | Alarm functionality improvements                                          |
+|               |                       | Real-time LED strips synchronization                                      |
+|               |                       | Configurable number of buttons for RF remotes                             |
+| v1.1.0        | 2026                  | Alarm functionality & security improvements                               |
+|               |                       | RF power outlet support                                                   |
 |               |                       | [RF & Zigbee bridge]() support                                            |
 |               |                       | [Athom GU10 bulb](https://www.athom.tech/blank-1/wled-gu10-rgbcw) support |
 |               |                       | [iOS app]() integration                                                   |
 |               |                       | Alarm notifications over MQTT (only with iOS app)                         |
 |               |                       | Auto arm/disarm alarm by geofencing (only with iOS app)                   |
-| v1.2.0        | 2026                  | Automatic bluetooth LED strip configuration                               |
+|               |                       | Automatic bluetooth LED strip configuration                               |
+| v1.2.0        | 2026                  | Data insights (sensor data, actuator data)                                |
+|               |                       | Advanced automation programming. No-code block based programming          |
+|               |                       | Added modes to LED strip scenarios                                        |
 | v1.3.0        | 2026                  | [IP camera]() support                                                     |
-| v1.4.0        | 2026                  | Data insights (RF sensor data, LED strip data)                            |
-|               |                       | Automatic scenarios based on machine learning                             |
+|               |                       | Custom LED strip mode creation                                            |
+| v1.4.0        | 2026                  | Smart scenarios based on machine learning                                 |
 | v1.5.0        | 2026                  | AI chatbot for controlling the system                                     |
 | v1.6.0        | 2026                  | AI voice control integration                                              |
 | v1.7.0        | 2027                  | [ElectriControl]() support                                                |
-|               |                       | Improved data insights for electrics                                      |
-| v1.8.0        | 2027                  | Smart electronic schemes based on machine learning                        |
+|               |                       | Improved data insights                                                    |
+|               |                       | Added data insights for energy consumption                                |
+| v1.8.0        | 2027                  | Smart energy saving schemes based on machine learning                     |
 
-## 8. Issues, recommendations, feedback & security reports
+## 10. Issues, recommendations, feedback & security reports
 
 I truly appreciate the opportunity to resolve issues and receive feedback on my work. This is a one-person hobby project into which I've invested many hours. If you have any recommendations, tips, or feedback, please feel free to open an issue or contact me directly.
 
-## 9. Contributing
+## 11. Contributing
 
-When contributing to this repository, please read [CONTRIBUTING.md](CONTRIBUTING.md), [HTML/CSS/JavaScript conventions](documentation/software/HTML_CSS_JAVASCRIPT_CONVENTIONS.md) and [C/C++ conventions](documentation/software/CPP_CONVENTIONS.md).
+When contributing to this repository, please read [CONTRIBUTING.md](CONTRIBUTING.md), [HTML/CSS/JavaScript conventions](documentation/software/HTML_CSS_JAVASCRIPT_CONVENTIONS.md) and [Python conventions](documentation/software/PYTHON_CONVENTIONS.md).
 
-## 10. Authors
+## 12. Authors
 
 * **Luke de Munk** - Project maintainer - [Munk IT](munkservices.com) | [LinkedIn](https://www.linkedin.com/in/luke-de-munk/)

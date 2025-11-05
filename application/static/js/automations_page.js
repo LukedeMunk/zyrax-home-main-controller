@@ -862,8 +862,11 @@ function loadModal(event, id=undefined) {
                 timeInvertedActionTitleElem.textContent = TEXT_TIME_TURNING_ON;
             }
 
-            timeInvertedActionContainerElem.style.display = "block";
-            timeInvertedActionTxtElem.value = automation.inverted_action_time;
+            /* If has inverted event */
+            if (automation.inverted_automation_copy_id != -1) {
+                timeInvertedActionContainerElem.style.display = "block";
+                timeInvertedActionTxtElem.value = automation.inverted_action_time;
+            }
         }
     } else if (automation.trigger == AUTOMATION_TRIGGER_SENSOR) {
         toggleCopyAutomationInvertedTriggerAndPower(automation.inverted_automation_copy_id != -1);

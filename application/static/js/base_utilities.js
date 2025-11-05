@@ -991,6 +991,7 @@ function enableScrolling() {
 document.body.addEventListener('keydown', function(e) {
     if (e.key == "Escape") {
         enableScrolling();
+        hideOverlay();
     }
 });
 

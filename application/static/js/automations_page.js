@@ -842,7 +842,6 @@ function loadModal(event, id=undefined) {
     updateDelayTimeField();
     actionSelectElem.value = automation.action;
     loadActionParameters();
-    triggerDeviceStateSelectElem.value = automation.trigger_state;
     toggleTimeWindowActiveState(automation.activate_during_time_window);
 
     if (automation.trigger == AUTOMATION_TRIGGER_TIMER) {
@@ -878,6 +877,7 @@ function loadModal(event, id=undefined) {
         delayInvertedAutomationCbElem.checked = automation.inverted_delay_minutes > 0;
         timeInvertedActionContainerElem.style.display = "none";
         loadTriggerSensorStateOptions(automation.trigger_device_ids[0]);
+        triggerDeviceStateSelectElem.value = automation.trigger_state;
     } else if (automation.trigger == AUTOMATION_TRIGGER_SWITCH) {
         toggleCopyAutomationInvertedTriggerAndPower(automation.inverted_automation_copy_id != -1);
         preconditionsContainerElem.style.display = "none";
@@ -888,6 +888,7 @@ function loadModal(event, id=undefined) {
         delayInvertedAutomationCbElem.checked = automation.inverted_delay_minutes > 0;
         timeInvertedActionContainerElem.style.display = "none";
         loadTriggerSensorStateOptions(automation.trigger_device_ids[0]);
+        triggerDeviceStateSelectElem.value = automation.trigger_state;
     }
 
     timeWindowStartBand = automation.time_window_start_minutes;
@@ -952,6 +953,8 @@ function loadTrigger() {
         loadTriggerSensorStateOptions();
         if (index != -1) {
             triggerDeviceStateSelectElem.value = automations[index].trigger_state;
+        } else {
+            triggerDeviceStateSelectElem.value = automations[selectedAutomationId].trigger_state;
         }
     } else if (triggerSelectElem.value == AUTOMATION_TRIGGER_SWITCH) {
         preconditionsContainerElem.style.display = "none";
@@ -962,6 +965,8 @@ function loadTrigger() {
         loadTriggerSensorStateOptions();
         if (index != -1) {
             triggerDeviceStateSelectElem.value = automations[index].trigger_state;
+        } else {
+            triggerDeviceStateSelectElem.value = automations[selectedAutomationId].trigger_state;
         }
     }
 

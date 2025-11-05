@@ -59,6 +59,10 @@ def update_rf_device():
 
     config = {}
 
+    if "name" in request.form:
+        config["name"] = request.form.get("name")
+    if "model_id" in request.form:
+        config["model_id"] = request.form.get("model_id")
     if "icon" in request.form:
         config["icon"] = request.form.get("icon")
     if "icon_low_state" in request.form:

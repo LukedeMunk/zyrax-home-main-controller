@@ -592,8 +592,8 @@ function updateDelayTimeField() {
 */
 /******************************************************************************/
 function updateTimeWindowRangeField() {
-    updateTimeWindowRangeField();
-
+    updateTimeWindowRangeSlider();
+    
     if (timeWindowTypeToggleElem.checked) {
         timeWindowRangeFieldElem.textContent = VAR_TEXT_ACTIVE_FROM(minutesToHourString(timeWindowStartBand), minutesToHourString(timeWindowEndBand));
         return;
@@ -652,7 +652,7 @@ function loadTimeWindowRangeFieldEnd() {
   @brief    Updates the time window range slider element.
 */
 /******************************************************************************/
-function updateTimeWindowRangeField() {
+function updateTimeWindowRangeSlider() {
     let sliderColor = "var(--success-text)";
     let rangeColor = "var(--background2)";
 
@@ -847,6 +847,7 @@ function loadModal(event, id=undefined) {
 
     if (automation.trigger == AUTOMATION_TRIGGER_TIMER) {
         toggleCopyAutomationInvertedTriggerAndPower(automation.inverted_automation_copy_id != -1);
+        preconditionsContainerElem.style.display = "none";
         timeWindowToggleElem.style.display = "none";
         timeTriggerContainerElem.style.display = "block";
         triggerDevicesContainerElem.style.display = "none";
@@ -866,6 +867,7 @@ function loadModal(event, id=undefined) {
         }
     } else if (automation.trigger == AUTOMATION_TRIGGER_SENSOR) {
         toggleCopyAutomationInvertedTriggerAndPower(automation.inverted_automation_copy_id != -1);
+        preconditionsContainerElem.style.display = "block";
         timeWindowToggleElem.style.display = "block";
         timeTriggerContainerElem.style.display = "none";
         triggerDevicesContainerElem.style.display = "block";
@@ -875,6 +877,7 @@ function loadModal(event, id=undefined) {
         loadTriggerSensorStateOptions(automation.trigger_device_ids[0]);
     } else if (automation.trigger == AUTOMATION_TRIGGER_SWITCH) {
         toggleCopyAutomationInvertedTriggerAndPower(automation.inverted_automation_copy_id != -1);
+        preconditionsContainerElem.style.display = "none";
         timeWindowToggleElem.style.display = "none";
         timeTriggerContainerElem.style.display = "none";
         triggerDevicesContainerElem.style.display = "block";
@@ -891,13 +894,11 @@ function loadModal(event, id=undefined) {
     updateTimeWindowRangeField();
 
     if (automation.time_window_activated == 1) {
-        preconditionsContainerElem.style.display = "block";
         timeWindowToggleElem.checked = true;
         timeWindowToggleElem.textContent = TEXT_DEACTIVATE_TIME_WINDOW;
         timeWindowToggleElem.style.color = "var(--error-text)";
         timeWindowContainerElem.style.display = "block";
     } else {
-        preconditionsContainerElem.style.display = "none";
         timeWindowToggleElem.checked = false;
         timeWindowToggleElem.textContent = TEXT_ACTIVATE_TIME_WINDOW;
         timeWindowToggleElem.style.color = "var(--success-text)";

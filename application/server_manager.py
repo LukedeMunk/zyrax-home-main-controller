@@ -58,23 +58,23 @@ class Profile(db.Model):
     ui_theme = db.Column(db.Integer, nullable=False, default=c.UI_THEME_DARK_BLUE)
     created_at = db.Column(db.DateTime(timezone=True), default=datetime.now(c.TIME_ZONE), nullable=False)
 
-class ProfileHasFavouriteDashboardConfiguration(db.Model):
-    __tablename__ = "ProfileHasFavouriteDashboardConfiguration"
-    id = db.Column(db.Integer, primary_key=True)
-    profile_id = db.Column(db.Integer, nullable=False)
-    configuration_id = db.Column(db.Integer, nullable=False)
-
-#class AccountHasDashboardConfiguration(db.Model): For not unimplemented
-#    __tablename__ = "AccountHasDashboardConfiguration"
-#    id = db.Column(db.Integer, primary_key=True)
-#    account_id = db.Column(db.Integer, nullable=False)
-#    configuration_id = db.Column(db.Integer, nullable=False)
-
 class DashboardConfiguration(db.Model):
     __tablename__ = "DashboardConfiguration"
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), nullable=False)
     icon = db.Column(db.String(50), nullable=False, default="fa-duotone fa-solid fa-grid-horizontal fa-lg")
+
+#class AccountHasDashboardConfiguration(db.Model): For now unimplemented
+#    __tablename__ = "AccountHasDashboardConfiguration"
+#    id = db.Column(db.Integer, primary_key=True)
+#    account_id = db.Column(db.Integer, nullable=False)
+#    configuration_id = db.Column(db.Integer, nullable=False)
+
+#class ProfileHasFavouriteDashboardConfiguration(db.Model): For now unimplemented
+#    __tablename__ = "ProfileHasFavouriteDashboardConfiguration"
+#    id = db.Column(db.Integer, primary_key=True)
+#    profile_id = db.Column(db.Integer, nullable=False)
+#    configuration_id = db.Column(db.Integer, nullable=False)
         
 class DashboardHasTile(db.Model):
     __tablename__ = "DashboardHasTile"
@@ -115,7 +115,7 @@ class AlarmHasDeactivationDevice(db.Model):
     name = db.Column(db.String(50), nullable=False)
     ip_address = db.Column(db.String(50), nullable=False)
     mac_address = db.Column(db.String(50), nullable=False)
-    #endregion
+#endregion
     
 #region Device tables
 class Device(db.Model):
@@ -141,12 +141,6 @@ class RfDevice(db.Model):
     icon_low_state = db.Column(db.String(50), nullable=False, default="fa-duotone fa-solid fa-microchip")
     low_battery = db.Column(db.Boolean, nullable=False, default=False)
 
-class RfDeviceIsTriggered(db.Model):
-    __tablename__ = "RfDeviceIsTriggered"
-    id = db.Column(db.Integer, primary_key=True)
-    device_id = db.Column(db.Integer, nullable=False)
-    datetime = db.Column(db.DateTime(timezone=True), default=datetime.now(c.TIME_ZONE), nullable=False)
-
 class RfDeviceHasRfCode(db.Model):
     __tablename__ = "RfDeviceHasRfCode"
     id = db.Column(db.Integer, primary_key=True)
@@ -154,6 +148,12 @@ class RfDeviceHasRfCode(db.Model):
     name = db.Column(db.String(50), nullable=False)
     rf_code = db.Column(db.Integer, nullable=False, unique=True)
     type = db.Column(db.Integer, nullable=False)                                    #presence detected, opened, closed, low battery, remotecontrolBtn
+
+class RfDeviceIsTriggered(db.Model):
+    __tablename__ = "RfDeviceIsTriggered"
+    id = db.Column(db.Integer, primary_key=True)
+    device_id = db.Column(db.Integer, nullable=False)
+    datetime = db.Column(db.DateTime(timezone=True), default=datetime.now(c.TIME_ZONE), nullable=False)
 
 class IpCamera(db.Model):
     __tablename__ = "IpCamera"
@@ -275,7 +275,7 @@ class ModeParameter(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), nullable=False)
     human_friendly_name = db.Column(db.String(50), nullable=False)
-    type = db.Column(db.Integer, nullable=False)                                        #range, select, color, checkbox, directionSwitch
+    type = db.Column(db.Integer, nullable=False)                                #range, select, color, checkbox, directionSwitch
     default_value = db.Column(db.String(50), nullable=False, default="")
     minimum_value = db.Column(db.Integer)
     maximum_value = db.Column(db.Integer)

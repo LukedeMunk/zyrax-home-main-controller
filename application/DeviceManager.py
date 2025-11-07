@@ -757,9 +757,12 @@ class DeviceManager:
             #Next automation if not in configured time window
             if automation["time_window_activated"]:
                 is_in_time_window = self.check_time_window(automation["time_window_start_minutes"], automation["time_window_end_minutes"])
+
+                #Is in time window and is inactive in time window, don't activate
                 if is_in_time_window and not automation["activate_during_time_window"]:
                     continue
                 
+                #Is not in time window and is active in time window, don't activate
                 if not is_in_time_window and automation["activate_during_time_window"]:
                     continue
 

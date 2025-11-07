@@ -66,6 +66,8 @@ This main ZyraX Home controller serves as the central interface and management h
 
 The controller software is cross-platform and can run on Windows and Linux systems, though a Raspberry Pi is recommended for deployment. This repository includes software and documentation for the main controller.
 
+<img src="documentation/software/system_overview_v0_9_0_Beta.png" alt="system_overview" width="90%" style="border-radius:10px; display:block; margin:auto;">
+
 ### Other ZyraX Home devices
 
 The platform can integrate with other open-source components developed for the ZyraX Home ecosystem:
@@ -178,6 +180,7 @@ Several documentation files describe this project and system. The list of these 
 |------------|----------------|-----------------------------|
 | Server becomes unavailable (HTTP code `502`) for a minute after enabling RF receiver | v0.9.0 | v1.0.0 |
 | RF remote control loads only 1 code | v0.9.0 | v1.0.0 |
+| LED strip IP not displayed at configuration screen | v0.9.0 | v1.0.0 |
 
 ### 8.2 Errors
 
@@ -207,7 +210,7 @@ Below is a roadmap for the ZyraX Home main controller, highlighting the key vers
 | **Version**   | **Expected release**  | **Key features**                      |
 |-------------  |---------------------- |------------------------------------   |
 | v0.9.0 Beta   | 11-2025               | First public test release                                                 |
-| v1.0.0        | 12-2025               | Improved security                                                         |
+| v1.0.0        | 01-2026               | Improved security                                                         |
 |               |                       | Improved LED strip addressing configuration UI                            |
 |               |                       | Improved LED strip addressing, real-time LED feedback                     |
 |               |                       | Real-time LED feedback. Capable of showing real-time LED states in the UI |

@@ -87,6 +87,9 @@ def update_device(id, config_dict):
         if "icon" in config_dict:
             device.icon = config_dict["icon"]
 
+        if "model_id" in config_dict:
+            device.model_id = config_dict["model_id"]
+
         if device.type == c.DEVICE_TYPE_LEDSTRIP:
             _update_ledstrip(id, config_dict)
         elif device.type == c.DEVICE_TYPE_RF_DEVICE:

@@ -181,6 +181,7 @@ Several documentation files describe this project and system. The list of these 
 | Server becomes unavailable (HTTP code `502`) for a minute after enabling RF receiver | v0.9.0 | v1.0.0 |
 | RF remote control loads only 1 code | v0.9.0 | v1.0.0 |
 | LED strip IP not displayed at configuration screen | v0.9.0 | v1.0.0 |
+| LED strip model ID not saved during update | v0.9.0 | v1.0.0 |
 
 ### 8.2 Errors
 

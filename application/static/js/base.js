@@ -6,6 +6,9 @@
  * 
  * Brief:   Global JavaScript code for the application. More information:
  *          https://github.com/LukedeMunk/zyrax-home-main-controller
+ * 
+ * Template version:        0.0.3
+ * Template information:    https://github.com/LukedeMunk/templates
  */
 /******************************************************************************/
 //#region Elements

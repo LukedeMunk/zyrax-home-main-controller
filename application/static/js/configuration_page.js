@@ -943,6 +943,12 @@ function updateLedstripSuccess(result) {
         if (lastLedstripData.has_sensor != undefined) {
             ledstrip.has_sensor = lastLedstripData.has_sensor;
         }
+        if (lastLedstripData.sensor_inverted != undefined) {
+            ledstrip.sensor_inverted = lastLedstripData.sensor_inverted;
+        }
+        if (lastLedstripData.sensor_model != undefined) {
+            ledstrip.sensor_model = lastLedstripData.sensor_model;
+        }
         if (lastLedstripData.number_of_leds != undefined) {
             ledstrip.number_of_leds = lastLedstripData.number_of_leds;
         }

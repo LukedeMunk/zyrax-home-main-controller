@@ -6,6 +6,9 @@
  * 
  * Brief:   Global code that handles global utility functions. More information:
  *          https://github.com/LukedeMunk/zyrax-home-main-controller
+ * 
+ * Template version:        0.0.3
+ * Template information:    https://github.com/LukedeMunk/templates
  */
 /******************************************************************************/
 //#region Elements
@@ -46,7 +49,7 @@ const VERSION_RE = /^v([0-9]+)\_([0-9]+)\_([0-9]+)$/;
 const PASSWORD_RE = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[#$^+=!*()@%&]).{8,64}$/;  //To check passwords according to NIST
 const EMAIL_RE = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;                   //To check emails
 
-const MAX_VISIBLE_BANNERS = 3; // Maximum number of banners to show at once
+const MAX_VISIBLE_BANNERS = 3;                                                      //Maximum number of banners to show at once
 
 /* Popup type classes */
 const BANNER_TYPE_SUCCESS = "success";

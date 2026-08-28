@@ -2,119 +2,196 @@
 ################################################################################
 #
 # File:     install.sh
-# Version:  0.0.2
+# Version:  0.0.3
 # Author:   Luke de Munk
-# Brief:    Installer for ZyraX Home main controller and microservices
-#           Uses a Python virtual environment for dependencies.
+# Brief:    Installer and updater for the ZyraX Home main controller and
+#           microservices.
 #
 #           More information:
 #           https://github.com/LukedeMunk/zyrax-home-main-controller
 #
 ################################################################################
-MAIN_FILE="application/main.py"
-MAIN_SERVICE_FILE="application/services/zyrax_home.service"
-REQUIREMENTS_FILE="application/requirements.txt"
+set -Eeuo pipefail
 
 APPLICATION_NAME="ZyraX_Home"
-VENV_PATH="/etc/$APPLICATION_NAME/venv"
-INSTALL_PATH="/etc/$APPLICATION_NAME/application"
+SERVICE_USER="zyraxhome"
+
+SOURCE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+APPLICATION_SOURCE_PATH="$SOURCE_ROOT/application"
+MAIN_FILE="$APPLICATION_SOURCE_PATH/main.py"
+MAIN_SERVICE_FILE="$APPLICATION_SOURCE_PATH/services/zyrax_home.service"
+REQUIREMENTS_FILE="$APPLICATION_SOURCE_PATH/requirements.txt"
+
+SYSTEM_PATH="/etc/$APPLICATION_NAME"
+VENV_PATH="$SYSTEM_PATH/venv"
+INSTALL_PATH="$SYSTEM_PATH/application"
 RUNTIME_PATH="/var/lib/$APPLICATION_NAME"
 DATA_PATH="$RUNTIME_PATH/data"
+KEYRING_ENV_FILE="$SYSTEM_PATH/keyring.env"
+KEYRING_FILE="$DATA_PATH/cryptfile_pass.cfg"
+
+SERVICES=(
+    "zyrax_home.service"
+    "zyrax_home_telegram.service"
+    "zyrax_home_weather.service"
+)
+
+if [ "${EUID}" -ne 0 ]; then
+    exec sudo /bin/bash "$0" "$@"
+fi
 
 echo "ZyraX Home main controller installer initializing"
 
-# Check required files
-if [ ! -f "$MAIN_FILE" ]; then
-    echo "Missing main application source file"
-    exit 71
-fi
-if [ ! -f "$MAIN_SERVICE_FILE" ]; then
-    echo "Missing main service file"
-    exit 71
-fi
-if [ ! -f "$REQUIREMENTS_FILE" ]; then
-    echo "Missing requirements file"
-    exit 71
+required_files=(
+    "$MAIN_FILE"
+    "$MAIN_SERVICE_FILE"
+    "$REQUIREMENTS_FILE"
+    "$APPLICATION_SOURCE_PATH/ConfigurationManager.py"
+    "$APPLICATION_SOURCE_PATH/populate_db.py"
+    "$APPLICATION_SOURCE_PATH/database_utility/__init__.py"
+    "$APPLICATION_SOURCE_PATH/services/zyrax_home_telegram.service"
+    "$APPLICATION_SOURCE_PATH/services/zyrax_home_weather.service"
+)
+
+for required_file in "${required_files[@]}"; do
+    if [ ! -f "$required_file" ]; then
+        echo "Missing required source file: $required_file" >&2
+        exit 71
+    fi
+done
+
+if ! id "$SERVICE_USER" >/dev/null 2>&1; then
+    echo "Creating service user '$SERVICE_USER'"
+    useradd --system --home-dir "$RUNTIME_PATH" --create-home \
+        --shell /usr/sbin/nologin "$SERVICE_USER"
 fi
 
-echo "Overwrite data? (Y or N) (default: Y):"
+default_full_install="N"
+if [ ! -x "$VENV_PATH/bin/python3" ]; then
+    default_full_install="Y"
+fi
+
+echo "Perform a full system dependency installation? (Y or N) (default: $default_full_install):"
 read -r full_install
-full_install=${full_install:-Y}
+full_install=${full_install:-$default_full_install}
 
-if [ "$full_install" = "Y" ] || [ "$full_install" = "y" ]; then
-    echo "Installing application as new installation..."
+if [[ "$full_install" =~ ^[Yy]$ ]]; then
+    echo "Installing operating-system dependencies"
+    apt-get update
+    apt-get install -y \
+        build-essential \
+        liblgpio-dev \
+        nginx \
+        openssl \
+        python3-dev \
+        python3-pip \
+        python3-venv \
+        rsync \
+        swig
 
-    # Update system and install Nginx & venv tools
-    sudo apt update
-    sudo apt install -y nginx python3-venv python3-pip liblgpio-dev swig python3-dev build-essential
-    
-    # Remove default Nginx config
-    sudo rm /etc/nginx/sites-enabled/default
+    if systemctl list-unit-files apache2.service >/dev/null 2>&1; then
+        systemctl disable --now apache2.service || true
+    fi
+elif ! command -v rsync >/dev/null 2>&1; then
+    echo "rsync is required for a safe application update" >&2
+    echo "Run the installer again and select the full installation option." >&2
+    exit 69
+fi
 
-    # Create production folder
-    sudo mkdir -p "$INSTALL_PATH"
-    sudo mkdir -p "$DATA_PATH"
-    sudo mkdir -p "$DATA_PATH/profile_pictures"
-    sudo mkdir -p "$DATA_PATH/.zyrax_temp"
+echo "Stopping ZyraX Home services"
+systemctl stop "${SERVICES[@]}" 2>/dev/null || true
 
-    # Set data directory owner to user
-    sudo chown -R $USER:$USER "$RUNTIME_PATH"
-    sudo chown -R $USER:$USER "$INSTALL_PATH"
-    sudo chmod -R 750 $RUNTIME_PATH
+echo "Creating installation and runtime directories"
+install -d -m 755 "$SYSTEM_PATH" "$INSTALL_PATH"
+install -d -o "$SERVICE_USER" -g "$SERVICE_USER" -m 750 \
+    "$RUNTIME_PATH" \
+    "$DATA_PATH" \
+    "$DATA_PATH/.zyrax_temp" \
+    "$DATA_PATH/ota" \
+    "$DATA_PATH/profile_pictures"
 
-    # Copy application files
-    sudo cp -R application/* "$INSTALL_PATH/"
-    sudo cp -R application/data/profile_pictures/default_profile_picture.png "$DATA_PATH/profile_pictures/"
+echo "Synchronizing application files"
+rsync -a --delete --exclude='/data/' \
+    "$APPLICATION_SOURCE_PATH/" \
+    "$INSTALL_PATH/"
 
-    # Create virtual environment
-    sudo python3 -m venv "$VENV_PATH"
-    sudo chown -R $USER:$USER "$VENV_PATH"
+chown -R root:root "$INSTALL_PATH"
+find "$INSTALL_PATH" -type d -exec chmod 755 {} +
+find "$INSTALL_PATH" -type f -exec chmod 644 {} +
+find "$INSTALL_PATH/services" -type f -name '*.sh' -exec chmod 755 {} +
 
-    # Install dependencies inside venv using absolute paths
-    sudo -u "$USER" /bin/bash -c "
-    source '$VENV_PATH/bin/activate'
-    pip install --upgrade pip
-    pip install -r '$INSTALL_PATH/requirements.txt'
-    pip install keyrings.cryptfile
-    pip install --no-binary=:all: lgpio
-    pip install rpi-lgpio
-    "
-    
-    # Generate self-signed SSL keys
-    sudo mkdir -p /etc/ssl/zyrax
-    sudo openssl req -x509 -nodes -days 365 \
-        -newkey rsa:2048 \
-        -keyout /etc/ssl/zyrax/zyrax.key \
-        -out /etc/ssl/zyrax/zyrax.crt \
-        -subj "/C=NL/ST=State/L=City/O=ZyraX Home/OU=IT/CN=localhost"
-    sudo chown root:root /etc/ssl/zyrax/*
-    sudo chmod 600 /etc/ssl/zyrax/zyrax.key
-    sudo chmod 644 /etc/ssl/zyrax/zyrax.crt
+DEFAULT_PROFILE_PICTURE="$APPLICATION_SOURCE_PATH/data/profile_pictures/default_profile_picture.png"
+if [ -f "$DEFAULT_PROFILE_PICTURE" ] && \
+   [ ! -f "$DATA_PATH/profile_pictures/default_profile_picture.png" ]; then
+    install -o "$SERVICE_USER" -g "$SERVICE_USER" -m 640 \
+        "$DEFAULT_PROFILE_PICTURE" \
+        "$DATA_PATH/profile_pictures/default_profile_picture.png"
+fi
 
-    # Install systemd service files
-    sudo cp "$INSTALL_PATH/services/zyrax_home.service" /etc/systemd/system/
-    sudo cp "$INSTALL_PATH/services/zyrax_home_telegram.service" /etc/systemd/system/
-    sudo cp "$INSTALL_PATH/services/zyrax_home_weather.service" /etc/systemd/system/
+echo "Creating or updating the Python environment"
+if [ ! -x "$VENV_PATH/bin/python3" ]; then
+    python3 -m venv "$VENV_PATH"
+fi
 
-    # Stop services
-    sudo systemctl stop apache2
-    sudo systemctl disable apache2
+"$VENV_PATH/bin/python3" -m pip install --upgrade pip
+"$VENV_PATH/bin/python3" -m pip install -r "$INSTALL_PATH/requirements.txt"
+"$VENV_PATH/bin/python3" -m pip install keyrings.cryptfile
 
-    # Enable and start services
-    sudo systemctl daemon-reload
-    sudo systemctl enable zyrax_home.service
-    sudo systemctl enable zyrax_home_telegram.service
-    sudo systemctl enable zyrax_home_weather.service
-    sudo systemctl enable nginx
+if [[ "$full_install" =~ ^[Yy]$ ]]; then
+    "$VENV_PATH/bin/python3" -m pip install --no-binary=:all: lgpio
+    "$VENV_PATH/bin/python3" -m pip install rpi-lgpio
+fi
 
-    sudo systemctl start zyrax_home.service
-    sudo systemctl start zyrax_home_telegram.service
-    sudo systemctl start zyrax_home_weather.service
-    sudo systemctl start nginx
+echo "Configuring non-interactive encrypted keyring storage"
+if [ ! -f "$KEYRING_ENV_FILE" ]; then
+    umask 077
+    printf 'KEYRING_CRYPTFILE_PASSWORD=%s\n' "$(openssl rand -hex 32)" \
+        > "$KEYRING_ENV_FILE"
+fi
 
-    # Setup Nginx server block
-    NGINX_CONFIGURATION="/etc/nginx/sites-available/zyrax"
-    sudo bash -c "cat > $NGINX_CONFIGURATION" <<EOL
+if ! grep -q '^KEYRING_CRYPTFILE_PASSWORD=.' "$KEYRING_ENV_FILE"; then
+    echo "Missing KEYRING_CRYPTFILE_PASSWORD in $KEYRING_ENV_FILE" >&2
+    exit 78
+fi
+
+if grep -q '^KEYRING_CRYPTFILE_PATH=' "$KEYRING_ENV_FILE"; then
+    sed -i "s|^KEYRING_CRYPTFILE_PATH=.*|KEYRING_CRYPTFILE_PATH=$KEYRING_FILE|" \
+        "$KEYRING_ENV_FILE"
+else
+    printf 'KEYRING_CRYPTFILE_PATH=%s\n' "$KEYRING_FILE" \
+        >> "$KEYRING_ENV_FILE"
+fi
+
+chown root:root "$KEYRING_ENV_FILE"
+chmod 600 "$KEYRING_ENV_FILE"
+
+echo "Installing systemd service definitions"
+for service in "${SERVICES[@]}"; do
+    install -o root -g root -m 644 \
+        "$INSTALL_PATH/services/$service" \
+        "/etc/systemd/system/$service"
+done
+
+if [[ "$full_install" =~ ^[Yy]$ ]]; then
+    echo "Creating a self-signed TLS certificate"
+    install -d -o root -g root -m 755 /etc/ssl/zyrax
+
+    if [ ! -f /etc/ssl/zyrax/zyrax.key ] || \
+       [ ! -f /etc/ssl/zyrax/zyrax.crt ]; then
+        openssl req -x509 -nodes -days 365 \
+            -newkey rsa:2048 \
+            -keyout /etc/ssl/zyrax/zyrax.key \
+            -out /etc/ssl/zyrax/zyrax.crt \
+            -subj "/C=NL/ST=State/L=City/O=ZyraX Home/OU=IT/CN=localhost"
+    fi
+
+    chown root:root /etc/ssl/zyrax/zyrax.key /etc/ssl/zyrax/zyrax.crt
+    chmod 600 /etc/ssl/zyrax/zyrax.key
+    chmod 644 /etc/ssl/zyrax/zyrax.crt
+
+    rm -f /etc/nginx/sites-enabled/default
+
+    cat > /etc/nginx/sites-available/zyrax <<'EOF'
 server {
     listen 443 ssl;
     server_name localhost;
@@ -124,30 +201,36 @@ server {
 
     location / {
         proxy_pass http://127.0.0.1:5000;
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
     }
+
     client_max_body_size 50M;
 }
 
 server {
     listen 80;
     server_name localhost;
-    return 301 https://\$host\$request_uri;
+    return 301 https://$host$request_uri;
 }
-EOL
+EOF
 
-    # Put server in available sites and check Nginx configuration
-    sudo ln -sf /etc/nginx/sites-available/zyrax /etc/nginx/sites-enabled/zyrax
-    sudo nginx -t
-    sudo systemctl restart nginx
-
-    echo "Installation complete. Access the app at https://mastercontroller.local/"
-
-else
-    echo "Only updating application files (database and venv remain intact)..."
-    #Add service updates
-    sudo rsync -av --exclude="data/" application/ "$INSTALL_PATH/"
+    ln -sf /etc/nginx/sites-available/zyrax /etc/nginx/sites-enabled/zyrax
+    nginx -t
 fi
+
+echo "Validating installed Python sources"
+"$VENV_PATH/bin/python3" -m compileall -q "$INSTALL_PATH"
+
+systemctl daemon-reload
+systemctl enable "${SERVICES[@]}"
+systemctl restart "${SERVICES[@]}"
+
+if command -v nginx >/dev/null 2>&1; then
+    systemctl enable nginx
+    systemctl restart nginx
+fi
+
+echo "Installation complete. Access the app at https://mastercontroller.local/"

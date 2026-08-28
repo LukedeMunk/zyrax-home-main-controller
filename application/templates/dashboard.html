@@ -5,52 +5,31 @@
 <script>
     page = DASHBOARD_PAGE;
 
-    var alarm = JSON.parse('{{ alarm | tojson | safe }}');
-    var devices = JSON.parse('{{ devices | tojson | safe }}');
-    var groups = JSON.parse('{{ groups | tojson | safe }}');
-    var dashboardConfigurations = JSON.parse('{{ dashboard_configurations | tojson | safe }}');
-    var tileTypes = JSON.parse('{{ tile_types | tojson | safe }}');
-    var weather = JSON.parse('{{ weather | tojson | safe }}');
-    var weatherLocation = "{{ weather_location }}";
-    var weatherAvailable = true;
+    let alarm = JSON.parse('{{ alarm | tojson | safe }}');
+    let devices = JSON.parse('{{ devices | tojson | safe }}');
+    let groups = JSON.parse('{{ groups | tojson | safe }}');
+    let automations = JSON.parse('{{ automations | tojson | safe }}');
+    let dashboardConfigurations = JSON.parse('{{ dashboard_configurations | tojson | safe }}');
+    let tileTypes = JSON.parse('{{ tile_types | tojson | safe }}');
+    let weather = JSON.parse('{{ weather | tojson | safe }}');
+    let weatherLocation = "{{ weather_location }}";
+    let weatherAvailable = true;
     if (weather == null) {
         weatherAvailable = false;
     }
 </script>
 
-<script src="../static/js/dashboard_page.js" defer></script>
+<script src="../static/js/ui_components/DashboardGrid.js" defer></script>
+<script src="../static/js/pages/dashboard_page.js" defer></script>
 
 <style>
     body {
-        margin: 100px 0px;
+        margin: 20px 0px;
         width: 100%;
     }
 </style>
 <link rel="stylesheet" href="../static/css/styles_tiles.css">
-
-<dialog id="tileModal" class="modal" style="width: 60%;">
-    <i class="fa-solid fa-xmark close-modal-button clickable" target-modal="tileModal"></i>
-    <h3 id="tileModalTitle" style="margin-top: 0px;">New tile</h3>
-    <p id="tileErrorMessageField" class="message error" style="margin: 0px;"></p>
-
-    <div class="input-field-container">
-        <p id="tileTypeTitle" class="input-field-title">Type</p>
-        <select id="tileTypeSelect" onchange="updateModalTileType();" class="input-field"></select>
-    </div>
-    <div id="tileTargetInputContainer" class="input-field-container">
-        <p id="tileTargetTitle" class="input-field-title">Target</p>
-        <select id="tileTargetSelect" onchange="generateTilePreviews();" class="input-field"></select>
-    </div>
-    
-    <div id="tilePreviewContainer" class="flex-grid"></div>
-</dialog>
-
-<dialog id="iconModal" class="modal">
-    <i class="fa-solid fa-xmark close-modal-button clickable" target-modal="iconModal"></i>
-    <h3 style="margin-top: 0px;">Pick icon</h3>
-    
-    <div id="iconPickerContainer" class="icon-grid"></div>
-</dialog>
+<link rel="stylesheet" media="screen and (max-width: 699px)" href="../static/css/styles_tiles_mobile.css">
 
 <dialog id="weatherLocationModal" class="modal">
     <i class="fa-solid fa-xmark close-modal-button clickable" target-modal="weatherLocationModal"></i>
@@ -67,9 +46,44 @@
     <button id="submitWeatherLocationBtn" onclick="updateWeatherLocation();">Submit</button>
 </dialog>
 
-<div id="topBar" class="top-bar"></div>
+<section class="dashboard-workspace" aria-label="{{ title }}">
+    <div id="dashboardConfigurationPanel" class="dashboard-configuration-panel" hidden>
+        <div>
+            <h3 id="dashboardConfigurationTitle"></h3>
+            <p id="dashboardConfigurationDescription"></p>
+        </div>
+        <div class="dashboard-configuration-actions">
+            <button id="addTileBtn" onclick="loadAddTileModal();">
+                <i class="fa-duotone fa-solid fa-plus"></i>
+                <span id="addTileBtnText"></span>
+            </button>
+            <button id="renameDashboardBtn" onclick="loadDashboardConfigurationModal(selectedDashboardId);">
+                <i class="fa-duotone fa-solid fa-pen"></i>
+                <span id="renameDashboardBtnText"></span>
+            </button>
+            <button id="addDashboardBtn" onclick="loadDashboardConfigurationModal();">
+                <i class="fa-duotone fa-solid fa-plus"></i>
+                <span id="addDashboardBtnText"></span>
+            </button>
+            <button id="resetDashboardBtn" onclick="resetDashboardConfiguration();">
+                <i class="fa-duotone fa-solid fa-arrows-rotate-reverse"></i>
+                <span id="resetDashboardBtnText"></span>
+            </button>
+            <button id="deleteDashboardBtn" class="danger-button" onclick="deleteDashboardConfiguration(selectedDashboardId);">
+                <i class="fa-duotone fa-solid fa-trash"></i>
+                <span id="deleteDashboardBtnText"></span>
+            </button>
+        </div>
+    </div>
 
-<div id="dashboardGrid" class="flex-grid" style="width: 90%; margin: auto;"></div>
+    <div id="dashboardEmptyState" class="dashboard-empty-state" hidden>
+        <i class="fa-duotone fa-solid fa-grid-2 fa-2x"></i>
+        <p id="dashboardEmptyStateText"></p>
+        <button id="createFirstDashboardBtn" onclick="loadDashboardConfigurationModal();"></button>
+    </div>
+
+    <div id="dashboardGrid" class="flex-grid dashboard-grid"></div>
+</section>
 
 
 {% endblock %}

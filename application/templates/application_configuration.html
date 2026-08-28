@@ -4,11 +4,11 @@
 <script>
     page = ALARM_PAGE;
     
-    var weatherApiKey = "{{ weather_api_key }}";
-    var telegramBotToken = "{{ telegram_bot_token }}";
+    let weatherApiKey = "{{ weather_api_key }}";
+    let telegramBotToken = "{{ telegram_bot_token }}";
 </script>
 
-<script src="../static/js/application_configuration_page.js" defer></script>
+<script src="../static/js/pages/application_configuration_page.js" defer></script>
 <link rel="stylesheet" href="../static/css/styles_tiles.css">
 
 <div class="container-form">
@@ -27,7 +27,7 @@
                 </div>
                 <div class="centered-flex">
                     <button id="submitConfigurationBtn" onclick="submitConfiguration();">Submit</button>
-                    <button id="resetConfigurationBtn" onclick="resetConfigurationConfirm();">Reset</button>
+                    <button id="resetConfigurationBtn" onclick="resetConfiguration();">Reset</button>
                 </div>
             </fieldset>
         </div>

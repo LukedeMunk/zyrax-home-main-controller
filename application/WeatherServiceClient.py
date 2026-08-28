@@ -65,7 +65,7 @@ class WeatherServiceClient:
         
         self.api_key_header = {"x-api-key": api_key}
 
-        if not c.WEATHER_SERVICE_ENABLED:
+        if not c.dynamic_config.weather_service_enabled:
             self.service_state = SERVICE_STATE_DISABLED
         
         self._initialized = True
@@ -253,7 +253,7 @@ class WeatherServiceClient:
         url = self.base_url + "/set_location"
 
         try:
-            response = requests.post(url, json={"location": c.WEATHER_LOCATION}, headers=self.api_key_header)
+            response = requests.post(url, json={"location": c.dynamic_config.weather_location}, headers=self.api_key_header)
         except:
             self.service_state = SERVICE_STATE_UNAVAILABLE
             return (False, self.state_to_text(SERVICE_STATE_UNAVAILABLE))

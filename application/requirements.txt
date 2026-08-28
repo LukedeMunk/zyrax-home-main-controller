@@ -1,5 +1,5 @@
 APScheduler==3.11.0
-argon2==0.1.10
+argon2-cffi==25.1.0
 cryptography==46.0.3
 expiringdict==1.2.2
 fastapi==0.119.1

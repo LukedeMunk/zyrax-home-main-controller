@@ -23,6 +23,9 @@ from threading import Thread, Timer                                             
 from pythonping import ping                                                     #For pinging alarm deactivation devices
 import network_scanner
 from TelegramServiceClient import TelegramServiceClient
+from automation import (AdapterRegistry, AutomationEngine,
+                        AutomationRunService, Event, EventDispatcher, EventType)
+from automation.device_adapters import DeviceCommandAdapter, RfInputAdapter
 
 class DeviceManager:
     _instance = None
@@ -51,14 +54,32 @@ class DeviceManager:
         self.ledstrips = []                                                         #Objects
         self.cameras = []                                                           #Objects
         self.device_timers = []
-        self.automation_timers = []
         self.network_devices = []
         self.unconfigured_devices = []
         self._initialized = True
         self.telegram_client = TelegramServiceClient(
             base_url=c.TELEGRAM_SERVICE_URL,
-            api_key=c.MICROSERVICE_KEY
+            api_key=c.dynamic_config.microservice_key
         )
+        self.adapter_registry = AdapterRegistry()
+        self.event_dispatcher = EventDispatcher()
+        self.automation_engine = AutomationEngine(self.adapter_registry)
+        self.automation_run_service = AutomationRunService(
+            self.automation_engine
+        )
+        self.automation_engine.set_run_service(self.automation_run_service)
+        self.event_dispatcher.set_event_recorder(
+            self.automation_run_service.record_event
+        )
+        self.event_dispatcher.subscribe(self.automation_engine.handle_event)
+
+        self.device_command_adapter = DeviceCommandAdapter(self)
+        self.rf_input_adapter = RfInputAdapter(self, self.event_dispatcher)
+        self.adapter_registry.register(
+            "existing_devices",
+            self.device_command_adapter
+        )
+        self.adapter_registry.register("rf_input", self.rf_input_adapter)
 
     ################################################################################
     #
@@ -66,11 +87,12 @@ class DeviceManager:
     #
     ################################################################################
     def initialize(self):
+        db_util.ensure_automation_definitions()
         self.load_devices()
         self.initialize_ledstrips()
 
         self.check_timed_automations()
-        logi("Devicemanager started")
+        logi(c.TEXT_DEVICE_MANAGER_STARTED)
 
 #region Device functionality
     ################################################################################
@@ -83,11 +105,11 @@ class DeviceManager:
     def add_unconfigured_device_to_list(self, ip, hostname):
         for strip in self.unconfigured_devices:
             if strip["ip"] == ip:
-                logw("Strip with IP [" + ip + "] already in unconfigured ledstrip list")
+                logw(c.VAR_TEXT_IP_ALREADY_IN_UNCONFIGURED_LIST.format(ip))
                 return
             
             if strip["hostname"] == hostname:
-                logw("Strip with hostname [" + hostname + "] already in unconfigured ledstrip list")
+                logw(c.VAR_TEXT_HOSTNAME_ALREADY_IN_UNCONFIGURED_LIST.format(hostname))
                 return
             
         self.unconfigured_devices.append({"ip": ip, "hostname": hostname})
@@ -211,14 +233,14 @@ class DeviceManager:
     #
     ################################################################################
     def initialize_ledstrips(self):
-        logi("Initialize ledstrips")
+        logi(c.TEXT_INITIALIZING_LEDSTRIPS)
 
         for ledstrip in self.ledstrips:
             self.check_ledstrip_connection_status(ledstrip.id)
             if ledstrip.connection_status:
                 self.synchronize_ledstrip(ledstrip.id)
             else:
-                loge("Could not connect to ledstrip [" + ledstrip.name + "]")
+                loge(c.VAR_TEXT_COULD_NOT_CONNECT_TO_LEDSTRIP.format(ledstrip.name))
 
     ################################################################################
     #
@@ -227,13 +249,13 @@ class DeviceManager:
     #
     ################################################################################
     def update_ledstrip_firmware(self, version):
-        logi("Update firmware of ledstrips")
+        logi(c.TEXT_UPDATING_LEDSTRIP_FIRMWARE)
 
         filename = version + ".bin"
         path = os.path.join(c.OTA_FILE_DIRECTORY_PATH, filename)
 
         if not os.path.exists(path):
-            return (False, "Firmware file not found")
+            return (False, c.TEXT_FIRMWARE_FILE_NOT_FOUND)
         
         all_success = True
         for ledstrip in self.ledstrips:
@@ -243,7 +265,7 @@ class DeviceManager:
         if all_success:
             return (True)
         
-        return (False, "Not all ledstrips updating")
+        return (False, c.TEXT_NOT_ALL_LEDSTRIPS_UPDATING)
     
     ################################################################################
     #
@@ -253,7 +275,7 @@ class DeviceManager:
     #
     ################################################################################
     def get_ledstrip_with_leds(self, id):
-        return db_util._get_ledstrip(id, True)
+        return db_util.get_ledstrip(id, True)
         
     ################################################################################
     #
@@ -344,7 +366,7 @@ class DeviceManager:
             db_util.update_device(id, {"firmware_version": ledstrip_config["firmware_version"]})
 
         if ledstrip_config["firmware_version"] not in c.COMPATIBLE_LEDSTRIP_FIRMWARE_VERSIONS:
-            logw("Firmware of [" + ledstrip_db["name"] + "] is not compatible. Firmware [" + ledstrip_config["firmware_version"] + "]")
+            logw(c.VAR_TEXT_FIRMWARE_OF_LEDSTRIP_NOT_COMPATIBLE.format(ledstrip_db["name"], ledstrip_config["firmware_version"]))
             #TODO update firmware
 
         if ledstrip_db["has_sensor"] != ledstrip_config["has_sensor"]:
@@ -399,8 +421,8 @@ class DeviceManager:
     #
     ################################################################################
     def get_ledstrip_color(self, id):
-        parameter = db_util.get_ledstrip_mode_configuration(c.COLOR_LEDSTRIP_MODE, id)["parameters"][0]
-        return parameter["value"]
+        parameter = db_util.get_ledstrip_mode_configuration(c.LEDSTRIP_MODE_ID_COLOR, id)["parameters"][0]
+        return parameter["value1"]
 
     ################################################################################
     #
@@ -422,11 +444,11 @@ class DeviceManager:
     def set_ledstrip_color(self, id, color):
         color_parameter = [{
             "id": c.PARAMETER_ID_COLOR1,
-            "value" : color
+            "value1" : color
         }]
 
-        db_util.configure_ledstrip_mode(c.COLOR_LEDSTRIP_MODE, id, color_parameter)
-        self._get_ledstrip(id).send_mode_configuration(c.COLOR_LEDSTRIP_MODE)
+        db_util.configure_ledstrip_mode(c.LEDSTRIP_MODE_ID_COLOR, id, color_parameter)
+        self._get_ledstrip(id).send_mode_configuration(c.LEDSTRIP_MODE_ID_COLOR)
 
     ################################################################################
     #
@@ -474,8 +496,10 @@ class DeviceManager:
         group = db_util.get_group(id=group_id)
 
         for device_id in group["device_ids"]:
-            db_util.configure_ledstrip_mode(mode_id, device_id, config_list)
-            self._get_ledstrip(device_id).send_mode_configuration(mode_id)
+            device = db_util.get_device(device_id)
+            if device["type"] == c.DEVICE_TYPE_LEDSTRIP:
+                db_util.configure_ledstrip_mode(mode_id, device_id, config_list)
+                self._get_ledstrip(device_id).send_mode_configuration(mode_id)
 
     ################################################################################
     #
@@ -514,32 +538,7 @@ class DeviceManager:
     #
     ################################################################################
     def process_rf_signal(self, rf_code):
-        rf_devices = self.get_devices_dict(type=c.DEVICE_TYPE_RF_DEVICE)
-
-        for rf_device in rf_devices:
-            for code in rf_device["rf_codes"]:
-                if code["rf_code"] == rf_code:
-                    if code["type"] == c.RF_CODE_TYPE_ACTIVE:
-                        if rf_device["state"] != True:
-                            db_util.add_sensor_triggered(rf_device["id"])
-                            self.set_rf_device_state(rf_device["id"], True)
-                            logi("[" + rf_device["name"] + "] opened")
-                
-                    if code["type"] == c.RF_CODE_TYPE_INACTIVE:
-                        if rf_device["state"] != False:
-                            self.set_rf_device_state(rf_device["id"], False)
-                            logi("[" + rf_device["name"] + "] closed")
-                
-                    if code["type"] == c.RF_CODE_TYPE_TRIGGERED:
-                        db_util.add_sensor_triggered(rf_device["id"])
-                        self.set_rf_device_state(rf_device["id"], True)
-                        logi("[" + rf_device["name"] + "] triggered")
-                
-                    if code["type"] == c.RF_CODE_TYPE_LOW_BATTERY:
-                        db_util.update_device(rf_device["id"], {"rf_code_low_battery" : True})
-                        logi("[" + rf_device["name"] + "] low battery triggered")
-                        
-                    return
+        return self.rf_input_adapter.receive_code(rf_code)
 #endregion
 
 #region Sensor functionality
@@ -624,12 +623,13 @@ class DeviceManager:
     def set_device_group_power(self, id, power):
         group = db_util.get_group(id=id)
 
-        if group["type"] == c.DEVICE_TYPE_RF_DEVICE or group["type"] == c.DEVICE_TYPE_IP_CAMERA:
+        if c.DEVICE_TYPE_RF_DEVICE in group["types"] or c.DEVICE_TYPE_IP_CAMERA in group["types"]:
             logw("RF devices and cameras cannot be turned off")
-            return
         
-        for device in group["device_ids"]:
-            self.set_device_power(device, power)
+        for device_id in group["device_ids"]:
+            device = db_util.get_device(device_id)
+            if device["type"] != c.DEVICE_TYPE_RF_DEVICE and device["type"] != c.DEVICE_TYPE_IP_CAMERA:
+                self.set_device_power(device_id, power)
 
         if power == 1:
             logi("Group [" + group["name"] + "] turned on")
@@ -653,8 +653,10 @@ class DeviceManager:
             
         group = db_util.get_group(id=id)
         
-        for device in group["device_ids"]:
-            self.set_ledstrip_brightness(device, brightness)
+        for device_id in group["device_ids"]:
+            device = db_util.get_device(device_id)
+            if device["type"] == c.DEVICE_TYPE_LEDSTRIP:
+                self.set_ledstrip_brightness(device_id, brightness)
 
     ################################################################################
     #
@@ -666,8 +668,10 @@ class DeviceManager:
     def set_ledstrip_group_color(self, id, color):
         group = db_util.get_group(id=id)
 
-        for device in group["device_ids"]:
-            self.set_ledstrip_color(device, color)
+        for device_id in group["device_ids"]:
+            device = db_util.get_device(device_id)
+            if device["type"] == c.DEVICE_TYPE_LEDSTRIP:
+                self.set_ledstrip_color(device_id, color)
 
     ################################################################################
     #
@@ -679,8 +683,10 @@ class DeviceManager:
     def set_ledstrip_group_mode(self, id, mode):
         group = db_util.get_group(id=id)
 
-        for device in group["device_ids"]:
-            self.set_ledstrip_mode(device, mode)
+        for device_id in group["device_ids"]:
+            device = db_util.get_device(device_id)
+            if device["type"] == c.DEVICE_TYPE_LEDSTRIP:
+                self.set_ledstrip_mode(device_id, mode)
 
     ################################################################################
     #
@@ -692,11 +698,32 @@ class DeviceManager:
     def set_ledstrip_group_power_animation(self, id, power_animation):
         group = db_util.get_group(id=id)
         
-        for device in group["device_ids"]:
-            self.set_ledstrip_power_animation(device, power_animation)
+        for device_id in group["device_ids"]:
+            device = db_util.get_device(device_id)
+            if device["type"] == c.DEVICE_TYPE_LEDSTRIP:
+                self.set_ledstrip_power_animation(device_id, power_animation)
 #endregion
 
 #region Automation functionality
+    ################################################################################
+    #
+    #   @brief  Registers an integration adapter and its capabilities.
+    #   @param  name                Unique adapter name
+    #   @param  adapter             Adapter instance
+    #
+    ################################################################################
+    def register_integration_adapter(self, name, adapter):
+        self.adapter_registry.register(name, adapter)
+
+    ################################################################################
+    #
+    #   @brief  Publishes a protocol-independent event.
+    #   @param  event               Event to publish
+    #
+    ################################################################################
+    def publish_event(self, event):
+        self.event_dispatcher.publish(event)
+
     ################################################################################
     #
     #   @brief  Enabled or disables the specified automation
@@ -705,7 +732,7 @@ class DeviceManager:
     #
     ################################################################################
     def set_automation_enabled(self, id, enabled):
-        db_util.update_automation(id, {"enabled" : enabled})
+        return db_util.update_automation(id, {"enabled" : enabled})
 
     ################################################################################
     #
@@ -714,26 +741,7 @@ class DeviceManager:
     #
     ################################################################################
     def check_timed_automations(self):
-        automations = db_util.get_automations(c.AUTOMATION_TRIGGER_TIMER, True)
-        
-        current_datetime = datetime.today()
-        current_day = current_datetime.weekday()                                    #Get day of week (0-6)
-        current_time = current_datetime.strftime("%H:%M")                           #Get time in format hour:minute
-        
-        for automation in automations:                                              #Check every automation
-            #Next automation if disabled
-            if not automation["enabled"]:
-                continue
-
-            #Next automation if day disabled
-            if automation["days"][current_day] != "1":
-                continue
-            
-            #Next automation if time is not the same
-            if automation["time"] != current_time:
-                continue
-
-            self.execute_automation(automation)
+        self.automation_run_service.process_time_triggers()
 
     ################################################################################
     #
@@ -744,121 +752,13 @@ class DeviceManager:
     #
     ################################################################################
     def check_sensor_automations(self, id, state):
-        automations = db_util.get_automations(None, True)
-        
-        for automation in automations:
-            if automation["trigger"] != c.AUTOMATION_TRIGGER_SENSOR and automation["trigger"] != c.AUTOMATION_TRIGGER_SWITCH:
-                continue
+        self.event_dispatcher.publish(Event(
+            event_type=EventType.DEVICE_STATE_CHANGED,
+            source_type="device",
+            source_id=id,
+            payload={"state": int(state)}
+        ))
 
-            #Next automation if disabled
-            if not automation["enabled"]:
-                continue
-
-            #Next automation if not in configured time window
-            if automation["time_window_activated"]:
-                is_in_time_window = self.check_time_window(automation["time_window_start_minutes"], automation["time_window_end_minutes"])
-
-                #Is in time window and is inactive in time window, don't activate
-                if is_in_time_window and not automation["activate_during_time_window"]:
-                    continue
-                
-                #Is not in time window and is active in time window, don't activate
-                if not is_in_time_window and automation["activate_during_time_window"]:
-                    continue
-
-            #Next automation if sensor ID not in automation
-            triggers_automation = False
-            for device_id in automation["trigger_device_ids"]:
-                if id == device_id:
-                    triggers_automation = True
-                    break
-
-            #Next automation if sensor is not a trigger
-            if not triggers_automation:
-                continue
-
-            #Next automation if sensor is not the trigger state
-            if automation["trigger_state"] != state:
-                continue
-
-            #Automation needs to be triggered
-            #Delete possible existing timer
-            for index, timer in enumerate(self.automation_timers):
-                timed_automation = db_util.get_automation(id = timer["id"])
-
-                #if timer already exists, remove
-                if timer["id"] == automation["id"]:
-                    self.automation_timers[index]["timer"].cancel()
-                    self.automation_timers.pop(index)
-                    continue
-
-                #if same group of target devices, check
-                if automation["trigger_device_ids"] == timed_automation["trigger_device_ids"]:
-                    #If action is same, remove
-                    if automation["action"] == timed_automation["action"]:
-                        logi("Deleted automation delay timer [" + timer["name"] + "] because it has the same action")
-                        self.automation_timers[index]["timer"].cancel()
-                        self.automation_timers.pop(index)
-
-            if automation["delay_minutes"] > 0:
-                self.automation_timers.append({
-                    "name": automation["name"],
-                    "id": automation["id"],
-                    "timer": Timer(automation["delay_minutes"]*60,
-                                   self.execute_automation,
-                                   args=[automation, True])
-                })
-
-                self.automation_timers[self.get_index_from_id(self.automation_timers, automation["id"])]["timer"].start()
-                logi("Waiting for [" + str(automation["delay_minutes"]) + "] minute and then execute automation")
-            else:
-                self.execute_automation(automation, True)
-
-    ################################################################################
-    #
-    #   @brief  Executes the specified automation.
-    #   @param  automation          Automation to execute
-    #   @param  by_sensor           If True, the automation is triggered by a sensor
-    #
-    ################################################################################
-    def execute_automation(self, automation, by_sensor=False):
-        if automation["action"] == c.AUTOMATION_ACTION_SET_DEVICE_POWER:
-            power = int(automation["parameters"][0]["value"])
-            for device_id in automation["target_device_ids"]:
-                device = self.get_device_dict(False, device_id)
-                #continue when power is same
-                if device["power"] == power:
-                    continue
-
-                if device["type"] == c.DEVICE_TYPE_LEDSTRIP:
-                    ledstrip = self._get_ledstrip(id=device_id)
-                    #If timed automation, set power
-                    if not by_sensor:
-                        self.set_device_power(device_id, power, by_sensor)
-                        continue
-
-                    #If ledstrip is off, set power
-                    if ledstrip.power == 0:
-                        self.set_device_power(device_id, power, by_sensor)
-                        continue
-
-                    #If ledstrip is on, only turn off when turned on by sensor
-                    if ledstrip.power_setted_by_sensor:
-                        self.set_device_power(device_id, power, by_sensor)
-
-                    continue
-                
-                self.set_device_power(device_id, power, by_sensor)
-
-        elif automation["action"] == c.AUTOMATION_ACTION_SET_LEDSTRIP_COLOR:
-            for device_id in automation["target_device_ids"]:
-                self.set_ledstrip_color(device_id, automation["parameters"][0]["value"])
-
-        elif automation["action"] == c.AUTOMATION_ACTION_SET_LEDSTRIP_MODE:
-            for device_id in automation["target_device_ids"]:
-                self.set_ledstrip_mode(device_id, automation["parameters"][0]["value"])
-
-        logi("Automation [" + automation["name"] + "] executed")
 #endregion
 
 #region Alarm functionality
@@ -916,10 +816,7 @@ class DeviceManager:
     #
     ################################################################################
     def _download_ledstrip_states(self, id):
-        for ledstrip in self.ledstrips:
-            if ledstrip.id == id:
-                ledstrip.download_states()
-                return
+        self._get_ledstrip(id, True)
     
     ################################################################################
     #
@@ -934,6 +831,7 @@ class DeviceManager:
             if ledstrip.id == id:
                 if update_states:
                     ledstrip.download_states()
+                    
                 return ledstrip
             
         return None
@@ -1076,12 +974,11 @@ class DeviceManager:
     ################################################################################
     #
     #   @brief  Returns a list of group dictionaries.
-    #   @param  type                Group type
     #   @return list                Dictionary list with groups
     #
     ################################################################################
-    def get_groups(self, type=None):
-        return db_util.get_groups(type=type)
+    def get_groups(self):
+        return db_util.get_groups()
     
     ################################################################################
     #
@@ -1112,7 +1009,7 @@ class DeviceManager:
     #
     ################################################################################
     def update_group(self, id, config_dict):
-        db_util.update_group(id, config_dict)
+        result = db_util.update_group(id, config_dict)
         if "name" in config_dict:
             config_dict.pop("name")
         if "icon" in config_dict:
@@ -1120,11 +1017,14 @@ class DeviceManager:
 
         group = db_util.get_group(id)
 
-        for device in group["device_ids"]:
-            if group["type"] == c.DEVICE_TYPE_LEDSTRIP:
-                self.update_ledstrip(device, config_dict)
-            elif group["type"] == c.DEVICE_TYPE_RF_DEVICE:
-                db_util.update_device(device, config_dict)
+        for device_id in group["device_ids"]:
+            device = db_util.get_device(device_id)
+            if device["type"] == c.DEVICE_TYPE_LEDSTRIP:
+                self.update_ledstrip(device_id, config_dict)
+            elif device["type"] == c.DEVICE_TYPE_RF_DEVICE:
+                db_util.update_device(device_id, config_dict)
+
+        return result
 
     ################################################################################
     #
@@ -1278,6 +1178,9 @@ class DeviceManager:
             if device["type"] == c.DEVICE_TYPE_RF_BRIDGE:
                 c.RF_RECEIVER_PRESENT = True
                 c.RF_TRANSMITTER_PRESENT = True
+
+        if hasattr(self, "rf_input_adapter"):
+            self.rf_input_adapter.refresh()
 #endregion
 
 #region Utilities functionalty
@@ -1346,22 +1249,25 @@ class DeviceManager:
                     
         for ledstrip_param in ledstrip_mode["parameters"]:
             for db_param in db_mode["parameters"]:
-                if ledstrip_param["name"] == db_param["name"]:
+                if int(ledstrip_param["id"]) == int(db_param["mode_parameter_id"]):
+#TODO value 2
+                    if db_param["value1"] == "False" or db_param["value1"] == "True":
+                        db_param["value1"] = db_param["value1"].casefold() == "true"
 
-                    if isinstance(db_param["value"], bool):
-                        db_param["value"] = int(db_param["value"])
+                    if isinstance(db_param["value1"], bool):
+                        db_param["value1"] = int(db_param["value1"])
 
-                    if str(ledstrip_param["value"]) == str(db_param["value"]):
+                    if str(ledstrip_param["value1"]) == str(db_param["value1"]):
                         parameters_compared += 1
                     else:
-                        logw(ledstrip_param["name"] + " not the same, mode: " + str(ledstrip_mode["mode"]))
-                        logw("DB value: " + str(db_param["value"]) + ", strip value: " + str(ledstrip_param["value"]))
+                        logi(str(ledstrip_param["id"]) + " not the same, mode: " + str(ledstrip_mode["mode"]))
+                        logi("DB value1: " + str(db_param["value1"]) + ", strip value1: " + str(ledstrip_param["value1"]))
                         return False
                     
         if parameters_compared == len(ledstrip_mode["parameters"]):
             return True
 
-        loge("Mode parameter names don't match, mode [" + str(ledstrip_mode["mode"] + "]"))
+        loge("Mode parameter names don't match, mode [" + str(ledstrip_mode["mode"]) + "]")
         return False
         
     ################################################################################

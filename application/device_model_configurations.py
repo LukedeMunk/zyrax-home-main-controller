@@ -9,6 +9,8 @@
 #           https://github.com/LukedeMunk/zyrax-home-main-controller
 #
 ################################################################################
+from language_package_english import *                                          #Import language package
+
 LEDSTRIP_MODEL_WS2801 = 0
 LEDSTRIP_MODEL_WS2812B = 1
 LEDSTRIP_MODEL_SK6812K = 2
@@ -28,25 +30,25 @@ RF_CODE_TYPE_INACTIVE = 1
 RF_CODE_TYPE_TRIGGERED = 2
 RF_CODE_TYPE_LOW_BATTERY = 3
 
-RF_CODE_OPENED = {"name": "Open signal", "type": RF_CODE_TYPE_ACTIVE}
-RF_CODE_CLOSED = {"name": "Close signal", "type": RF_CODE_TYPE_INACTIVE}
-RF_CODE_ON = {"name": "On signal", "type": RF_CODE_TYPE_ACTIVE}
-RF_CODE_OFF = {"name": "Off signal", "type": RF_CODE_TYPE_INACTIVE}
-RF_CODE_TRIGGERED = {"name": "Trigger signal", "type": RF_CODE_TYPE_TRIGGERED}
-RF_CODE_LOW_BATTERY = {"name": "Low battery signal", "type": RF_CODE_TYPE_LOW_BATTERY}
+RF_CODE_OPENED = {"name": TEXT_OPEN_SIGNAL, "type": RF_CODE_TYPE_ACTIVE}
+RF_CODE_CLOSED = {"name": TEXT_CLOSE_SIGNAL, "type": RF_CODE_TYPE_INACTIVE}
+RF_CODE_ON = {"name": TEXT_ON_SIGNAL, "type": RF_CODE_TYPE_ACTIVE}
+RF_CODE_OFF = {"name": TEXT_OFF_SIGNAL, "type": RF_CODE_TYPE_INACTIVE}
+RF_CODE_TRIGGERED = {"name": TEXT_TRIGGER_SIGNAL, "type": RF_CODE_TYPE_TRIGGERED}
+RF_CODE_LOW_BATTERY = {"name": TEXT_LOW_BATTERY_SIGNAL, "type": RF_CODE_TYPE_LOW_BATTERY}
 
 
 ICON_TYPE_ACTIVE = 0
 ICON_TYPE_INACTIVE = 1
 
-ICON_ON = {"name": "On", "type": ICON_TYPE_ACTIVE}
-ICON_OFF = {"name": "Off", "type": ICON_TYPE_INACTIVE}
-ICON_OPEN = {"name": "Open", "type": ICON_TYPE_ACTIVE}
-ICON_CLOSED = {"name": "Closed", "type": ICON_TYPE_INACTIVE}
-ICON_TRIGGERED = {"name": "Triggered", "type": ICON_TYPE_ACTIVE}
-ICON_IDLE = {"name": "Idle", "type": ICON_TYPE_INACTIVE}
+ICON_ON = {"name": TEXT_ON, "type": ICON_TYPE_ACTIVE}
+ICON_OFF = {"name": TEXT_OFF, "type": ICON_TYPE_INACTIVE}
+ICON_OPEN = {"name": TEXT_OPEN, "type": ICON_TYPE_ACTIVE}
+ICON_CLOSED = {"name": TEXT_CLOSED, "type": ICON_TYPE_INACTIVE}
+ICON_TRIGGERED = {"name": TEXT_TRIGGERED, "type": ICON_TYPE_ACTIVE}
+ICON_IDLE = {"name": TEXT_IDLE, "type": ICON_TYPE_INACTIVE}
 
-ICON_ICON = {"name": "Icon", "type": ICON_TYPE_ACTIVE}
+ICON_ICON = {"name": TEXT_ICON, "type": ICON_TYPE_ACTIVE}
 
 LEDSTRIP_MODEL_ID_WS2801 = 0
 LEDSTRIP_MODEL_ID_WS2812B = 1
@@ -93,7 +95,7 @@ LEDSTRIP_MODELS = [
 LEDSTRIP_SENSOR_MODELS = [
     {
         "model_id":LEDSTRIP_SENSOR_MODEL_ID_OPEN_CLOSE,
-        "name":"Contact Switch"
+        "name": TEXT_CONTACT_SWITCH
     }
 ]
 
@@ -101,7 +103,7 @@ DOOR_SENSOR_MODELS = [
     {
         "model_id":RF_SENSOR_MODEL_ID_DOOR_WINDOW,
         "type":DEVICE_TYPE_RF_DEVICE,
-        "name":"RF Door/Window Sensor",
+        "name":TEXT_RF_DOOR_WINDOW_SENSOR,
         "rf_code_types":[
             RF_CODE_OPENED,
             RF_CODE_CLOSED
@@ -113,11 +115,11 @@ DOOR_SENSOR_MODELS = [
         "states":[
             {
                 "state": 0,
-                "name": "Close"
+                "name": TEXT_CLOSED
             },
             {
                 "state": 1,
-                "name": "Open"
+                "name": TEXT_OPEN
             }
         ]
     },
@@ -127,7 +129,7 @@ MOTION_SENSOR_MODELS = [
     {
         "model_id":RF_SENSOR_MODEL_ID_MOTION,
         "type":DEVICE_TYPE_RF_DEVICE,
-        "name":"RF PIR Motion Sensor",
+        "name":TEXT_RF_PIR_MOTION_SENSOR,
         "rf_code_types":[
             RF_CODE_TRIGGERED
         ],
@@ -138,11 +140,11 @@ MOTION_SENSOR_MODELS = [
         "states":[
             {
                 "state": 0,
-                "name": "Room Cleared"
+                "name": TEXT_ROOM_CLEARED
             },
             {
                 "state": 1,
-                "name": "Presence Detected"
+                "name": TEXT_PRESENCE_DETECTED
             }
         ]
     },
@@ -161,15 +163,15 @@ MOTION_SENSOR_MODELS = [
         "states":[
             {
                 "state": 0,
-                "name": "Room Cleared"
+                "name": TEXT_ROOM_CLEARED
             },
             {
                 "state": 1,
-                "name": "Presence Detected"
+                "name": TEXT_PRESENCE_DETECTED
             },
             {
                 "state": 2,
-                "name": "Low Battery"
+                "name": TEXT_LOW_BATTERY
             }
         ]
     }
@@ -179,7 +181,7 @@ SWITCH_MODELS = [
     {
         "model_id":RF_SWITCH_MODEL_ID_TOGGLE,
         "type":DEVICE_TYPE_RF_DEVICE,
-        "name":"RF Toggle Switch",
+        "name":TEXT_RF_TOGGLE_SWITCH,
         "rf_code_types":[
             RF_CODE_ON,
             RF_CODE_OFF
@@ -191,18 +193,18 @@ SWITCH_MODELS = [
         "states":[
             {
                 "state": 0,
-                "name": "Turned off"
+                "name": TEXT_TURNED_OFF
             },
             {
                 "state": 1,
-                "name": "Turned on"
+                "name": TEXT_TURNED_ON
             }
         ]
     },
     {
         "model_id":RF_SWITCH_MODEL_ID_TAP,
         "type":DEVICE_TYPE_RF_DEVICE,
-        "name":"RF Tap Switch",
+        "name":TEXT_RF_TAP_SWITCH,
         "rf_code_types":[
             RF_CODE_TRIGGERED
         ],
@@ -212,7 +214,7 @@ SWITCH_MODELS = [
         "states":[
             {
                 "state": 0,
-                "name": "Activated"
+                "name": TEXT_ACTIVATED
             }
         ]
     },   
@@ -222,7 +224,7 @@ REMOTE_MODELS = [
     {
         "model_id":RF_REMOTE_MODEL_ID,
         "type":DEVICE_TYPE_RF_DEVICE,
-        "name":"RF Remote Control",
+        "name":TEXT_RF_REMOTE_CONTROL,
         "icons":[
             ICON_ICON
         ],
@@ -251,18 +253,18 @@ POWER_OUTLET_MODELS = [
         "states":[
             {
                 "state": 0,
-                "name": "Off"
+                "name": TEXT_OFF
             },
             {
                 "state": 1,
-                "name": "On"
+                "name": TEXT_ON
             }
         ]
     },
     {
         "model_id":10,
         "type":DEVICE_TYPE_RF_DEVICE,
-        "name":"RF Tap Power Outlet",
+        "name":TEXT_RF_TAP_POWER_OUTLET,
         "rf_code_types":[
             RF_CODE_TRIGGERED
         ],
@@ -271,6 +273,7 @@ POWER_OUTLET_MODELS = [
         ]
     },
 ]
+
 CAMERA_MODELS = [
     {
         "model_id":11,
@@ -285,21 +288,17 @@ CAMERA_MODELS = [
                 "name": "Activated"
             }
         ]
-    },
-    
+    },    
 ]
-
-
-
-
 
 #DEVICE_TYPE_RF_SENSOR
 #DEVICE_TYPE_RF_REMOTE_SWITCH = 2
 #DEVICE_TYPE_RF_POWER_OUTLET = 3
 
-DEVICE_TYPES = [{"name": "Ledstrips", "type" : DEVICE_TYPE_LEDSTRIP},
-                {"name": "RF Devices", "type" : DEVICE_TYPE_RF_DEVICE},
-                {"name": "Cameras", "type" : DEVICE_TYPE_IP_CAMERA},]
+
+DEVICE_TYPES = [{"name": TEXT_LEDSTRIPS, "type" : DEVICE_TYPE_LEDSTRIP},
+                {"name": TEXT_RF_DEVICES, "type" : DEVICE_TYPE_RF_DEVICE},
+                {"name": TEXT_CAMERAS, "type" : DEVICE_TYPE_IP_CAMERA},]
                 #{"name": "RF Sensors", "type" : DEVICE_TYPE_RF_SENSOR},
                 #{"name": "RF Remotes", "type" : DEVICE_TYPE_RF_REMOTE_SWITCH},
                 #{"name": "RF Power Outlets", "type" : DEVICE_TYPE_RF_POWER_OUTLET}]
@@ -314,43 +313,43 @@ DEVICE_CATEGORY_IP_CAMERA = 6
 
 DEVICE_CATEGORIES = [
     {
-        "name":"Ledstrip",
+        "name":TEXT_LEDSTRIP,
         "category":DEVICE_CATEGORY_LEDSTRIP,
         "icon":"fa-duotone fa-solid fa-lightbulb-on",
         "device_models":LEDSTRIP_MODELS
     },
     {
-        "name":"Door/Window Sensor",
+        "name":TEXT_DOOR_WINDOW_SENSOR,
         "category":DEVICE_CATEGORY_DOOR_SENSOR,
         "icon":"fa-duotone fa-solid fa-door-open",
         "device_models":DOOR_SENSOR_MODELS
     },
     {
-        "name":"Motion Sensor",
+        "name":TEXT_MOTION_SENSOR,
         "category":DEVICE_CATEGORY_MOTION_SENSOR,
         "icon":"fa-duotone fa-solid fa-person-walking",
         "device_models":MOTION_SENSOR_MODELS
     },
     {
-        "name":"Switch",
+        "name":TEXT_SWITCH,
         "category":DEVICE_CATEGORY_SWITCH,
         "icon":"fa-duotone fa-solid fa-circle-sort",
         "device_models":SWITCH_MODELS
     },
     {
-        "name":"Remote",
+        "name":TEXT_REMOTE,
         "category":DEVICE_CATEGORY_REMOTE,
         "icon":"fa-duotone fa-solid fa-light-switch",
         "device_models":REMOTE_MODELS
     },
     {
-        "name":"Power Outlet",
+        "name":TEXT_POWER_OUTLET,
         "category":DEVICE_CATEGORY_POWER_OUTLET,
         "icon":"fa-duotone fa-solid fa-outlet",
         "device_models":POWER_OUTLET_MODELS
     },
     {
-        "name":"Camera",
+        "name":TEXT_CAMERA,
         "category":DEVICE_CATEGORY_IP_CAMERA,
         "icon":"fa-duotone fa-solid fa-camera-cctv",
         "device_models":CAMERA_MODELS

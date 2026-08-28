@@ -15,33 +15,17 @@
         <link rel="apple-touch-icon" href="../static/images/apple-touch-icon.png">
         <link href="../static/fontawesome-icons/css/all.min.css" rel="stylesheet">
         <meta charset="utf-8"/>
-        
+
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=0">
     </head>
 
-    <div id="pageBackdrop" class="backdrop"></div>
-    
-    <div id="bannerStack" class="banner-stack"></div>
-
-    <div id="loadingBanner" class="loading-banner-container">
-        <div class="centered-flex" style="gap: 8px;">
-            <div id="loadingBannerIcon" class="dot-loader"></div>
-            <p id="loadingBannerMessageField"></p>
-        </div>
-        <div id="loadingBannerProgress" class="progress full-width" style="margin: 5px auto;"><div id="loadingBannerProgressBar" class="bar"></div></div>
-    </div>
-
-    <div id="popup" class="popup-container">
-        <i id="popupIcon" class="popup-icon"></i><br>
-        <h2 id="popupTitle" class="popup-title"></h2>
-        <p id="popupMessageField" class="popup-message"></p>
-        
-        <div id="popupButtonContainer" class="popup-button-container"></div>
-    </div>
+    <!-- Custom elements -->
+    <!-- End of custom elements -->
 
     <body>
         <script>
-            const APPLICATION_VERSION = "{{ APPLICATION_VERSION }}";
+            /* Custom base variables */
+            const CURRENT_APPLICATION_VERSION = "{{ CURRENT_APPLICATION_VERSION }}";
             const RF_RECEIVER_PRESENT = "{{ RF_RECEIVER_PRESENT }}" == "True";
             const RF_TRANSMITTER_PRESENT = "{{ RF_TRANSMITTER_PRESENT }}" == "True";
             let alarmActivated = "{{ alarm_activated }}" == "True";
@@ -56,12 +40,54 @@
             const LEDSTRIP_PAGE = "LEDSTRIP_PAGE";
             const SENSOR_PAGE = "SENSOR_PAGE";
             const ALARM_PAGE = "ALARM_PAGE";
+            /* End of custom base variables */
         </script>
 
-        <script src="../static/js/language_pack_english.js"></script>
-        <script src="../static/js/jquery.min.js"></script>
-        <script src="../static/js/base_utilities.js" defer></script>
-        <script src="../static/js/base.js" defer></script>
+        <script src="../static/js/core/language_pack_english.js"></script>
+        <script src="../static/js/core/jquery.min.js"></script>
+        <script src="../static/js/core/utility_globals.js" defer></script>
+        <script src="../static/js/core/base_utilities.js" defer></script>
+
+        <script src="../static/js/ui_components/BannerManager.js" defer></script>
+        <script src="../static/js/ui_components/FloatingNavigationBar.js" defer></script>
+        <script src="../static/js/ui_components/LoadingBannerManager.js" defer></script>
+        <script src="../static/js/ui_components/ModalForm.js" defer></script>
+        <script src="../static/js/ui_components/MultiStepModalForm.js" defer></script>
+        <script src="../static/js/ui_components/MouseContextMenu.js" defer></script>
+        <script src="../static/js/ui_components/Overlay.js" defer></script>
+        <script src="../static/js/ui_components/PasswordModalForm.js" defer></script>
+        <script src="../static/js/ui_components/PopupManager.js" defer></script>
+        <script src="../static/js/ui_components/StandardTable.js" defer></script>
+        <script src="../static/js/ui_components/Toolbar.js" defer></script>
+
+        <script src="../static/js/ui_components/ModeConfigurationModal.js" defer></script>
+        <script src="../static/js/ui_components/IconPicker.js" defer></script>
+
+        <script src="../static/js/ui_components/tiles/AddTile.js" defer></script>
+        <script src="../static/js/ui_components/tiles/ModeTile.js" defer></script>
+
+        <script src="../static/js/ui_components/tiles/Tile.js" defer></script>
+        <script src="../static/js/ui_components/tiles/LedstripTile.js" defer></script>
+        <script src="../static/js/ui_components/tiles/RfDeviceTile.js" defer></script>
+        <script src="../static/js/ui_components/tiles/AlarmTile.js" defer></script>
+        <script src="../static/js/ui_components/tiles/AutomationTile.js" defer></script>
+        <script src="../static/js/ui_components/tiles/DateTimeTile.js" defer></script>
+        <script src="../static/js/ui_components/tiles/WeatherTile.js" defer></script>
+        <script src="../static/js/ui_components/tiles/DeviceDetailsTile.js" defer></script>
+
+        <script src="../static/js/services/alarm_service.js"></script>
+        <script src="../static/js/services/automation_service.js"></script>
+        <script src="../static/js/services/dashboard_service.js"></script>
+        <script src="../static/js/services/device_service.js"></script>
+        <script src="../static/js/services/group_service.js"></script>
+        <script src="../static/js/services/ledstrip_service.js"></script>
+        <script src="../static/js/services/module_service.js"></script>
+        <script src="../static/js/services/rf_device_service.js"></script>
+        <script src="../static/js/services/user_service.js"></script>
+
+        <script src="../static/js/core/globals.js" defer></script>
+        <script src="../static/js/core/element_structures.js" defer></script>
+        <script src="../static/js/core/base.js" defer></script>
         <script src="../static/js/Color.js"></script>
         
         <div class="">
@@ -70,10 +96,5 @@
 
             {% endblock %}
         </div>
-        
     </body>
-
-    <footer>                                                                <!-- Begin of the navigation bar -->
-        <nav id="navigationBarContainer"></nav>
-    </footer>                                                               <!-- End of the navigation bar -->
 </html>

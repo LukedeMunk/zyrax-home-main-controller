@@ -5,12 +5,12 @@
 <script>
     page = ALARM_PAGE;
     
-    var devices = JSON.parse('{{ devices | tojson | safe }}');
-    var alarm = JSON.parse('{{ alarm | tojson | safe }}');
-    var alarmTriggerTimes = JSON.parse('{{ alarm_trigger_times | tojson | safe }}');
+    let devices = JSON.parse('{{ devices | tojson | safe }}');
+    let alarm = JSON.parse('{{ alarm | tojson | safe }}');
+    let alarmTriggerTimes = JSON.parse('{{ alarm_trigger_times | tojson | safe }}');
 </script>
 
-<script src="../static/js/alarm_page.js" defer></script>
+<script src="../static/js/pages/alarm_page.js" defer></script>
 <link rel="stylesheet" href="../static/css/styles_tiles.css">
 
 <dialog id="deactivationDeviceModal" class="modal">
@@ -64,20 +64,7 @@
 
 <div class="container-form">
     <div class="base-container">
-        <table class="scrollable-table-container-table">
-            <tr>
-                <td class="scrollable-td">
-                    <table id="triggerTableHeader" class="scrollable-table-header"></table>
-                </td>
-            </tr>
-            <tr>
-                <td class="scrollable-td">
-                    <div class="scrollable-table-container">
-                        <table id="triggerTable" class="scrollable-table" style="table-layout: fixed;"></table>
-                    </div>
-                </td>
-            </tr>
-        </table>
+        <table id="alarmTriggerTableContainer" class="scrollable-table-container-table"></table>
     </div>
 </div>
 {% endblock %}

@@ -69,10 +69,10 @@ class Ledstrip:
             self.check_connection_status(True)
         except:
             self.check_connection_status(False)
-            logw("[" + url + "] could not be sended to [" + self.name + "]")
+            logw(c.VAR_TEXT_CANNOT_BE_SEND.format(url, self.name))
             return (False, "")
 
-        logi("Sent [" + url + "] to [" + self.name + "]")
+        logi(c.VAR_TEXT_SEND_TO.format(url, self.name))
 
         if response.status_code != c.HTTP_CODE_OK:
             return (False, response.text)
@@ -84,7 +84,7 @@ class Ledstrip:
         try:
             response = json.loads(response)
         except:
-            loge("JSON error, string: " + response)
+            loge(c.VAR_TEXT_JSON_ERROR.format(response))
             
         return (True, response)
 
@@ -105,11 +105,11 @@ class Ledstrip:
             self.check_connection_status(True)
         except:
             self.check_connection_status(False)
-            loge(url + " could not be sended to [" + self.name + "]")
+            logw(c.VAR_TEXT_CANNOT_BE_SEND.format(url, self.name))
             print(parameters_dict)
-            return (False, "No device connection")
+            return (False, c.TEXT_DEVICE_DISCONNECTED)
 
-        logi("Sent [" + url + "] to [" + self.name + "]")
+        logi(c.VAR_TEXT_SEND_TO.format(url, self.name))
         print(parameters_dict)
 
         if response.status_code != c.HTTP_CODE_OK:
@@ -122,7 +122,7 @@ class Ledstrip:
         try:
             response = json.loads(response)
         except:
-            loge("JSON error, string: " + response)
+            loge(c.VAR_TEXT_JSON_ERROR.format(response))
         
         return (True, response)
 
@@ -148,11 +148,11 @@ class Ledstrip:
         result = self.send_post_command(c.CMD_SET_CONFIGURATION, config_dict)
 
         if result[0]:
-            logi("Updated ledstrip [" + self.name + "]")
+            logi(c.VAR_TEXT_UPDATED_DEVICE.format(self.name))
             if "hostname" in config_dict:
                 self.hostname = config_dict["hostname"]
         else:
-            loge("Could not update ledstrip [" + self.name + "], error [" + result[1] + "]")
+            logi(c.VAR_TEXT_CANNOT_UPDATE_LEDSTRIP.format(self.name, result[1]))
 
         return result
         
@@ -166,7 +166,7 @@ class Ledstrip:
         result = self.send_command(c.CMD_GET_STATES)
         
         if not result[0]:
-            loge("Cannot get states")
+            loge(c.TEXT_CANNOT_GET_STATES)
             return False
         
         state_dict = {}
@@ -203,7 +203,7 @@ class Ledstrip:
         result = self.send_command(c.CMD_GET_MODE_CONFIGURATIONS)
 
         if not result[0]:
-            loge("Cannot get mode configurations")
+            loge(c.TEXT_CANNOT_GET_MODE_CONFIGURATIONS)
 
         return result
     
@@ -218,7 +218,7 @@ class Ledstrip:
         result = self.send_command(c.CMD_GET_CONFIGURATION)
         
         if not result[0]:
-            loge("Cannot get configuration")
+            loge(c.TEXT_CANNOT_GET_MODE_CONFIGURATIONS)
 
         return result
 
@@ -262,7 +262,7 @@ class Ledstrip:
         if address_dict is not None:
             db_util.update_device(self.id, address_dict)
             
-        db_ledstrip = db_util._get_ledstrip(self.id, True)
+        db_ledstrip = db_util.get_ledstrip(self.id, True)
         leds = []
 
         for led in db_ledstrip["leds"]:
@@ -278,11 +278,14 @@ class Ledstrip:
     ################################################################################
     def check_connection_status(self, status=None):
         if status is not None:
+            if self.connection_status == status:
+                return
+            
             self.connection_status = status
             db_util.update_device(self.id, {"connection_status" : self.connection_status})
             return
         
-        self.connection_status = False
+        status = False
 
         logi(self.hostname)
         try:
@@ -290,12 +293,16 @@ class Ledstrip:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             socket.setdefaulttimeout(1)
             if s.connect_ex((ip, self.port)) == 0:
-                self.connection_status = True
+                status = True
 
             s.close()
         except:
             loge("socket.gaierror: [Errno 11001] getaddrinfo failed")
         
+        if self.connection_status == status:
+            return
+        
+        self.connection_status = status
         db_util.update_device(self.id, {"connection_status" : self.connection_status})
     
     ################################################################################
@@ -395,24 +402,51 @@ class Ledstrip:
         mode_config = db_util.get_ledstrip_mode_configuration(mode_id, self.id)
         parameters = {}
 
+        color_parameter_ids = {
+            c.PARAMETER_ID_COLOR1,
+            c.PARAMETER_ID_COLOR2,
+        }
+
         for parameter in mode_config["parameters"]:
-            if parameter["name"] == c.PARAMETER_NAME_COLOR1 or parameter["name"] == c.PARAMETER_NAME_COLOR2:
-                parameter["value"] = parameter["value"].replace("#", "")
+            parameter_id = parameter["mode_parameter_id"]
+            value1 = parameter["value1"]
+            value2 = parameter["value2"]
 
-            if parameter["name"] == c.PARAMETER_NAME_USE_GRADIENT1 or parameter["name"] == c.PARAMETER_NAME_USE_GRADIENT2:
-                if parameter["value"] == True:
-                    parameter["value"] = 1
-                elif parameter["value"] == False:
-                    parameter["value"] = 0
+            if parameter_id in color_parameter_ids:
+                color = str(value1).removeprefix("#")
 
-            parameters[parameter["name"]] = parameter["value"]
+                if isinstance(value2, str):
+                    use_gradient = value2.casefold() == "true"
+                else:
+                    use_gradient = bool(value2)
+
+                parameters[str(parameter_id)] = json.dumps(
+                    [color, int(use_gradient)],
+                    separators=(",", ":"),
+                )
+
+            elif parameter_id == c.PARAMETER_ID_COLOR_RANGE:
+                parameters[str(parameter_id)] = json.dumps(
+                    [value1, value2],
+                    separators=(",", ":"),
+                )
+
+            else:
+                #
+                if value1 == "False" or value1 == "True":
+                    value1 = value1.casefold() == "true"
+
+                if isinstance(value1, bool):
+                        value1 = int(value1)
+
+                parameters[str(parameter_id)] = value1
 
         parameters["mode"] = int(mode_id)
 
         if start_mode:
             db_util.update_device(self.id, {"mode": mode_id})
             parameters["start_mode"] = 1
-        
+
         result = self.send_post_command(c.CMD_CONFIG_MODE, parameters)
         return result[0]
         

@@ -3,19 +3,18 @@
 {% block content %}
 
 <script>
-    var page = LOGIN_PAGE;
-    var message = "{{ message }}";
+    let page = LOGIN_PAGE;
+    let message = "{{ message }}";
 </script>
 
-<script src="../static/js/user_and_module_utilities.js" defer></script>
-<script src="../static/js/login_page.js" defer></script>
+<script src="../static/js/pages/login_page.js" defer></script>
 <link rel="stylesheet" href="../static/css/styles_welcome_screen.css">
 
 <div id="welcomeContainer" class="container-form" style="height: 100vh;">
     <div class="welcome-container">
         <div id="welcomePicture" class="welcome-logo"><img src="../static/images/logo.png" alt="ZyraX Logo"></div>
         <div id="welcomeTitle" class="welcome-title-container" style="margin-top: 32px;"></div>
-        <div class="get-started-button" style="animation: buttonFadeIn 2s ease 1.2s forwards;"><button onclick="scrollToSection('loginContainer');">Login</button></div>
+        <div class="fade-button" style="animation: buttonFadeIn 1s ease 1.2s forwards;"><button id="welcomeBtn">Login</button></div>
     </div>
 </div>
 

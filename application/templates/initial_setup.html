@@ -10,8 +10,7 @@
     let selectedProfile = {};
 </script>
 
-<script src="../static/js/user_and_module_utilities.js" defer></script>
-<script src="../static/js/initial_setup_page.js" defer></script>
+<script src="../static/js/pages/initial_setup_page.js" defer></script>
 <link rel="stylesheet" href="../static/css/styles_welcome_screen.css">
 
 <div id="welcomeContainer" class="container-form" style="height: 100vh;">
@@ -19,7 +18,7 @@
         <div class="welcome-logo"><img src="../static/images/logo.png" alt="ZyraX Logo"></div>
         <div id="welcomeTitle" class="welcome-title-container" style="margin-top: 32px;"></div>
         <div id="welcomeSubtitle" class="welcome-subtitle">Let's get your home connected and personalized.</div>
-        <div class="get-started-button"><button id="getStartedBtn" onclick="scrollToSection('accountContainer');">Get Started</button></div>
+        <div class="fade-button"><button id="getStartedBtn" onclick="scrollToSection('accountContainer');">Get Started</button></div>
     </div>
 </div>
 
@@ -34,26 +33,26 @@
             <input id="accountEmailTxt" class="input-field" type="text" placeholder="Email">
         </div>
 
-        <div id="passwordValidationContainer" class="password-validation-container">
+        <div id="passwordValidationContainer" class="password-validation-container page-password-validation">
             <div class="message-container">
-                <i id="pwdValidationIconLength" class="fa-solid fa-circle-xmark" style="transition: 300ms;"></i>
-                <p id="pwdValidationTitleLength" style="margin-bottom: 0px;">Between 8 and 64 characters</p>
+                <i id="passwordValidationIconLength" class="fa-solid fa-circle-xmark" style="transition: 300ms;"></i>
+                <p id="passwordValidationTitleLength" style="margin-bottom: 0px;">Between 8 and 64 characters</p>
             </div>
             <div class="message-container">
-                <i id="pwdValidationIconUpperCase" class="fa-solid fa-circle-xmark" style="transition: 300ms;"></i>
-                <p id="pwdValidationTitleUpperCase" style="margin-bottom: 0px;">At least one uppercase character</p>
+                <i id="passwordValidationIconUpperCase" class="fa-solid fa-circle-xmark" style="transition: 300ms;"></i>
+                <p id="passwordValidationTitleUpperCase" style="margin-bottom: 0px;">At least one uppercase character</p>
             </div>
             <div class="message-container">
-                <i id="pwdValidationIconLowerCase" class="fa-solid fa-circle-xmark" style="transition: 300ms;"></i>
-                <p id="pwdValidationTitleLowerCase" style="margin-bottom: 0px;">At least one lowercase character</p>
+                <i id="passwordValidationIconLowerCase" class="fa-solid fa-circle-xmark" style="transition: 300ms;"></i>
+                <p id="passwordValidationTitleLowerCase" style="margin-bottom: 0px;">At least one lowercase character</p>
             </div>
             <div class="message-container">
-                <i id="pwdValidationIconNumber" class="fa-solid fa-circle-xmark" style="transition: 300ms;"></i>
-                <p id="pwdValidationTitleNumber" style="margin-bottom: 0px;">At least one number</p>
+                <i id="passwordValidationIconNumber" class="fa-solid fa-circle-xmark" style="transition: 300ms;"></i>
+                <p id="passwordValidationTitleNumber" style="margin-bottom: 0px;">At least one number</p>
             </div>
             <div class="message-container">
-                <i id="pwdValidationIconSymbol" class="fa-solid fa-circle-xmark" style="transition: 300ms;"></i>
-                <p id="pwdValidationTitleSymbol" >At least one symbol</p>
+                <i id="passwordValidationIconSymbol" class="fa-solid fa-circle-xmark" style="transition: 300ms;"></i>
+                <p id="passwordValidationTitleSymbol" >At least one symbol</p>
             </div>
         </div>
 

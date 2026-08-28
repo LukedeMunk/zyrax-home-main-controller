@@ -62,7 +62,7 @@ class TelegramServiceClient:
         self.api_key = api_key
         self.api_key_header = {"x-api-key": api_key}
         self.service_state = SERVICE_STATE_UNAVAILABLE
-        if not c.TELEGRAM_SERVICE_ENABLED:
+        if not c.dynamic_config.telegram_service_enabled:
             self.service_state = SERVICE_STATE_DISABLED
         
         self._initialized = True

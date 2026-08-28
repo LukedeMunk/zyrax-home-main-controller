@@ -5,11 +5,11 @@
 <script>
     page = SENSOR_PAGE;
     
-    var devices = JSON.parse('{{ devices | tojson | safe }}');
-    var sensorTriggerTimes = JSON.parse('{{ sensor_trigger_times | tojson | safe }}');
+    let devices = JSON.parse('{{ devices | tojson | safe }}');
+    let sensorTriggerTimes = JSON.parse('{{ sensor_trigger_times | tojson | safe }}');
 </script>
 
-<script src="../static/js/rf_devices_page.js" defer></script>
+<script src="../static/js/pages/rf_devices_page.js" defer></script>
 <link rel="stylesheet" href="../static/css/styles_tiles.css">
 
 <div class="container-form">

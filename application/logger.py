@@ -3,6 +3,7 @@
 # File:     logger.py
 # Version:  0.9.0
 # Author:   Luke de Munk
+#
 # Brief:    For logging in file and printing logged lines
 #
 #           More information:

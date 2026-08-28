@@ -4,10 +4,10 @@
 <script>
     page = CONFIGURATION_PAGE;
 
-    var devices = JSON.parse('{{ devices | tojson | safe }}');
-    var unconfiguredDevices = JSON.parse('{{ unconfigured_devices | tojson | safe }}');
-    var groups = JSON.parse('{{ groups | tojson | safe }}');
-    var logs = JSON.parse('{{ logs | tojson | safe }}');
+    let devices = JSON.parse('{{ devices | tojson | safe }}');
+    let unconfiguredDevices = JSON.parse('{{ unconfigured_devices | tojson | safe }}');
+    let groups = JSON.parse('{{ groups | tojson | safe }}');
+    let logs = JSON.parse('{{ logs | tojson | safe }}');
 
     const LEDSTRIP_SENSOR_MODELS = JSON.parse('{{ LEDSTRIP_SENSOR_MODELS | tojson | safe }}');
     const DEVICE_TYPES = JSON.parse('{{ DEVICE_TYPES | tojson | safe }}');
@@ -16,19 +16,17 @@
     
     const SUPPORTED_UI_LANGUAGES = JSON.parse('{{ SUPPORTED_UI_LANGUAGES | tojson | safe }}');
 
-    var weatherServiceEnabled = "{{ weather_service_enabled }}" == "True";
-    var weatherApiKey = "{{ weather_api_key }}";
-    var telegramServiceEnabled = "{{ telegram_service_enabled }}" == "True";
-    var telegramBotToken = "{{ telegram_bot_token }}";
-    var rpiRfReceiverEnabled = "{{ rpi_rf_receiver_enabled }}" == "True";
+    let weatherServiceEnabled = "{{ weather_service_enabled }}" == "True";
+    let weatherApiKey = "{{ weather_api_key }}";
+    let telegramServiceEnabled = "{{ telegram_service_enabled }}" == "True";
+    let telegramBotToken = "{{ telegram_bot_token }}";
+    let rpiRfReceiverEnabled = "{{ rpi_rf_receiver_enabled }}" == "True";
 
     /* List of update files */
-    var otaVersionsReady = JSON.parse('{{ ota_files | tojson | safe }}');
-    var currentLedstripFirmwareVersion = "v0.0.0";
+    let otaVersionsReady = JSON.parse('{{ ota_files | tojson | safe }}');
 </script>
 
-<script src="../static/js/user_and_module_utilities.js" defer></script>
-<script src="../static/js/configuration_page.js" defer></script>
+<script src="../static/js/pages/configuration_page.js" defer></script>
 <link rel="stylesheet" href="../static/css/styles_tiles.css">
 
 <dialog id="iconModal" class="modal" style="width: 30%; box-shadow: var(--shadow-large);">
@@ -58,139 +56,6 @@
     
     <div id="manualDevicePairContainer" style="display: none;">
     </div>
-</dialog>
-
-<dialog id="ledstripModal" class="modal">
-    <i class="fa-solid fa-xmark close-modal-button clickable" target-modal="ledstripModal"></i>
-    <h3 id="ledstripModalTitle" style="margin-top: 0px;">Add ledstrip</h3>
-    <p id="errorMessageLedstripField" class="message error" style="margin: 0px;"></p>
-
-    <table id="unconfiguredLedstripTable" style="display: none;"></table>
-
-    <fieldset>
-        <legend id="ledstripTitle">Ledstrip</legend>
-
-        <div style="text-align: center;">
-            <div class="input-field-container" style="width: 100%;">
-                <p id="ledstripNameTitle" class="input-field-title">Name</p>
-                <input id="ledstripNameTxt" class="input-field" type="text" placeholder="Name">
-            </div>
-
-            <div class="input-field-container" style="width: 100%;">
-                <p id="ledstripHostnameTitle" class="input-field-title">Hostname</p>
-                <input id="ledstripHostnameTxt" class="input-field" type="text" placeholder="Hostname">
-            </div>
-
-            <div class="input-field-container" style="width: 100%;">
-                <p id="ledstripModelTitle" class="input-field-title">Model</p>
-                <select id="ledstripModelSelect" class="input-field"></select>
-            </div>
-
-            <div style="display: flex;">
-                <div class="input-field-container">
-                    <p id="ledstripIconTitle" class="input-field-title field-title-button">Icon</p>
-                    <button id="ledstripIconBtn" class="icon-button" onclick="loadIconModal('ledstripIconTxt')" style="width: 50px; height: 50px;"><i id="ledstripIconTxt"></i></button>
-                </div>
-
-                <div class="input-field-container">
-                    <p id="ledstripIconLowStateTitle" class="input-field-title field-title-button">Icon not active</p>
-                    <button id="ledstripIconLowStateBtn" class="icon-button" onclick="loadIconModal('ledstripIconLowStateTxt')" style="width: 50px; height: 50px;"><i id="ledstripIconLowStateTxt"></i></button>
-                </div>
-            </div>
-        </div>
-    </fieldset>
-    
-    <fieldset>
-        <legend id="ledstripSensorTitle">Sensor</legend>
-        
-        <div style="text-align: center;">
-            <div style="display: flex; margin: 0px 10px;">
-                <div>
-                    <p id="ledstripHasSensorTitle" class="input-field-title range-title">Has Sensor</p>
-                    <label class="switch" style="margin: 15px;">
-                        <input id="ledstripHasSensorCb" type="checkbox" onchange="toggleLedstripHasSensor();">
-                        <span class="slider round"></span>
-                    </label>
-                </div>
-
-                <div id="ledstripSensorInvertedContainer">
-                    <p id="ledstripSensorIsInvertedTitle" class="input-field-title range-title">Inverted</p>
-                    <label class="switch" style="margin: 15px;">
-                        <input id="ledstripSensorIsInvertedCb" type="checkbox">
-                        <span class="slider round"></span>
-                    </label>
-                </div>
-
-                <div id="ledstripSensorModelContainer" class="input-field-container">
-                    <p id="ledstripSensorModelTitle" class="input-field-title">Sensor model</p>
-                    <select id="ledstripSensorModelSelect" class="input-field" style="width: 100%;">
-                        <option value=""></option>
-                        <option value="0">ContactSensor</option>
-                    </select>
-                </div>
-            </div>
-        </div>
-    </fieldset>
-
-    <button id="submitLedstripBtn" onclick="addLedstrip();">Submit</button>
-</dialog>
-
-<dialog id="rfDeviceModal" class="modal">
-    <i class="fa-solid fa-xmark close-modal-button clickable" target-modal="rfDeviceModal"></i>
-    <h3 id="rfDeviceModalTitle" style="margin-top: 0px;">Add RF Device</h3>
-    <p id="errorMessageRfDeviceField" class="message error" style="margin: 0px;"></p>
-
-    <div class="input-field-container" style="width: 100%;">
-        <p id="rfDeviceNameTitle" class="input-field-title">Name</p>
-        <input id="rfDeviceNameTxt" class="input-field" type="text" placeholder="Name">
-    </div>
-
-    <div style="display: flex;">
-        <div class="input-field-container">
-            <p id="rfDeviceIconTitle" class="input-field-title field-title-button">Icon</p>
-            <button id="rfDeviceIconBtn" class="icon-button" onclick="loadIconModal('rfDeviceIconTxt')" style="width: 50px; height: 50px;"><i id="rfDeviceIconTxt"></i></button>
-        </div>
-
-        <div id="rfDeviceIconLowStateContainer" class="input-field-container">
-            <p id="rfDeviceIconLowStateTitle" class="input-field-title field-title-button">Icon not active</p>
-            <button id="rfDeviceIconLowStateBtn" class="icon-button" onclick="loadIconModal('rfDeviceIconLowStateTxt')" style="width: 50px; height: 50px;"><i id="rfDeviceIconLowStateTxt"></i></button>
-        </div>
-    </div>
-
-    <div id="rfCodesContainer"></div>
-    
-    <table id="rfCodesTable" style="display: table; width: 70%;"></table>
-
-    <button id="submitRfDeviceBtn" onclick="addRfDevice();">Submit</button>
-</dialog>
-
-<dialog id="groupModal" class="modal">
-    <i class="fa-solid fa-xmark close-modal-button clickable" target-modal="groupModal"></i>
-    <h3 id="groupModalTitle" style="margin-top: 0px;">Add group</h3>
-    <p id="errorMessageGroupField" class="message error" style="margin: 0px;"></p>
-    
-    <div class="input-field-container">
-        <p id="groupNameTitle" class="input-field-title">Name</p>
-        <input id="groupNameTxt" class="input-field" type="text" placeholder="Name">
-    </div>
-
-    <div class="input-field-container">
-        <p id="groupIconTitle" class="input-field-title field-title-button">Icon</p>
-        <button id="groupIconBtn" class="icon-button" onclick="loadIconModal('groupIconTxt')" style="width: 50px; height: 50px;"><i id="groupIconTxt"></i></button>
-    </div>
-
-    <div id="groupTypeSelectContainer" class="input-field-container">
-        <p id="groupTypeSelectTitle" class="input-field-title">Type</p>
-        
-        <select id="groupTypeSelect" class="input-field" onchange="updateGroupDevices();">
-            <option value="0">Ledstrips</option>
-            <option value="1">Sensors</option>
-        </select>
-    </div>
-
-    <div id="groupDevicesContainer" class="flex-grid" style="margin: 20px auto; justify-content: center;"></div>
-
-    <button id="submitGroupBtn" onclick="addGroup();">Submit</button>
 </dialog>
 
 <div class="container-form">
@@ -310,5 +175,5 @@
     </div>
 </div>
 
-<button id="resetToFactoryConfigurationBtn" onclick="resetToFactoryConfigurationConfirm();">Reset to factory settings</button>
+<button id="resetToFactoryConfigurationBtn" onclick="resetToFactoryConfiguration();">Reset to factory settings</button>
 {% endblock %}

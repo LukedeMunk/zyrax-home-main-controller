@@ -5,10 +5,10 @@
 <script>
     page = LEDSTRIP_PAGE;
     
-    var strip = JSON.parse('{{ ledstrip | tojson | safe }}');
+    let strip = JSON.parse('{{ ledstrip | tojson | safe }}');
 </script>
 
-<script src="../static/js/realtime_led_coloring_page.js" defer></script>
+<script src="../static/js/pages/realtime_led_coloring_page.js" defer></script>
 
 <div id="segmentMouseMenu" class="mouse-context-menu">
     <ul class="mouse-context-menu-options">

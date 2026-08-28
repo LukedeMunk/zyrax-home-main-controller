@@ -16,6 +16,9 @@ import json                                                                     
 from cryptography.fernet import Fernet                                          #For generating configuration and database encryption keys
 import keyring
 
+
+from keyrings.cryptfile.cryptfile import CryptFileKeyring
+
 ENCRYPTED_KEYS = {
     "database_encryption_key",
     "flask_encryption_key",
@@ -63,6 +66,13 @@ class ConfigurationManager:
         self.master_key = self._get_master_key()
         self.application_name = application_name
         self.data = {}
+
+        keyring_password = os.environ.get("KEYRING_CRYPTFILE_PASSWORD")
+
+        if keyring_password:
+            keyring_backend = CryptFileKeyring()
+            keyring_backend.keyring_key = keyring_password
+            keyring.set_keyring(keyring_backend)
 
         self.load()
 
@@ -184,25 +194,25 @@ class ConfigurationManager:
 
             self.save()
 
-            key = keyring.get_password(self.application_name, "database_encryption_key")
-            if key is None:
-                print("[INFO] Created database encryption key")
-                keyring.set_password(self.application_name, "database_encryption_key", Fernet.generate_key().decode())
-            
-            key = keyring.get_password(self.application_name, "flask_encryption_key")
-            if key is None:
-                print("[INFO] Created Flask encryption key")
-                keyring.set_password(self.application_name, "flask_encryption_key", secrets.token_urlsafe(32))
-            
-            key = keyring.get_password(self.application_name, "microservice_key")
-            if key is None:
-                print("[INFO] Created microservice API key")
-                keyring.set_password(self.application_name, "microservice_key", Fernet.generate_key().decode())
-            
-            key = keyring.get_password(self.application_name, "default_password")
-            if key is None:
-                print("[INFO] Created default password")
-                keyring.set_password(self.application_name, "default_password", )
+            #key = keyring.get_password(self.application_name, "database_encryption_key")
+            #if key is None:
+            #    print("[INFO] Created database encryption key")
+            #    keyring.set_password(self.application_name, "database_encryption_key", Fernet.generate_key().decode())
+#
+            #key = keyring.get_password(self.application_name, "flask_encryption_key")
+            #if key is None:
+            #    print("[INFO] Created Flask encryption key")
+            #    keyring.set_password(self.application_name, "flask_encryption_key", secrets.token_urlsafe(32))
+#
+            #key = keyring.get_password(self.application_name, "microservice_key")
+            #if key is None:
+            #    print("[INFO] Created microservice API key")
+            #    keyring.set_password(self.application_name, "microservice_key", Fernet.generate_key().decode())
+#
+            #key = keyring.get_password(self.application_name, "default_password")
+            #if key is None:
+            #    print("[INFO] Created default password")
+            #    keyring.set_password(self.application_name, "default_password", )
         
     ################################################################################
     #

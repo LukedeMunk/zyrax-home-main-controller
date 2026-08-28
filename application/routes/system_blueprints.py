@@ -12,9 +12,11 @@
 from flask import Blueprint, request                                            #Import flask blueprints and requests
 import configuration as c                                                       #Import application configuration variables
 from DeviceManager import DeviceManager                                         #Import device manager
-from server_manager import generate_json_http_response
+
 from logger import logi, logw, loge                                             #Import logging functions
 from urllib.parse import urlparse, parse_qs                                     #For parsing HTTP requests done by ESP32 controllers
+from utilities.authentication import minimum_role_required
+from utilities.response import generate_json_http_response
 
 dm = DeviceManager()
 system_bp = Blueprint("system_blueprints", __name__)

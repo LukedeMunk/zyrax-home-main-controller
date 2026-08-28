@@ -40,8 +40,8 @@ chat_id = None
 bot_token = None
 microservice_api_key = None
 
-TELEGRAM_BOT_TOKEN_NAME = "TELEGRAM_BOT_TOKEN"
-TELEGRAM_CHAT_ID_NAME = "TELEGRAM_CHAT_ID"
+TELEGRAM_BOT_TOKEN_NAME = "telegram_bot_token"
+TELEGRAM_CHAT_ID_NAME = "telegram_chat_id"
 MICROSERVICE_API_KEY_NAME = "MICROSERVICE_API_KEY"
 SERVICE_NAME = "Telegram_microservice"
 

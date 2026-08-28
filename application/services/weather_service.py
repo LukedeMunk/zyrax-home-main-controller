@@ -25,8 +25,8 @@ import logging as l
 # Configuratie
 l.basicConfig(level=l.INFO)
 
-WEATHER_API_KEY_NAME = "WEATHER_API_KEY"
-MICROSERVICE_KEY_NAME = "MICROSERVICE_KEY"
+WEATHER_API_KEY_NAME = "weather_api_key"
+MICROSERVICE_KEY_NAME = "microservice_key"
 SERVICE_NAME = "Weather_microservice"
 
 SERVICE_STATE_RUNNING = 0

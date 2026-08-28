@@ -8,8 +8,8 @@
  *
  *          More information:
  *          https://github.com/LukedeMunk/zyrax-home-main-controller
- * 
- * Template version:        0.0.3
+ *
+ * Template version:        0.0.4
  * Template information:    https://github.com/LukedeMunk/templates
  */
 /******************************************************************************/
@@ -87,10 +87,6 @@ fieldset {
 .popup-container {
     width: 80%;
 }
-
-.basics-fieldset-margin {
-    display: none;
-}
 /* #endregion */
 
 /* #region Custom mobile styles */
@@ -102,7 +98,7 @@ fieldset {
     width: 98%;
     min-width: 200px;
     padding-bottom: 25px;
-    bottom: -20px;
+    bottom: 10px;
 }
 
 .container-form.welcome {

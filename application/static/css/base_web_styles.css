@@ -1,13 +1,15 @@
 /******************************************************************************/
 /*
  * File:    base_web_styles.css
- * Author:  Luke de Munk
  * Version: 0.9.0
+ * Author:  Luke de Munk
  * 
- * Brief:   Base styles for web pages. Needs colors.css. More information:
+ * Brief:   Base styles for web pages. Needs variables.css.
+ *
+ *          More information:
  *          https://github.com/LukedeMunk/zyrax-home-main-controller
  * 
- * Template version:        0.0.3
+ * Template version:        0.0.4
  * Template information:    https://github.com/LukedeMunk/templates
  */
 /******************************************************************************/
@@ -25,6 +27,15 @@ body {
 
 *:focus {
     outline: solid var(--border2) 1px;
+}
+
+
+.inline-cb {
+    display: flex;
+    margin: 15px auto !important;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
 }
 
 .flex {
@@ -61,6 +72,15 @@ body {
     padding-top: 2px;
 }
 
+.input-field-horizontal-group {
+    display: flex;
+    gap: 10px;
+    width: 95%;
+    min-width: 80px;
+    max-width: 350px;
+    margin: 0px auto;
+}
+
 .input-field-container {
     width: 70%;
     min-width: 80px;
@@ -80,6 +100,7 @@ body {
     font-size: var(--font-size-small);
     margin-left: 8px;
     cursor: default;
+    z-index: 2;                     /* Prevent title stroke by disabled input border*/
 }
 
 .gradient-background {
@@ -167,8 +188,8 @@ option.selected {
 }
 
 .big-select::-webkit-scrollbar {
-    width: 5px;
-    height: 5px;
+    width: 8px;
+    height: 8px;
 }
 
 .big-select::-webkit-scrollbar-track {
@@ -349,7 +370,7 @@ input[type="checkbox"]::before {
     transform: scale(0);
     transform-origin: bottom left;
     transition: transform 120ms ease-in-out;
-    box-shadow: var(--shadow-small);
+    box-shadow: inset 1em 1em var(--border1);
 }
   
 input[type="checkbox"]:checked::before {
@@ -381,8 +402,14 @@ input[type="checkbox"]:focus {
 .switch {
     position: relative;
     display: inline-block;
+
     width: 60px;
+    min-width: 60px;
     height: 34px;
+    min-height: 34px;
+
+    flex-shrink: 0;
+
     margin: auto;
 }
   
@@ -570,7 +597,7 @@ th, td {
 }
 
 .scrollable-table-container::-webkit-scrollbar {
-    width: 5px;
+    width: 8px;
     height: 8px;
 }
 
@@ -583,6 +610,105 @@ th, td {
 .scrollable-table-container::-webkit-scrollbar-thumb {
     background-color: var(--icon);
     border-radius: 10px;
+}
+/* #endregion */
+
+/* region Table filters */
+.table-filter-container {
+    min-width: 180px;
+    position: fixed;
+    background: var(--background3);
+    border-radius: 15px;
+    box-shadow: var(--shadow-small);
+    z-index: var(--z-modal);
+    transform: translate(-50%, 15px);
+    opacity: 0;
+    transition:
+        opacity 0.25s ease,
+        transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    overflow: visible;
+    pointer-events: none;
+
+    overflow-y: auto;
+    max-height: 300px;
+}
+
+.table-filter-container.show {
+    opacity: 1;
+    transform: translate(-50%, 0);
+    pointer-events: auto;
+}
+
+.table-filter-container.show::after {
+    opacity: 1;
+}
+
+.table-filter-container.hide {
+    opacity: 0;
+    transform: translate(-50%, 15px);
+    pointer-events: none;
+}
+
+.table-filter-container.hide::after {
+    opacity: 0;
+}
+
+.table-filter-container input[type="checkbox"] {
+    margin: 0px;
+}
+
+.table-filter-item-container {
+    display: flex;
+    margin: 10px 5px;
+    gap: 5px;
+    align-items: center;
+}
+.table-filter-item-container i {
+    font-size: 14px;
+}
+.table-filter-item-container p {
+    margin: 0px;
+}
+
+/* General row styling */
+table tr {
+    transition: background-color 0.15s ease, transform 0.15s ease;
+}
+
+/* Row being dragged */
+table tr.dragging {
+    opacity: 0.5;
+    background-color: var(--background4);
+    transform: scale(0.98);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 10;
+}
+
+/* Drop target */
+table tr.drag-over {
+    position: relative;
+    background-color: var(--background4);
+}
+
+/* Visual insertion indicator line */
+table tr.drag-over::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 3px;
+    background-color: #4a90e2;
+    border-radius: 2px;
+}
+
+/* Hover feedback */
+table tr[draggable="true"] {
+    cursor: grab;
+}
+
+table tr[draggable="true"]:active {
+    cursor: grabbing;
 }
 /* #endregion */
 
@@ -639,13 +765,11 @@ a:active {
 }
 
 .message-icon {
-    opacity: 0;
     transition-property: opacity;
     transition-duration: 300ms;
 }
 
 .message-text {
-    opacity: 0;
     margin: 0px;
     transition-property: opacity;
     transition-duration: 300ms;
@@ -711,8 +835,6 @@ a:active {
 }
 
 .content-wrap {
-    margin-left: 10px;
-    margin-right: 10px;
     width: 100%;
 }
 /* #endregion */
@@ -849,12 +971,19 @@ button:hover, .button:hover {
 /* #endregion */
 
 /* #region Loading banner */
-.loading-banner-container {
+.loading-banner-stack {
     position: fixed;
     top: 16px;
     right: 16px;
     display: flex;
-    flex-direction: column;       /* stack loader, message, progress vertically */
+    flex-direction: column;
+    gap: 8px;
+    z-index: var(--z-banner);
+}
+
+.loading-banner-container {
+    display: flex;
+    flex-direction: column;
     align-items: flex-start;
     gap: 12px;
     background: var(--background4);
@@ -868,7 +997,6 @@ button:hover, .button:hover {
     transform: translateY(-8px);
     transition: opacity 300ms, transform 300ms;
     cursor: default;
-    z-index: var(--z-banner);
     pointer-events: none;
 }
 
@@ -877,6 +1005,18 @@ button:hover, .button:hover {
     opacity: 1;
     transform: translateY(0);
     pointer-events: auto;
+}
+
+.loading-banner-content {
+    gap: 8px;
+}
+
+.loading-banner-message {
+    margin: 0;
+}
+
+.loading-banner-progress {
+    margin: 5px auto;
 }
 
 .progress {
@@ -916,7 +1056,7 @@ button:hover, .button:hover {
     box-shadow: var(--shadow-large);
     opacity: 0;
     transition: opacity 300ms;
-    z-index: var(--z-modal);
+    z-index: var(--z-dialog);
     pointer-events: none;
 }
 
@@ -933,7 +1073,7 @@ button:hover, .button:hover {
 .popup-title {
     font-size: var(--font-size-h2);
     font-weight: 600;
-    margin-bottom: 8px;
+    margin: 8px;
     color: var(--text);
 }
 
@@ -941,6 +1081,21 @@ button:hover, .button:hover {
     font-size: var(--font-size-p);
     margin-bottom: 20px;
     color: var(--secondary-text);
+}
+
+.popup-list-container {
+    text-align: left;
+    font-weight: bold;
+    background-color: var(--background3);
+    border-radius: 15px;
+    padding: 10px 10px 5px 30px;
+
+    max-height: 100px;
+    overflow-y: auto;
+}
+
+.popup-list-container li {
+    margin-bottom: 8px;
 }
 
 .popup-button-container {
@@ -966,6 +1121,11 @@ button:hover, .button:hover {
     outline: 0px;
     z-index: var(--z-modal);
     box-shadow: var(--shadow-medium);
+    max-height: 90%;
+}
+
+.big-modal {
+    width: 80%;
 }
 
 .modal.show {
@@ -978,23 +1138,6 @@ button:hover, .button:hover {
     top: 10px;
 }
 
-.backdrop {
-    position: fixed;
-    opacity: 0;
-    z-index: var(--z-backdrop);
-    background-color: rgba(10, 10, 10, 0.5);
-    backdrop-filter: blur(3px);
-    transition-duration: 300ms;
-    transition-property: opacity, -webkit-backdrop-filter, backdrop-filter;
-    pointer-events: none;
-    inset: 0;
-}
-
-.backdrop.show {
-    opacity: 1;
-    pointer-events: auto;
-}
-
 .info {
     color: var(--text);
     background-color: var(--background3);
@@ -1004,6 +1147,22 @@ button:hover, .button:hover {
     .modal {
         width: 80%;
     }
+}
+
+.password-validation-container {
+    background-color: var(--background4);
+    text-align: left;
+    padding: 5px 15px;
+    border-radius: 15px;
+    margin: auto;
+    width: 80%;
+    min-width: 150px;
+}
+
+.input-icon-table-cell {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 /* #endregion */
 
@@ -1019,6 +1178,11 @@ button:hover, .button:hover {
 }
 
 .disabled-icon {
+    color: var(--icon-disabled) !important;
+    cursor: not-allowed !important;
+}
+
+.disabled-icon:hover {
     color: var(--icon-disabled) !important;
 }
 
@@ -1087,8 +1251,8 @@ button:hover, .button:hover {
 
 /* #region Scrollbar */
 ::-webkit-scrollbar {
-    width: 5px;
-    height: 5px;
+    width: 8px;
+    height: 8px;
 }
 
 ::-webkit-scrollbar-track {
@@ -1114,6 +1278,7 @@ button:hover, .button:hover {
     min-width: 180px;
     box-shadow: var(--shadow-small);
     z-index: var(--z-modal);
+    text-align: left;
 
     opacity: 0;
     transform: translateY(-5px);
@@ -1145,6 +1310,11 @@ button:hover, .button:hover {
     color: var(--text);
 }
 
+.mouse-context-menu-item:focus-visible {
+    outline: 2px solid var(--icon-green);
+    outline-offset: -2px;
+}
+
 /* Icon inside menu item */
 .mouse-context-menu-item i {
     width: 16px;
@@ -1170,6 +1340,13 @@ button:hover, .button:hover {
     transform: translateX(-5px);
     transition: opacity 300ms, transform 300ms;
     pointer-events: none;                                   /* prevent interaction when hidden */
+}
+
+.mouse-context-menu.submenus-left .mouse-context-menu-item .submenu {
+    right: 100%;
+    left: auto;
+    margin-right: 4px;
+    margin-left: 0;
 }
 
 /* Show submenu if hovering over parent OR submenu itself */
@@ -1214,18 +1391,38 @@ fieldset {
 }
 /* #endregion */
 
+/* #region Overlay */
+.overlay {
+    position: fixed;
+    opacity: 0;
+    z-index: var(--z-overlay);
+    background-color: var(--overlay);
+    backdrop-filter: blur(3px);
+    transition-duration: 300ms;
+    transition-property: opacity, -webkit-backdrop-filter, backdrop-filter;
+    inset: 0;
+    display: flex;
+}
+
+.overlay.show {
+    opacity: 1;
+    pointer-events: auto;
+}
+/* #endregion */
+
 /* #region Navigation bar */
 nav {
     position: fixed;
-    bottom: 16px;
+    /*bottom: 16px;
     left: 50%;
-    transform: translateX(-50%);
+    transform: translateX(-50%);*/
 
+    white-space: nowrap;
     display: flex;
     align-items: center;  /* vertically center all children */
     gap: 8px;             /* spacing between items and separators */
 
-    overflow: hidden;
+    /*overflow: hidden;*/
     max-width: 90%;
     background-color: var(--background3);
     border-radius: 12px;
@@ -1290,6 +1487,7 @@ nav a {
     align-items: center;
     justify-content: center;
     height: 100%;
+    min-height: 18px;
     font-size: var(--font-size-p);
     position: relative;
     z-index: 1;
@@ -1344,4 +1542,199 @@ nav a:link, nav a:visited, nav a:hover, nav a:active {
 .navigation-item-title {
     margin: 0;
 }
+
+nav a,
+nav .button-item {
+    position: relative;
+}
+
+.nav-notification-badge {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+
+    height: 18px;
+    padding: 2px 6px;
+
+    font-size: var(--font-size-small);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50px;
+    pointer-events: none;
+}
+
+/* #region Submenu */
+.navigation-submenu {
+    min-width: 180px;
+    position: fixed;
+    background: var(--background3);
+    border-radius: 15px;
+    box-shadow: var(--shadow-small);
+    z-index: var(--z-modal);
+    transform: translate(-50%, 15px);
+    opacity: 0;
+    transition:
+        opacity 0.25s ease,
+        transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    overflow: visible;
+}
+
+/* Arrow */
+.navigation-submenu::after {
+    content: "";
+    position: absolute;
+    bottom: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 6px solid var(--background3);
+    opacity: 0;
+    transition: opacity 0.25s ease;
+}
+
+.navigation-submenu.show {
+    opacity: 1;
+    transform: translate(-50%, 0);
+}
+
+.navigation-submenu.show::after {
+    opacity: 1;
+}
+
+.navigation-submenu.hide {
+    opacity: 0;
+    transform: translate(-50%, 15px);
+}
+
+.navigation-submenu.hide::after {
+    opacity: 0;
+}
+
+/* Menu items */
+.navigation-submenu-item {
+    display: flex;
+    align-items: center;
+    gap: 0px 10px;
+    padding: 10px 14px;
+    text-decoration: none !important;
+    font-size: var(--font-size-p);
+    transition: background 0.15s ease, transform 0.15s ease;
+    border-radius: 15px;
+    margin: 0px;
+}
+
+.navigation-submenu-item.clickable:hover {
+    background: var(--background4);
+    padding-left: 16px;
+    transition: background 0.15s ease, padding-left 0.15s ease;
+}
+
+.navigation-submenu i {
+    min-width: 18px;
+    text-align: center;
+}
 /* #endregion */
+/* #endregion */
+
+/* #region Toolbar */
+.toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.toolbar-sub {
+    background: var(--background2);
+    border-radius: 20px;
+    box-shadow: var(--shadow-small);
+    display: flex;
+    align-items: center;
+    height: stretch;
+}
+
+.divider {
+    width: 1px;
+    height: 20px;
+    background: var(--background5);
+    margin: 6px 0;
+}
+
+.toolbar-button {
+    width: 100px;
+    height: stretch;
+    min-height: 60px;
+    padding: 20px;
+    padding-bottom: 10px;
+    gap: 15px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    cursor: pointer;
+    border-radius: 15px;
+}
+
+.toolbar-button-normal-p {
+    font-size: var(--font-size-p) !important;
+}
+
+.toolbar-button.full-width {
+    margin: 10px auto;
+    width: 95%;
+}
+
+.toolbar-button.selected {
+    border-radius: 17px;
+    background: var(--block-blue);
+}
+
+.toolbar-button.disabled {
+    background: var(--background4);
+    cursor: not-allowed;
+}
+.toolbar-button.disabled:hover {
+    border-radius: 15px;
+}
+.toolbar-button.delete {
+    background: var(--delete-button-background-1);
+}
+.toolbar-button.delete:hover {
+    background: var(--delete-button-background-1-hover);
+}
+
+.toolbar-button p {
+    font-size: var(--font-size-extra-small);
+    margin: 0px;
+}
+/* #endregion */
+.cell-flex {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 10px;
+}
+
+
+.tile-select-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+    margin: 10px 0px;
+}
+
+
+.input-icon-container {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    width: 95%;
+    max-width: 350px;
+    margin: auto;
+}

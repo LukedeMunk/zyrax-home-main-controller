@@ -12,12 +12,14 @@
 from flask import Blueprint, request, session                                   #Import flask blueprints and requests
 import configuration as c                                                       #Import application configuration variables
 from logger import logi, logw, loge                                             #Import logging functions
-from server_manager import generate_json_http_response, session
+
 import os                                                                       #For file handling
 import database_utility as db_util                                              #Import utility for database functionality
 from werkzeug.utils import secure_filename
 import uuid
 from routes.template_blueprints import login_get
+from utilities.authentication import minimum_role_required
+from utilities.response import generate_json_http_response
 
 user_bp = Blueprint("user_blueprints", __name__)
 
@@ -47,15 +49,19 @@ def add_account():
     if not result[0]:
         return generate_json_http_response(c.HTTP_CODE_BAD_REQUEST, result[1])
     
-    logi(c.VAR_TEXT_ADDED_ACCOUNT.format(result[1], account["email"]))
+    logi(c.VAR_TEXT_ADDED_ACCOUNT.format(result[1]["email"], result[1]["email"]))
 
     #If first account, login
     if first_account:
-        session["account_id"] = result[1]                                       #ID to distinguish accounts
+        session["account_id"] = result[1]["id"]                                 #ID to distinguish accounts
         session["profile_id"] = None                                            #ID to distinguish users
         session.permanent = True                                                #Make session permanent for X amount of minutes (config file)
     
-    return generate_json_http_response(c.HTTP_CODE_OK, {"id": result[1]})
+    response = {
+        "id": result[1],
+        "accounts": db_util.get_accounts()
+    }
+    return generate_json_http_response(c.HTTP_CODE_OK, response)
 
 ################################################################################
 #
@@ -63,10 +69,8 @@ def add_account():
 #
 ################################################################################
 @user_bp.route("/update_account", methods=["POST"])
-def update_account():
-    if "account_id" not in session:
-        return generate_json_http_response(c.HTTP_CODE_UNAUTHORIZED)
-    
+@minimum_role_required()
+def update_account():    
     id = int(request.form.get("id"))
 
     account = {
@@ -79,9 +83,13 @@ def update_account():
     if not result[0]:
         return generate_json_http_response(c.HTTP_CODE_BAD_REQUEST, result[1])
     
-    logi(c.VAR_TEXT_UPDATED_ACCOUNT.format(session["account_id"], account["email"]))
-    
-    return generate_json_http_response(c.HTTP_CODE_OK)
+    session_account = db_util.get_account(session["account_id"])
+    logi(c.VAR_TEXT_UPDATED_ACCOUNT.format(session_account["email"], result[1]["email"]))
+
+    response = {
+        "accounts": db_util.get_accounts()
+    }
+    return generate_json_http_response(c.HTTP_CODE_OK, response)
 
 ################################################################################
 #
@@ -89,10 +97,8 @@ def update_account():
 #
 ################################################################################
 @user_bp.route("/delete_account", methods=["POST"])
-def delete_account():
-    if "account_id" not in session:
-        return generate_json_http_response(c.HTTP_CODE_UNAUTHORIZED)
-    
+@minimum_role_required()
+def delete_account():    
     id = int(request.form.get("id"))
 
     if id == session["account_id"]:
@@ -104,7 +110,8 @@ def delete_account():
     if not result[0]:
         return generate_json_http_response(c.HTTP_CODE_BAD_REQUEST, result[1])
     
-    logi("Deleted account")
+    session_account = db_util.get_account(session["account_id"])
+    logi(c.VAR_TEXT_DELETED_ACCOUNT.format(session_account["email"], account["email"]))
     
     return generate_json_http_response(c.HTTP_CODE_OK)
 
@@ -113,11 +120,9 @@ def delete_account():
 #   @brief  Endpoint to update the account password.
 #
 ################################################################################
-@user_bp.route("/update_account_password", methods=["POST"])
-def update_account_password():
-    if "account_id" not in session:
-        return generate_json_http_response(c.HTTP_CODE_UNAUTHORIZED)
-    
+@user_bp.route("/update_password", methods=["POST"])
+@minimum_role_required()
+def update_password():    
     current_password = request.form.get("current_password")                     #Get current password from arguments
 
     if current_password is None or current_password == "":
@@ -131,7 +136,8 @@ def update_account_password():
     if not result[0]:
         return generate_json_http_response(c.HTTP_CODE_BAD_REQUEST, result[1])
     
-    logi(c.VAR_TEXT_UPDATED_PASSWORD.format(session["account_id"], "ACCOUNT"))
+    session_account = db_util.get_account(session["account_id"])
+    logi(c.VAR_TEXT_UPDATED_PASSWORD.format(session_account["email"]))
     
     return generate_json_http_response(c.HTTP_CODE_OK, result[1])                 #Return a possible strength warning
 
@@ -142,10 +148,8 @@ def update_account_password():
 #
 ################################################################################
 @user_bp.route("/reset_account_password", methods=["POST"])
-def reset_account_password():
-    if "account_id" not in session:
-        return generate_json_http_response(c.HTTP_CODE_UNAUTHORIZED)
-    
+@minimum_role_required()
+def reset_account_password():    
     #id = int(request.form.get("id"))
 
     #result = db_util.reset_account_password(id)
@@ -182,14 +186,21 @@ def add_profile():
     if not result[0]:
         return generate_json_http_response(c.HTTP_CODE_BAD_REQUEST, result[1])
     
+    profile = db_util.get_profile(result[1])
+
     #When first profile of account, switch to that profile
     if len(db_util.get_profiles(session["account_id"])) == 1:
-        session["profile_id"] = result[1]
+        session["profile_id"] = profile["id"]
         session["language"] = profile["language"]
 
-    logi(c.VAR_TEXT_ADDED_PROFILE.format(session["account_id"], profile["name"]))
-    
-    return generate_json_http_response(c.HTTP_CODE_OK, {"id": result[1]})
+    session_account = db_util.get_account(session["account_id"])
+    logi(c.VAR_TEXT_ADDED_PROFILE.format(session_account["email"], profile["name"]))
+
+    response = {
+        "id": profile["id"],
+        "profiles": db_util.get_profiles(session["account_id"])
+    }
+    return generate_json_http_response(c.HTTP_CODE_OK, response)
 
 ################################################################################
 #
@@ -197,12 +208,10 @@ def add_profile():
 #
 ################################################################################
 @user_bp.route("/upload_profile_picture", methods=["POST"])
+@minimum_role_required()
 def upload_profile_picture():
-    if "account_id" not in session:
-        return generate_json_http_response(c.HTTP_CODE_UNAUTHORIZED)
-
     profile_id = int(request.form.get("profile_id"))
-    file = request.files.get("picture")
+    file = request.files["image"]
     
     if not file:
         return generate_json_http_response(c.HTTP_CODE_BAD_REQUEST, c.TEXT_NO_FILE_SELECTED)
@@ -241,10 +250,8 @@ def upload_profile_picture():
 #
 ################################################################################
 @user_bp.route("/update_profile", methods=["POST"])
+@minimum_role_required()
 def update_profile():
-    if "account_id" not in session:
-        return generate_json_http_response(c.HTTP_CODE_UNAUTHORIZED)
-
     id = int(request.form.get("id"))
 
     profile = {
@@ -259,9 +266,13 @@ def update_profile():
     if not result[0]:
         return generate_json_http_response(c.HTTP_CODE_BAD_REQUEST, result[1])
     
-    logi(c.VAR_TEXT_UPDATED_PROFILE.format(session["profile_id"], profile["name"]))
+    session_account = db_util.get_account(session["account_id"])
+    logi(c.VAR_TEXT_UPDATED_PROFILE.format(session_account["name"], profile["name"]))
     
-    return generate_json_http_response(c.HTTP_CODE_OK)
+    response = {
+        "profiles": db_util.get_profiles(session["account_id"])
+    }
+    return generate_json_http_response(c.HTTP_CODE_OK, response)
 
 ################################################################################
 #
@@ -269,10 +280,8 @@ def update_profile():
 #
 ################################################################################
 @user_bp.route("/delete_profile", methods=["POST"])
+@minimum_role_required()
 def delete_profile():
-    if "account_id" not in session:
-        return generate_json_http_response(c.HTTP_CODE_UNAUTHORIZED)
-
     id = int(request.form.get("id"))
     
     profile = db_util.get_profile(id=id)
@@ -289,7 +298,8 @@ def delete_profile():
         if os.path.exists(path):
             os.remove(path)
     
-    logi(c.VAR_TEXT_DELETED_PROFILE.format(session["account_id"], profile["name"]))
+    session_account = db_util.get_account(session["account_id"])
+    logi(c.VAR_TEXT_DELETED_PROFILE.format(session_account["email"], profile["name"]))
     
     return generate_json_http_response(c.HTTP_CODE_OK)
 #endregion
@@ -318,11 +328,11 @@ def login_post():
 
     logi(c.VAR_TEXT_LOGGED_IN.format(email))
 
-    message = {
-                "profiles": db_util.get_profiles(session["account_id"])
-            }
+    response = {
+        "profiles": db_util.get_profiles(session["account_id"])
+    }
     
-    return generate_json_http_response(c.HTTP_CODE_OK, message)
+    return generate_json_http_response(c.HTTP_CODE_OK, response)
 
 ################################################################################
 #
@@ -344,10 +354,8 @@ def logout():
 #
 ################################################################################
 @user_bp.route("/pick_profile", methods=["POST"])
-def pick_profile():
-    if "account_id" not in session:
-        return generate_json_http_response(c.HTTP_CODE_UNAUTHORIZED)
-    
+@minimum_role_required()
+def pick_profile():    
     profile_id = int(request.form.get("id"))
 
     session["profile_id"] = profile_id                                          #ID to distinguish users

@@ -1,8 +1,8 @@
 /******************************************************************************/
 /*
  * File:    styles.css
- * Author:  Luke de Munk
  * Version: 0.9.0
+ * Author:  Luke de Munk
  * 
  * Brief:   Additional styles.
  *
@@ -10,24 +10,6 @@
  *          https://github.com/LukedeMunk/zyrax-home-main-controller
  */
 /******************************************************************************/
-/*@media (hover: hover) {
-    .button:hover, .button-selected:hover {
-        border-radius: 50px;
-        border-color: rgb(184, 184, 184) !important;
-        transition: 300ms;
-        cursor: pointer;
-    }
-} TODO can be removed? */
-
-/*.button-selected {
-    color: rgb(184, 184, 184);
-    background: rgba(255, 255, 255, 0.3);
-    outline: 2px solid #20bf6b !important;
-    border-radius: 15px;
-    transition: 300ms;
-}*/
-
-
 /* #region Multi range */
 .multi-range-slider {
     -webkit-appearance: none;
@@ -97,44 +79,6 @@ input[type="range"]::-webkit-slider-runnable-track {
 
 .minimum-multi-range {
     z-index: 1;
-}
-/* #endregion */
-
-/* #region Top bar */
-.top-bar {
-    background-color: var(--background5);
-    position: fixed;
-    top: 0px;
-    left: 50%;
-    transform: translate(-50%, -50px);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    border-radius: 15px;
-    overflow: hidden;
-    z-index: 5;
-    transition: 300ms;
-    box-shadow: var(--shadow-small);
-}
-
-body.loaded .top-bar {
-    transform: translate(-50%, 12px);
-}
-
-.top-bar-item {
-    padding: 20px;
-    cursor: pointer;
-}
-
-.top-bar-item:hover {
-    background-color: var(--background2);
-    box-shadow: var(--shadow-small);
-    transition: 300ms;
-}
-
-.top-bar-item-active {
-    background-color: var(--background4);
-    box-shadow: var(--shadow-small);
 }
 /* #endregion */
 
@@ -233,12 +177,12 @@ body.loaded .top-bar {
     overflow: hidden;
 }
 
-.bubbles-double-horizontal {
+.bubbles-tile2x2 {
     width: 370px; 
     height: 100px;
 }
 
-.bubbles-double-horizontal-vertical {
+.bubbles-tile4x4 {
     width: 370px; 
     height: 210px;
 }
@@ -558,12 +502,7 @@ body.loaded .top-bar {
 }
 /* #endregion */
 
-.password-validation-container {
-    background-color: var(--background4);
-    text-align: left;
-    padding: 10px 20px;
-    border-radius: 15px;
-    margin: 15px auto;
+.page-password-validation {
     width: 70%;
     max-width: 310px;
 
@@ -573,7 +512,7 @@ body.loaded .top-bar {
     transition: max-height 0.8s ease-in-out, opacity 0.2s ease-in-out;
 }
 
-.password-validation-container.show {
+.page-password-validation.show {
     max-height: 500px;
     opacity: 1;
 }
@@ -691,13 +630,6 @@ input[type="color"] {
 
 .full-width {
     width: 100% !important;
-}
-
-.big-modal {
-    margin: 20px auto;
-    width: 70%;
-    overflow-y: auto;
-    box-sizing: border-box;
 }
 
 .minimal-height-button {

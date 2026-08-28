@@ -1,8 +1,8 @@
 /******************************************************************************/
 /*
  * File:    styles_tiles.css
- * Author:  Luke de Munk
  * Version: 0.9.0
+ * Author:  Luke de Munk
  * 
  * Brief:   Additional styles for draggable tiles.
  *
@@ -16,24 +16,173 @@
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
 }
 
+.dashboard-workspace {
+    width: min(92%, 1600px);
+    margin: 0 auto;
+}
+
+.dashboard-configuration-panel {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 18px;
+    padding: 16px 18px;
+    background: var(--background2);
+    border: 1px solid var(--background5);
+    border-radius: 15px;
+    box-shadow: var(--shadow-small);
+}
+
+.dashboard-configuration-panel[hidden] {
+    display: none;
+}
+
+.dashboard-configuration-panel h3,
+.dashboard-configuration-panel p {
+    margin: 0;
+}
+
+.dashboard-configuration-panel p {
+    margin-top: 4px;
+    color: var(--secondary-text);
+}
+
+.dashboard-configuration-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.dashboard-configuration-actions .danger-button {
+    color: var(--text-red);
+}
+
+.dashboard-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    padding: 48px 20px;
+    text-align: center;
+    color: var(--secondary-text);
+}
+
+.dashboard-empty-state[hidden] {
+    display: none;
+}
+
+.dashboard-grid {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(
+        var(--dashboard-columns, 1),
+        minmax(0, 1fr)
+    );
+    grid-template-rows: repeat(var(--dashboard-rows, 6), 45px);
+    grid-auto-rows: 45px;
+    min-height: 260px;
+    margin: 0 auto;
+    padding-bottom: 40px;
+    align-items: stretch;
+}
+
+.dashboard-grid .tile {
+    position: relative;
+    width: auto;
+    height: auto !important;
+    min-width: 0;
+    min-height: 0;
+    box-sizing: border-box;
+    z-index: 1;
+}
+
+.dashboard-grid-editable {
+    border-radius: 15px;
+    background-image: radial-gradient(
+        circle,
+        color-mix(in srgb, var(--secondary-text) 22%, transparent) 1px,
+        transparent 1px
+    );
+    background-size: calc(
+        (100% - (var(--dashboard-columns, 1) - 1) * 10px) /
+        var(--dashboard-columns, 1) + 10px
+    ) 45px;
+}
+
+.dashboard-tile-draggable {
+    cursor: grab;
+    touch-action: none;
+}
+
+.dashboard-tile-dragging {
+    cursor: grabbing;
+    opacity: .88;
+    z-index: 20 !important;
+    transition: none !important;
+    pointer-events: none;
+    will-change: transform;
+}
+
+.dashboard-drop-preview {
+    z-index: 0;
+    border: 2px dashed var(--icon-green);
+    border-radius: 15px;
+    background: color-mix(in srgb, var(--icon-green) 12%, transparent);
+    pointer-events: none;
+}
+
+.dashboard-drop-preview.invalid {
+    border-color: var(--text-red);
+    background: color-mix(in srgb, var(--text-red) 12%, transparent);
+}
+
+.dashboard-tile-options-button {
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    z-index: 5;
+    width: 24px;
+    min-width: 24px;
+    height: 24px;
+    min-height: 24px;
+    padding: 0;
+    border-radius: 50%;
+}
+
+.automation-tile-running {
+    opacity: .75;
+    pointer-events: none;
+}
+
+.automation-tile-success {
+    outline: 2px solid var(--icon-green);
+}
+
+.automation-tile-error {
+    outline: 2px solid var(--text-red);
+}
+
 .tile {
-    height: 60px;
-    grid-row: span 2;
+    grid-row: span 1;
+    height: 25px;
 
     cursor: pointer;
-    padding: 20px;
     font-size: var(--font-size-p);
     text-align: left;
     background-color: var(--background3);
     border-radius: 15px;
-    display: grid;
-    grid-template-rows: repeat(2, 50%);
-    grid-template-columns: repeat(2, 50%);
     
     justify-content: center;
     align-items: center;
     transition: 200ms;
     box-shadow: var(--shadow-small);
+
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .dark-shadow {
@@ -52,53 +201,82 @@
     transition: 200ms;
 }
 
+.dashboard-tile-dragging:hover {
+    transform: none;
+}
+
 .tile p {
     margin: 0px;
 }
 
-.single {
-    grid-row: span 1;
-    height: 25px !important;
-    padding: 10px 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+.tile-spacer {
+    visibility: hidden;
+    pointer-events: none;
+    background: transparent;
+    box-shadow: none;
 }
 
-.double-horizontal-centered {
-    grid-column: span 2;
+.tile1x2 {
+    height: 60px !important;
+    display: grid;
+    grid-template-rows: repeat(2, 50%);
+    grid-template-columns: repeat(2, 50%);
+    grid-row-gap: 10px;
+
+    grid-row: span 2;
+    align-content: center;
+    padding: 20px;
+}
+
+.tile2x2-centered {
+    height: 60px !important;
     display: flex;
     flex-direction: column;
     gap: 10px;
+
+    grid-column: span 2;
+    padding: 20px;
 }
   
-.double-horizontal {
-    height: 60px;
+.tile2x2 {
+    height: 60px !important;
+    display: grid;
+    grid-template-rows: repeat(2, 50%);
+    grid-template-columns: repeat(3, 33%);
+    grid-row-gap: 10px;
+
     grid-row: span 2;
     grid-column: span 2;
-    display: grid;
-    grid-gap: 10px;
     align-content: center;
+    padding: 20px;
 }
 
-.double-vertical {
-    height: 170px;       /*2*180 +15 from gap*/
-    grid-row: span 4;
+.tile2x4 {
+    height: 170px !important;       /*2*180 +15 from gap*/
     display: flex;
     flex-direction: column;
     gap: 10px;
+
+    grid-row: span 4;
+    padding: 20px;
 }
 
-.double-horizontal-vertical {
-    height: 170px;       /*2*180 +15 from gap*/
-    grid-row: span 4;
-    grid-column: span 2;
+.tile4x4 {
+    height: 170px !important;       /*2*180 +15 from gap*/
     display: grid;
     grid-template-rows: repeat(2, 50%);
     grid-template-columns: repeat(2, 50%);
     grid-gap: 10px;
+
+    grid-row: span 4;
+    grid-column: span 2;
+    padding: 20px;
 }
 
 .tile, [draggable] {
     user-select: none;
+}
+
+.tile .can-drag {
+    
 }

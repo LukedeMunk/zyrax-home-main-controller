@@ -16,12 +16,16 @@ import database_utility as db_util                                              
 from logger import logi, logw, loge, get_logs                                   #Import logging functions
 from WeatherServiceClient import WeatherServiceClient
 
+
+from utilities.authentication import minimum_role_required
+from utilities.response import generate_json_http_response, render_login_page
+
 dm = DeviceManager()
 template_bp = Blueprint("template_blueprints", __name__)
 
 weather_client = WeatherServiceClient(
     base_url=c.WEATHER_SERVICE_URL,
-    api_key=c.MICROSERVICE_KEY
+    api_key=c.dynamic_config.microservice_key
 )
 
 #region Load pages
@@ -36,17 +40,11 @@ weather_client = WeatherServiceClient(
 ################################################################################
 @template_bp.route("/login", methods=["GET"])
 def login_get(message=""):
-    #Check whether is already logged in
+    #Check whether is already logged in, send user profiles
     if "account_id" in session:
-        session.clear()                                                         #Logout, clear session
+        return render_login_page(message, db_util.get_profiles(session["account_id"]))
     
-    return render_template("login.html", title="",
-                            APPLICATION_VERSION=c.APPLICATION_VERSION,
-                            RF_RECEIVER_PRESENT=c.RF_RECEIVER_PRESENT,
-                            RF_TRANSMITTER_PRESENT=c.RF_TRANSMITTER_PRESENT,
-                            alarm_activated=db_util.get_alarm()["activated"],
-                            user_profiles=[],
-                            message=message)
+    return render_login_page(message)
 
 ################################################################################
 #
@@ -58,12 +56,10 @@ def login_get(message=""):
 #
 ################################################################################
 @template_bp.route("/account", methods=["GET"])
+@minimum_role_required()
 def account_page():
-    if "account_id" not in session:
-        return login_get(c.TEXT_NEED_TO_BE_LOGGED_IN)                           #User not logged in, return to login page
-    
     return render_template("account.html", title="",
-                            APPLICATION_VERSION=c.APPLICATION_VERSION,
+                            CURRENT_APPLICATION_VERSION=c.CURRENT_APPLICATION_VERSION,
                             RF_RECEIVER_PRESENT=c.RF_RECEIVER_PRESENT,
                             RF_TRANSMITTER_PRESENT=c.RF_TRANSMITTER_PRESENT,
                             alarm_activated=db_util.get_alarm()["activated"],
@@ -78,26 +74,25 @@ def account_page():
 #
 ################################################################################
 @template_bp.route("/", methods=["GET"])
+@minimum_role_required()
 def dashboard_page():
-    if "account_id" not in session:
-        return login_get(c.TEXT_NEED_TO_BE_LOGGED_IN)                           #User not logged in, return to login page
-    
     logi("[" + request.remote_addr + "] visited the website")
 
     alarm = db_util.get_alarm()
     alarm["connected_deactivation_devices"] = dm.get_connected_alarm_deactivation_devices(alarm["deactivation_devices"])
 
     return render_template("dashboard.html", title="",
-                            APPLICATION_VERSION=c.APPLICATION_VERSION,
+                            CURRENT_APPLICATION_VERSION=c.CURRENT_APPLICATION_VERSION,
                             RF_RECEIVER_PRESENT=c.RF_RECEIVER_PRESENT,
                             RF_TRANSMITTER_PRESENT=c.RF_TRANSMITTER_PRESENT,
                             alarm_activated=db_util.get_alarm()["activated"],
                             user_profiles=db_util.get_profiles(session["account_id"]),
                             alarm=alarm,
                             weather=weather_client.get_weather_forecast(True),
-                            weather_location=c.WEATHER_LOCATION,
+                            weather_location=c.dynamic_config.weather_location,
                             dashboard_configurations=db_util.get_dashboard_configurations(),
                             tile_types=c.TILE_TYPES,
+                            automations=dm.get_automations(),
                             devices=dm.get_devices_dict(update_states=True),
                             groups=dm.get_groups())
 
@@ -110,7 +105,7 @@ def dashboard_page():
 @template_bp.route("/initial_setup", methods=["GET"])
 def initial_setup():
     return render_template("initial_setup.html", title="",
-                            APPLICATION_VERSION=c.APPLICATION_VERSION,
+                            CURRENT_APPLICATION_VERSION=c.CURRENT_APPLICATION_VERSION,
                             RF_RECEIVER_PRESENT=c.RF_RECEIVER_PRESENT,
                             RF_TRANSMITTER_PRESENT=c.RF_TRANSMITTER_PRESENT,
                             alarm_activated=db_util.get_alarm()["activated"],
@@ -123,12 +118,10 @@ def initial_setup():
 #
 ################################################################################
 @template_bp.route("/configuration", methods=["GET"])
+@minimum_role_required()
 def configuration_page():
-    if "account_id" not in session:
-        return login_get(c.TEXT_NEED_TO_BE_LOGGED_IN)                           #User not logged in, return to login page
-    
     return render_template("configuration.html", title="Configuration",
-                            APPLICATION_VERSION=c.APPLICATION_VERSION,
+                            CURRENT_APPLICATION_VERSION=c.CURRENT_APPLICATION_VERSION,
                             RF_RECEIVER_PRESENT=c.RF_RECEIVER_PRESENT,
                             RF_TRANSMITTER_PRESENT=c.RF_TRANSMITTER_PRESENT,
                             alarm_activated=db_util.get_alarm()["activated"],
@@ -143,11 +136,11 @@ def configuration_page():
                             DEVICE_MODELS=c.DEVICE_MODELS,
                             logs=get_logs(),
                             SUPPORTED_UI_LANGUAGES=c.SUPPORTED_UI_LANGUAGES,
-                            weather_service_enabled=c.WEATHER_SERVICE_ENABLED,
-                            weather_api_key=c.WEATHER_API_KEY,
-                            telegram_service_enabled=c.TELEGRAM_SERVICE_ENABLED,
-                            rpi_rf_receiver_enabled=c.RPI_RF_ENABLED,
-                            telegram_bot_token=c.TELEGRAM_BOT_TOKEN)
+                            weather_service_enabled=c.dynamic_config.weather_service_enabled,
+                            weather_api_key=c.dynamic_config.weather_api_key,
+                            telegram_service_enabled=c.dynamic_config.telegram_service_enabled,
+                            rpi_rf_receiver_enabled=c.dynamic_config.rpi_rf_enabled,
+                            telegram_bot_token=c.dynamic_config.telegram_bot_token)
 
 ################################################################################
 #
@@ -155,14 +148,12 @@ def configuration_page():
 #
 ################################################################################
 @template_bp.route("/configure_led_addressing", methods=["GET"])
+@minimum_role_required()
 def configure_led_addressing_page():
-    if "account_id" not in session:
-        return login_get(c.TEXT_NEED_TO_BE_LOGGED_IN)                           #User not logged in, return to login page
-    
     id = int(request.args.get("id"))
 
     return render_template("configure_led_addressing.html", title="Configure LED addressing",
-                            APPLICATION_VERSION=c.APPLICATION_VERSION,
+                            CURRENT_APPLICATION_VERSION=c.CURRENT_APPLICATION_VERSION,
                             RF_RECEIVER_PRESENT=c.RF_RECEIVER_PRESENT,
                             RF_TRANSMITTER_PRESENT=c.RF_TRANSMITTER_PRESENT,
                             alarm_activated=db_util.get_alarm()["activated"],
@@ -175,15 +166,13 @@ def configure_led_addressing_page():
 #
 ################################################################################
 @template_bp.route("/realtime_led_coloring", methods=["GET"])
+@minimum_role_required()
 def realtime_led_coloring_page():
-    if "account_id" not in session:
-        return login_get(c.TEXT_NEED_TO_BE_LOGGED_IN)                           #User not logged in, return to login page
-    
     id = int(request.args.get("id"))
-    dm.set_ledstrip_mode(id, c.MODE_DRAWING)
+    dm.set_ledstrip_mode(id, c.LEDSTRIP_MODE_ID_DRAWING)
 
     return render_template("realtime_led_coloring.html", title="Real-time LED coloring",
-                            APPLICATION_VERSION=c.APPLICATION_VERSION,
+                            CURRENT_APPLICATION_VERSION=c.CURRENT_APPLICATION_VERSION,
                             RF_RECEIVER_PRESENT=c.RF_RECEIVER_PRESENT,
                             RF_TRANSMITTER_PRESENT=c.RF_TRANSMITTER_PRESENT,
                             alarm_activated=db_util.get_alarm()["activated"],
@@ -196,12 +185,10 @@ def realtime_led_coloring_page():
 #
 ################################################################################
 @template_bp.route("/automations", methods=["GET"])
+@minimum_role_required()
 def automations_page():
-    if "account_id" not in session:
-        return login_get(c.TEXT_NEED_TO_BE_LOGGED_IN)                           #User not logged in, return to login page
-    
     return render_template("automations.html", title="Automations",
-                            APPLICATION_VERSION=c.APPLICATION_VERSION,
+                            CURRENT_APPLICATION_VERSION=c.CURRENT_APPLICATION_VERSION,
                             RF_RECEIVER_PRESENT=c.RF_RECEIVER_PRESENT,
                             RF_TRANSMITTER_PRESENT=c.RF_TRANSMITTER_PRESENT,
                             alarm_activated=db_util.get_alarm()["activated"],
@@ -222,12 +209,10 @@ def automations_page():
 #
 ################################################################################
 @template_bp.route("/alarm", methods=["GET"])
+@minimum_role_required()
 def alarm_page():
-    if "account_id" not in session:
-        return login_get(c.TEXT_NEED_TO_BE_LOGGED_IN)                           #User not logged in, return to login page
-    
     return render_template("alarm.html", title="Alarm",
-                            APPLICATION_VERSION=c.APPLICATION_VERSION,
+                            CURRENT_APPLICATION_VERSION=c.CURRENT_APPLICATION_VERSION,
                             RF_RECEIVER_PRESENT=c.RF_RECEIVER_PRESENT,
                             RF_TRANSMITTER_PRESENT=c.RF_TRANSMITTER_PRESENT,
                             alarm_activated=db_util.get_alarm()["activated"],
@@ -242,12 +227,10 @@ def alarm_page():
 #
 ################################################################################
 @template_bp.route("/control_rf_devices", methods=["GET"])
+@minimum_role_required()
 def control_rf_devices_page():
-    if "account_id" not in session:
-        return login_get(c.TEXT_NEED_TO_BE_LOGGED_IN)                           #User not logged in, return to login page
-    
     return render_template("rf_devices.html", title="Sensors",
-                            APPLICATION_VERSION=c.APPLICATION_VERSION,
+                            CURRENT_APPLICATION_VERSION=c.CURRENT_APPLICATION_VERSION,
                             RF_RECEIVER_PRESENT=c.RF_RECEIVER_PRESENT,
                             RF_TRANSMITTER_PRESENT=c.RF_TRANSMITTER_PRESENT,
                             alarm_activated=db_util.get_alarm()["activated"],
@@ -261,17 +244,17 @@ def control_rf_devices_page():
 #
 ################################################################################
 @template_bp.route("/control_leds", methods=["GET"])
+@minimum_role_required()
 def control_leds_page():
-    if "account_id" not in session:
-        return login_get(c.TEXT_NEED_TO_BE_LOGGED_IN)                           #User not logged in, return to login page
-    
     id = int(request.args.get("id"))
     ledstrip = dm.get_device_dict(id=id, update_states=True)
     ledstrip["color"] = dm.get_ledstrip_color(id)
     title = "Control " + ledstrip["name"]
+
+    print(ledstrip)
     
     return render_template("control_ledstrip.html", title=title,
-                            APPLICATION_VERSION=c.APPLICATION_VERSION,
+                            CURRENT_APPLICATION_VERSION=c.CURRENT_APPLICATION_VERSION,
                             RF_RECEIVER_PRESENT=c.RF_RECEIVER_PRESENT,
                             RF_TRANSMITTER_PRESENT=c.RF_TRANSMITTER_PRESENT,
                             alarm_activated=db_util.get_alarm()["activated"],
@@ -283,6 +266,7 @@ def control_leds_page():
                             devices="",
                             group="",
                             palettes=c.PALETTES,
+                            LEDSTRIP_MODES=c.LEDSTRIP_MODES,
                             group_selected=False)
 
 ################################################################################
@@ -291,16 +275,14 @@ def control_leds_page():
 #
 ################################################################################
 @template_bp.route("/control_ledstrip_group", methods=["GET"])
+@minimum_role_required()
 def control_led_groups_page():
-    if "account_id" not in session:
-        return login_get(c.TEXT_NEED_TO_BE_LOGGED_IN)                           #User not logged in, return to login page
-    
     id = int(request.args.get("id"))
     group = dm.get_group(id=id)
     title = "Control " + group["name"]
 
     return render_template("control_ledstrip.html", title=title,
-                            APPLICATION_VERSION=c.APPLICATION_VERSION,
+                            CURRENT_APPLICATION_VERSION=c.CURRENT_APPLICATION_VERSION,
                             RF_RECEIVER_PRESENT=c.RF_RECEIVER_PRESENT,
                             RF_TRANSMITTER_PRESENT=c.RF_TRANSMITTER_PRESENT,
                             alarm_activated=db_util.get_alarm()["activated"],

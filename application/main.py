@@ -41,18 +41,25 @@ def check_received_rf_codes():
     
     if sm.rf_device is None:
         return
-    
-    if sm.rf_device.rx_code_timestamp == rf_timestamp:
+
+    received_timestamp = sm.rf_device.rx_code_timestamp
+    received_code = sm.rf_device.rx_code
+
+    # The RF receiver has no timestamp or code until the first signal arrives.
+    if received_timestamp is None or received_code is None:
         return
     
-    last_code_timestamp = rf_code_timestamps.get(sm.rf_device.rx_code, 0)
-    if sm.rf_device.rx_code_timestamp - last_code_timestamp < 250000:
+    if received_timestamp == rf_timestamp:
+        return
+    
+    last_code_timestamp = rf_code_timestamps.get(received_code, 0)
+    if received_timestamp - last_code_timestamp < 250000:
         return                                                                  #Debounce code for 250ms
 
-    rf_timestamp = sm.rf_device.rx_code_timestamp                               #Save timestamp for debouncing
-    rf_code_timestamps[sm.rf_device.rx_code] = rf_timestamp
-    sm.last_received_rf_codes[rf_timestamp] = sm.rf_device.rx_code
-    dm.process_rf_signal(sm.rf_device.rx_code)
+    rf_timestamp = received_timestamp                                           #Save timestamp for debouncing
+    rf_code_timestamps[received_code] = rf_timestamp
+    sm.last_received_rf_codes[rf_timestamp] = received_code
+    dm.process_rf_signal(received_code)
 
 ################################################################################
 #

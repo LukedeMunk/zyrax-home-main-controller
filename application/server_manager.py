@@ -3,6 +3,7 @@
 # File:     server_manager.py
 # Version:  0.9.0
 # Author:   Luke de Munk
+#
 # Brief:    Server manager manages the server. Creates the database, registers
 #           Flask blueprints and configures the Flask webserver.
 #
@@ -13,19 +14,32 @@
 from flask import Flask, session                                                #Import Flask and session
 from flask_sqlalchemy import SQLAlchemy                                         #Import Flask FlaskSQLAlchemy
 import os
+import sqlite3
 import configuration as c                                                       #Import application configuration variables
-from datetime import datetime
+from datetime import datetime, timedelta
 import json                                                                     #To generate JSON response strings
 from cryptography.fernet import Fernet
-import keyring
 from logger import logi, logw, loge                                             #Import logging functions
 from TelegramServiceClient import *
 from WeatherServiceClient import *
 from expiringdict import ExpiringDict                                           #To keep track of RF codes
 
+from sqlalchemy import event, inspect                                           #Inspect DB engine
+from sqlalchemy.engine import Engine
+
 #Flask configuration
 app = Flask(__name__)
 db =  SQLAlchemy()
+
+
+@event.listens_for(Engine, "connect")
+def enable_sqlite_foreign_keys(database_connection, connection_record):
+    if not isinstance(database_connection, sqlite3.Connection):
+        return
+
+    cursor = database_connection.cursor()
+    cursor.execute("PRAGMA foreign_keys=ON")
+    cursor.close()
 
 if c.PRODUCTION_MODE:
     import RPi.GPIO as GPIO                                                     #For RF purposes
@@ -39,14 +53,22 @@ last_received_rf_codes[0] = 0
 telegram_service_state = None#Can be removed?
 weather_service_state = None#Can be removed?
 
+
+class DatabaseInformation(db.Model):
+    __tablename__ = "DatabaseInformation"
+    id = db.Column(db.Integer, primary_key=True)
+    last_version_update = db.Column(db.DateTime, default=lambda: datetime.now(c.TIME_ZONE), nullable=False)
+    version = db.Column(db.String(10), default=c.CURRENT_APPLICATION_VERSION, nullable=False)
+    original_version = db.Column(db.String(10), default=c.CURRENT_APPLICATION_VERSION, nullable=False)
+
 #region Account tables
 class Account(db.Model):
     __tablename__ = "Account"
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(256), unique=True, nullable=False)              #Encrypted
     password = db.Column(db.String(256), nullable=False)                        #Hashed
-    created_at = db.Column(db.DateTime(timezone=True), default=datetime.now(c.TIME_ZONE), nullable=False)
-    last_logged_in_at = db.Column(db.DateTime(timezone=True), default=datetime.now(c.TIME_ZONE), nullable=False)
+    created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(c.TIME_ZONE), nullable=False)
+    last_logged_in_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(c.TIME_ZONE), nullable=False)
 
 class Profile(db.Model):
     __tablename__ = "Profile"
@@ -56,7 +78,7 @@ class Profile(db.Model):
     name = db.Column(db.String(256), nullable=False)
     language = db.Column(db.Integer, nullable=False)
     ui_theme = db.Column(db.Integer, nullable=False, default=c.UI_THEME_DARK_BLUE)
-    created_at = db.Column(db.DateTime(timezone=True), default=datetime.now(c.TIME_ZONE), nullable=False)
+    created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(c.TIME_ZONE), nullable=False)
 
 class DashboardConfiguration(db.Model):
     __tablename__ = "DashboardConfiguration"
@@ -79,10 +101,17 @@ class DashboardConfiguration(db.Model):
 class DashboardHasTile(db.Model):
     __tablename__ = "DashboardHasTile"
     id = db.Column(db.Integer, primary_key=True)
-    configuration_id = db.Column(db.Integer, nullable=False)
-    device_id = db.Column(db.Integer)
-    group_id = db.Column(db.Integer)
+    configuration_id = db.Column(
+        db.Integer,
+        db.ForeignKey("DashboardConfiguration.id", ondelete="CASCADE"),
+        nullable=False
+    )
+    device_id = db.Column( db.Integer, db.ForeignKey("Device.id", ondelete="CASCADE"))
+    group_id = db.Column(db.Integer, db.ForeignKey("Group.id", ondelete="CASCADE"))
+    automation_id = db.Column(db.Integer, db.ForeignKey("Automation.id", ondelete="CASCADE"))
     index = db.Column(db.Integer, nullable=False)
+    position_x = db.Column(db.Integer)
+    position_y = db.Column(db.Integer)
     type = db.Column(db.Integer, nullable=False)
     size = db.Column(db.Integer, nullable=False)
 #endregion
@@ -100,7 +129,7 @@ class AlarmIsTriggered(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     alarm_id = db.Column(db.Integer, nullable=False)
     trigger_device_id = db.Column(db.Integer, nullable=False)
-    datetime = db.Column(db.DateTime(timezone=True), default=datetime.now(c.TIME_ZONE), nullable=False)
+    datetime = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(c.TIME_ZONE), nullable=False)
 
 class AlarmHasTriggerDevice(db.Model):
     __tablename__ = "AlarmHasTriggerDevice"
@@ -118,15 +147,59 @@ class AlarmHasDeactivationDevice(db.Model):
 #endregion
     
 #region Device tables
+class Integration(db.Model):
+    __tablename__ = "Integration"
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), unique=True, nullable=False)
+    type = db.Column(db.String(50), nullable=False)
+    enabled = db.Column(db.Boolean, nullable=False, default=True)
+    configuration = db.Column(db.Text, nullable=False, default="{}")
+
 class Device(db.Model):
     __tablename__ = "Device"
     id = db.Column(db.Integer, primary_key=True)
+    integration_id = db.Column(db.Integer, db.ForeignKey("Integration.id", ondelete="SET NULL"))
     location_id = db.Column(db.Integer, nullable=False, default=-1)
     name = db.Column(db.String(50), unique=True, nullable=False)
     icon = db.Column(db.String(50), nullable=False, default="fa-duotone fa-solid fa-microchip")
     type = db.Column(db.Integer, nullable=False)
     model_id = db.Column(db.Integer, nullable=False)##
     category = db.Column(db.Integer, nullable=False)##
+
+class Entity(db.Model):
+    __tablename__ = "Entity"
+    id = db.Column(db.Integer, primary_key=True)
+    device_id = db.Column(
+        db.Integer,
+        db.ForeignKey("Device.id", ondelete="CASCADE"),
+        nullable=False
+    )
+    external_id = db.Column(db.String(100), nullable=False)
+    name = db.Column(db.String(50), nullable=False)
+    type = db.Column(db.String(50), nullable=False)
+    state = db.Column(db.Text, nullable=False, default="{}")
+
+    __table_args__ = (
+        db.UniqueConstraint(
+            "device_id",
+            "external_id",
+            name="uq_entity_device_external"
+        ),
+    )
+
+class EntityHasCapability(db.Model):
+    __tablename__ = "EntityHasCapability"
+    id = db.Column(db.Integer, primary_key=True)
+    entity_id = db.Column(db.Integer, db.ForeignKey("Entity.id", ondelete="CASCADE"), nullable=False)
+    capability = db.Column(db.String(50), nullable=False)
+
+    __table_args__ = (
+        db.UniqueConstraint(
+            "entity_id",
+            "capability",
+            name="uq_entity_capability"
+        ),
+    )
 
 class Location(db.Model):
     __tablename__ = "Location"
@@ -146,14 +219,15 @@ class RfDeviceHasRfCode(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     device_id = db.Column(db.Integer, nullable=False)
     name = db.Column(db.String(50), nullable=False)
-    rf_code = db.Column(db.Integer, nullable=False, unique=True)
+    rf_code = db.Column(db.Integer, nullable=False, index=True, unique=True)
+    protocol = db.Column(db.String(50), nullable=False, default="ev1527")
     type = db.Column(db.Integer, nullable=False)                                    #presence detected, opened, closed, low battery, remotecontrolBtn
 
 class RfDeviceIsTriggered(db.Model):
     __tablename__ = "RfDeviceIsTriggered"
     id = db.Column(db.Integer, primary_key=True)
     device_id = db.Column(db.Integer, nullable=False)
-    datetime = db.Column(db.DateTime(timezone=True), default=datetime.now(c.TIME_ZONE), nullable=False)
+    datetime = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(c.TIME_ZONE), nullable=False)
 
 class IpCamera(db.Model):
     __tablename__ = "IpCamera"
@@ -235,6 +309,16 @@ class Automation(db.Model):
     time_window_start_minutes = db.Column(db.Integer, nullable=False, default=0)
     time_window_end_minutes = db.Column(db.Integer, nullable=False, default=1439)
     delay_minutes = db.Column(db.Integer, nullable=False, default=0)                    #Delay when action takes place when closed, in minutes
+    concurrency_policy = db.Column(
+        db.String(20),
+        nullable=False,
+        default=c.AUTOMATION_CONCURRENCY_RESTART
+    )
+    error_policy = db.Column(
+        db.String(20),
+        nullable=False,
+        default=c.AUTOMATION_ERROR_STOP
+    )
 
 class AutomationHasParameter(db.Model):
     __tablename__ = "AutomationHasParameter"
@@ -262,6 +346,105 @@ class AutomationHasTriggerTime(db.Model):
     automation_id = db.Column(db.Integer, nullable=False)
     days = db.Column(db.String(7), nullable=False, default="0000000")
     time = db.Column(db.String(5), nullable=False, default="00:00")
+
+class AutomationTrigger(db.Model):
+    __tablename__ = "AutomationTrigger"
+    id = db.Column(db.Integer, primary_key=True)
+    automation_id = db.Column(
+        db.Integer,
+        db.ForeignKey("Automation.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True
+    )
+    type = db.Column(db.String(50), nullable=False, index=True)
+    source_type = db.Column(db.String(50))
+    source_id = db.Column(db.Integer, index=True)
+    configuration = db.Column(db.Text, nullable=False, default="{}")
+    ordering = db.Column(db.Integer, nullable=False, default=0)
+
+class AutomationCondition(db.Model):
+    __tablename__ = "AutomationCondition"
+    id = db.Column(db.Integer, primary_key=True)
+    automation_id = db.Column(
+        db.Integer,
+        db.ForeignKey("Automation.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True
+    )
+    type = db.Column(db.String(50), nullable=False)
+    configuration = db.Column(db.Text, nullable=False, default="{}")
+    ordering = db.Column(db.Integer, nullable=False, default=0)
+
+class AutomationAction(db.Model):
+    __tablename__ = "AutomationAction"
+    id = db.Column(db.Integer, primary_key=True)
+    automation_id = db.Column(
+        db.Integer,
+        db.ForeignKey("Automation.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True
+    )
+    type = db.Column(db.String(50), nullable=False)
+    configuration = db.Column(db.Text, nullable=False, default="{}")
+    ordering = db.Column(db.Integer, nullable=False, default=0)
+
+class DomainEvent(db.Model):
+    __tablename__ = "DomainEvent"
+    id = db.Column(db.String(36), primary_key=True)
+    type = db.Column(db.String(50), nullable=False, index=True)
+    source_type = db.Column(db.String(50), nullable=False)
+    source_id = db.Column(db.String(100), nullable=False, index=True)
+    payload = db.Column(db.Text, nullable=False, default="{}")
+    correlation_id = db.Column(db.String(36))
+    causation_id = db.Column(db.String(36))
+    occurred_at = db.Column(db.DateTime(timezone=True), nullable=False)
+
+class AutomationRun(db.Model):
+    __tablename__ = "AutomationRun"
+    id = db.Column(db.Integer, primary_key=True)
+    automation_id = db.Column(
+        db.Integer,
+        db.ForeignKey("Automation.id", ondelete="SET NULL"),
+        index=True
+    )
+    event_id = db.Column(db.String(36), db.ForeignKey("DomainEvent.id", ondelete="SET NULL"))
+    correlation_id = db.Column(db.String(36))
+    source = db.Column(db.String(50), nullable=False)
+    status = db.Column(db.String(20), nullable=False, index=True)
+    scheduled_for = db.Column(db.DateTime(timezone=True), nullable=False, index=True)
+    started_at = db.Column(db.DateTime(timezone=True))
+    finished_at = db.Column(db.DateTime(timezone=True))
+    error = db.Column(db.Text)
+    deduplication_key = db.Column(db.String(150), unique=True)
+    created_at = db.Column(
+        db.DateTime(timezone=True),
+        default=lambda: datetime.now(c.TIME_ZONE),
+        nullable=False
+    )
+
+class AutomationActionRun(db.Model):
+    __tablename__ = "AutomationActionRun"
+    id = db.Column(db.Integer, primary_key=True)
+    automation_run_id = db.Column(
+        db.Integer,
+        db.ForeignKey("AutomationRun.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True
+    )
+    command_id = db.Column(db.String(36), nullable=False, unique=True)
+    capability = db.Column(db.String(50), nullable=False)
+    target_type = db.Column(db.String(50), nullable=False)
+    target_id = db.Column(db.String(100), nullable=False)
+    parameters = db.Column(db.Text, nullable=False, default="{}")
+    status = db.Column(db.String(20), nullable=False)
+    started_at = db.Column(db.DateTime(timezone=True))
+    finished_at = db.Column(db.DateTime(timezone=True))
+    error = db.Column(db.Text)
+
+class AutomationSchedulerState(db.Model):
+    __tablename__ = "AutomationSchedulerState"
+    id = db.Column(db.Integer, primary_key=True)
+    last_checked_at = db.Column(db.DateTime(timezone=True))
 #endregion
 
 #region Modes
@@ -273,10 +456,11 @@ class Mode(db.Model):
 class ModeParameter(db.Model):
     __tablename__ = "ModeParameter"
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(50), nullable=False)
-    human_friendly_name = db.Column(db.String(50), nullable=False)
+    #name = db.Column(db.String(50), nullable=False)
+    #human_friendly_name = db.Column(db.String(50), nullable=False)
     type = db.Column(db.Integer, nullable=False)                                #range, select, color, checkbox, directionSwitch
-    default_value = db.Column(db.String(50), nullable=False, default="")
+    default_value1 = db.Column(db.String(50), nullable=False, default="")
+    default_value2 = db.Column(db.String(50), nullable=False, default="")
     minimum_value = db.Column(db.Integer)
     maximum_value = db.Column(db.Integer)
 
@@ -286,103 +470,30 @@ class ModeHasModeParameter(db.Model):
     device_id = db.Column(db.Integer, nullable=False)
     mode_id = db.Column(db.Integer, nullable=False)
     mode_parameter_id = db.Column(db.Integer, nullable=False)
-    value = db.Column(db.String(50), nullable=False, default="")
+    value1 = db.Column(db.String(50), nullable=False, default="")
+    value2 = db.Column(db.String(50))
 #endregion
 
 ################################################################################
 #
 #   @brief  Generates the ledstrip mode configuration parameters needed for the
-#   specific mode.
+#           specific mode.
 #
 ################################################################################
 def generate_ledstrip_mode_parameters():
-    db.session.add(ModeParameter(name=c.PARAMETER_NAME_MIN_COLOR_POS, human_friendly_name="Minimum color position",
-                                        type=c.MODE_PARAMETER_TYPE_COLOR_RANGE, default_value="0",
-                                        minimum_value=0, maximum_value=254))
-    
-    db.session.add(ModeParameter(name=c.PARAMETER_NAME_MAX_COLOR_POS, human_friendly_name="Maximum color position",
-                                        type=c.MODE_PARAMETER_TYPE_COLOR_RANGE, default_value="255",
-                                        minimum_value=1, maximum_value=255))
-    
-    db.session.add(ModeParameter(name=c.PARAMETER_NAME_COLOR1, human_friendly_name="Color 1",
-                                        type=c.MODE_PARAMETER_TYPE_COLOR, default_value="#ffffff"))
-    
-    db.session.add(ModeParameter(name=c.PARAMETER_NAME_COLOR2, human_friendly_name="Color 2",
-                                        type=c.MODE_PARAMETER_TYPE_COLOR, default_value="#000000"))
-    
-    db.session.add(ModeParameter(name=c.PARAMETER_NAME_USE_GRADIENT1, human_friendly_name="Use gradient 1",
-                                        type=c.MODE_PARAMETER_TYPE_CHECKBOX, default_value="False"))
-    
-    db.session.add(ModeParameter(name=c.PARAMETER_NAME_USE_GRADIENT2, human_friendly_name="Use gradient 2",
-                                        type=c.MODE_PARAMETER_TYPE_CHECKBOX, default_value="False"))
-    
-    db.session.add(ModeParameter(name=c.PARAMETER_NAME_SEGMENT_SIZE, human_friendly_name="Segment size of ? LEDs",
-                                        type=c.MODE_PARAMETER_TYPE_RANGE, default_value="1",
-                                        minimum_value=1, maximum_value=20))
-    
-    db.session.add(ModeParameter(name=c.PARAMETER_NAME_TAIL_LENGTH, human_friendly_name="Tail length of ? LEDs",
-                                        type=c.MODE_PARAMETER_TYPE_RANGE, default_value="0",
-                                        minimum_value=0, maximum_value=20))
-    
-    db.session.add(ModeParameter(name=c.PARAMETER_NAME_WAVE_LENGTH, human_friendly_name="Wave length of ? LEDs",
-                                        type=c.MODE_PARAMETER_TYPE_RANGE, default_value="10",
-                                        minimum_value=1, maximum_value=10))
-    
-    db.session.add(ModeParameter(name=c.PARAMETER_NAME_TIME_FADE, human_friendly_name="Time fade of ?ms per frame",
-                                        type=c.MODE_PARAMETER_TYPE_RANGE, default_value="0",
-                                        minimum_value=0, maximum_value=1000))
-    
-    db.session.add(ModeParameter(name=c.PARAMETER_NAME_DELAY, human_friendly_name="Fade delay of ?ms per frame",
-                                        type=c.MODE_PARAMETER_TYPE_RANGE, default_value="1",
-                                        minimum_value=0, maximum_value=1000))
-    
-    db.session.add(ModeParameter(name=c.PARAMETER_NAME_DELAY_BETWEEN, human_friendly_name="?ms between actions",
-                                        type=c.MODE_PARAMETER_TYPE_RANGE, default_value="200",
-                                        minimum_value=0, maximum_value=10000))
-    
-    db.session.add(ModeParameter(name=c.PARAMETER_NAME_RANDOMNESS_DELAY, human_friendly_name="?% randomness in the delay",
-                                        type=c.MODE_PARAMETER_TYPE_RANGE, default_value="0",
-                                        minimum_value=0, maximum_value=100))
-    
-    db.session.add(ModeParameter(name=c.PARAMETER_NAME_INTENSITY, human_friendly_name="Intensity of ?",
-                                        type=c.MODE_PARAMETER_TYPE_RANGE, default_value="1",
-                                        minimum_value=1, maximum_value=10))
-    
-    db.session.add(ModeParameter(name=c.PARAMETER_NAME_DIRECTION, human_friendly_name="? direction",
-                                        type=c.MODE_PARAMETER_TYPE_DIRECTION_CHECKBOX, default_value="False"))
-    
-    db.session.add(ModeParameter(name=c.PARAMETER_NAME_NUMBER_OF_ELEMENTS, human_friendly_name="? elements",
-                                        type=c.MODE_PARAMETER_TYPE_RANGE, default_value="5",
-                                        minimum_value=1, maximum_value=50))
-    
-    db.session.add(ModeParameter(name=c.PARAMETER_NAME_PALETTE, human_friendly_name="Palette",
-                                        type=c.MODE_PARAMETER_TYPE_SELECT, default_value="0"))
-    
-    db.session.add(ModeParameter(name=c.PARAMETER_NAME_FADE_LENGTH, human_friendly_name="Number of leds fading ?",
-                                        type=c.MODE_PARAMETER_TYPE_RANGE, default_value="0",
-                                        minimum_value=0, maximum_value=50))
-    
+    for parameter in c.LEDSTRIP_MODE_PARAMETERS:
+        db_parameter = ModeParameter(
+            id=parameter["id"],
+            type=parameter["type"],
+            default_value1=parameter["default1"],
+            default_value2=parameter.get("default2"),
+            minimum_value=parameter.get("min"),
+            maximum_value=parameter.get("max")
+        )
+
+        db.session.add(db_parameter)
+        
     db.session.commit()
-
-################################################################################
-#
-#   @brief  Generates a JSON string as HTTP response.
-#   @param  http_code           HTTP code to add
-#   @param  message             Message to add
-#   @return                     JSON string
-#
-################################################################################
-def generate_json_http_response(http_code, message=""):
-    #If is dictionary, convert to json string
-    if isinstance(message, dict):
-        message = json.dumps(message)
-    else:
-        message = "\"" + str(message) + "\""
-
-    json_string = "{\"status_code\":" + str(http_code) + ","
-    json_string += "\"message\":" + message + "}"
-
-    return json_string
 
 ################################################################################
 #
@@ -493,39 +604,6 @@ def check_files():
         file = open(c.LOGS_PATH, "w")
         file.close()
 
-    if not os.path.isfile(c.CONFIGURATION_FILE_PATH):
-        logw(c.TEXT_NO_CONFIGURATION_FILE_FOUND)
-        configuration = {
-            "WEATHER_SERVICE_ENABLED" : c.WEATHER_SERVICE_ENABLED,
-            "WEATHER_LOCATION" : c.WEATHER_LOCATION,
-            "TELEGRAM_SERVICE_ENABLED" : c.TELEGRAM_SERVICE_ENABLED,
-            "RPI_RF_ENABLED" : c.RPI_RF_ENABLED
-        }
-
-        with open(c.CONFIGURATION_FILE_PATH, "w") as file:
-            json.dump(configuration, file, indent=4)
-
-################################################################################
-#
-#   @brief  Checks the nessecary files and creates them when not found.
-#
-################################################################################
-def check_credentials():
-    key = keyring.get_password(c.APPLICATION_NAME, c.FLASK_ENCRYPTION_KEY_NAME)
-    if key is None:
-        logi("Created Flask encryption key")
-        keyring.set_password(c.APPLICATION_NAME, c.FLASK_ENCRYPTION_KEY_NAME, Fernet.generate_key().decode())
-
-    key = keyring.get_password(c.APPLICATION_NAME, c.DATABASE_ENCRYPTION_KEY_NAME)
-    if key is None:
-        logi("Created database encryption key")
-        keyring.set_password(c.APPLICATION_NAME, c.DATABASE_ENCRYPTION_KEY_NAME, Fernet.generate_key().decode())
-
-    key = keyring.get_password(c.APPLICATION_NAME, c.MICROSERVICE_KEY_NAME)
-    if key is None:
-        logi("Created microservice API key")
-        keyring.set_password(c.APPLICATION_NAME, c.MICROSERVICE_KEY_NAME, Fernet.generate_key().decode())
-
 ################################################################################
 #
 #   @brief  Checks the database file and creates it when not found.
@@ -537,7 +615,63 @@ def check_database():
     #Check database file
     if not os.path.isfile(c.DB_PATH):
         with app.app_context():
-            _create_database()
+            _create_database()    
+            
+    _check_database_state()
+
+################################################################################
+#
+#   @brief  Checks the database state. When no state is found, adds a new state
+#           row. Only one row is used in this table.
+#
+################################################################################
+def _check_database_state():
+    with app.app_context():
+        #Check if DatabaseInformation table exists (from application v1.2.6)
+        inspector = inspect(db.engine)
+
+        if not inspector.has_table(DatabaseInformation.__tablename__):
+            logw("Creating DatabaseInformation table", True)
+
+            DatabaseInformation.__table__.create(bind=db.engine)
+
+            state = DatabaseInformation(
+                                        id=1,
+                                        version=c.APPLICATION_VERSION_0_9_0,
+                                        original_version=c.APPLICATION_VERSION_0_9_0
+                                    )
+            db.session.add(state)
+            db.session.commit()
+        
+        state = DatabaseInformation.query.filter_by(id=1).first()
+
+        if state is None:
+            logw(c.TEXT_DATABASE_STATE_UNKNOWN, True)
+            state = DatabaseInformation(id=1)
+            db.session.add(state)
+            db.session.commit()
+            
+        if state.version == c.CURRENT_APPLICATION_VERSION:
+            return
+        
+        logw(c.VAR_TEXT_DATABASE_VERSION_DIFFERS.format(state.version, c.CURRENT_APPLICATION_VERSION), True)
+
+        # Add a migration function here after an update that needs a database
+        # update.
+        # v1.2.6 to v1.3.0
+        # TODO_IN_PRODUCTION
+        #if state.version == c.APPLICATION_VERSION_0_1_0:
+        #    _migrate_database_008_to_010()
+        #    return
+
+
+################################################################################
+#
+#   @brief  Migrates the v1.2.6 database to v1.3.0. EXAMPLE
+#
+################################################################################
+def _migrate_database_126_to_130():
+    return
 
 ################################################################################
 #
@@ -550,8 +684,17 @@ def initialize_flask_application():
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + os.path.join(c.DB_PATH)
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-    app.config["SECRET_KEY"] = c.FLASK_ENCRYPTION_KEY
-    app.config["FLASK_DEBUG"] = 1
+    app.config["SECRET_KEY"] = c.dynamic_config.flask_encryption_key
+    app.config["FLASK_DEBUG"] = not c.PRODUCTION_MODE
+    
+    # Persistent session cookies
+    #$app.config["SESSION_PERMANENT"] = True
+    app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=90)
+    app.config["SESSION_REFRESH_EACH_REQUEST"] = True
+
+    # Very important for iOS home-screen apps:
+    #$app.config["SESSION_COOKIE_SAMESITE"] = "None" or "Lax"
+    #app.config["SESSION_COOKIE_SECURE"] = True
 
     db.init_app(app)
 
@@ -564,12 +707,12 @@ def check_microservices():
     global telegram_service_state
     global weather_service_state
 
-    if not c.TELEGRAM_SERVICE_ENABLED:
+    if not c.dynamic_config.telegram_service_enabled:
         logw("Telegram service disabled")
     else:
         telegram_client = TelegramServiceClient(
             base_url=c.TELEGRAM_SERVICE_URL,
-            api_key=c.MICROSERVICE_KEY
+            api_key=c.dynamic_config.microservice_key
         )
 
         telegram_service_state = telegram_client.get_service_state()
@@ -577,12 +720,12 @@ def check_microservices():
         if telegram_service_state != SERVICE_STATE_RUNNING:
             logw("Telegram service unavailable")
 
-    if not c.WEATHER_SERVICE_ENABLED:
+    if not c.dynamic_config.weather_service_enabled:
         logw("Weather service disabled")
     else:
         weather_client = WeatherServiceClient(
             base_url=c.WEATHER_SERVICE_URL,
-            api_key=c.MICROSERVICE_KEY
+            api_key=c.dynamic_config.microservice_key
         )
 
         weather_service_state = weather_client.get_service_state()
@@ -599,7 +742,7 @@ def initialize_rf_receiver():
     global rf_device
     rf_device = None
 
-    if not c.RPI_RF_ENABLED:
+    if not c.dynamic_config.rpi_rf_enabled:
         logw("RF receiver disabled")
         return
 

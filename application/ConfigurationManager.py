@@ -16,9 +16,6 @@ import json                                                                     
 from cryptography.fernet import Fernet                                          #For generating configuration and database encryption keys
 import keyring
 
-
-from keyrings.cryptfile.cryptfile import CryptFileKeyring
-
 ENCRYPTED_KEYS = {
     "database_encryption_key",
     "flask_encryption_key",
@@ -67,14 +64,37 @@ class ConfigurationManager:
         self.application_name = application_name
         self.data = {}
 
+        self._configure_keyring()
+        self.load()
+
+    ################################################################################
+    #
+    #   @brief  Configures the encrypted file keyring for a headless service when
+    #           a keyring password is provided through the environment. Native
+    #           desktop keyrings remain unchanged when the variable is absent.
+    #
+    ################################################################################
+    def _configure_keyring(self):
         keyring_password = os.environ.get("KEYRING_CRYPTFILE_PASSWORD")
 
-        if keyring_password:
-            keyring_backend = CryptFileKeyring()
-            keyring_backend.keyring_key = keyring_password
-            keyring.set_keyring(keyring_backend)
+        if not keyring_password:
+            return
 
-        self.load()
+        try:
+            from keyrings.cryptfile.cryptfile import CryptFileKeyring
+        except ImportError as error:
+            raise RuntimeError(
+                "keyrings.cryptfile is required for headless keyring storage"
+            ) from error
+
+        keyring_backend = CryptFileKeyring()
+        keyring_path = os.environ.get("KEYRING_CRYPTFILE_PATH")
+
+        if keyring_path:
+            keyring_backend.file_path = keyring_path
+
+        keyring_backend.keyring_key = keyring_password
+        keyring.set_keyring(keyring_backend)
 
     ################################################################################
     #

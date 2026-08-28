@@ -1,6 +1,7 @@
 [Unit]
 Description=ZyraX Home weather service
-After=network.target
+After=network-online.target
+Wants=network-online.target
 StartLimitBurst=30
 StartLimitIntervalSec=60
 #StartLimitAction=reboot
@@ -8,12 +9,23 @@ StartLimitIntervalSec=60
 [Service]
 Type=simple
 WorkingDirectory=/etc/ZyraX_Home/application/services
-ExecStart=/etc/homesystem/webserver/start_telegram_service.sh
+ExecStart=/etc/ZyraX_Home/venv/bin/python3 -m uvicorn weather_service:app --host 127.0.0.1 --port 8001
 User=zyraxhome
 Restart=always
 RestartSec=1
 StandardOutput=journal
 StandardError=journal
+Environment="PATH=/etc/ZyraX_Home/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+EnvironmentFile=/etc/ZyraX_Home/keyring.env
+Environment="XDG_CONFIG_HOME=/var/lib/ZyraX_Home/data"
+Environment="XDG_CACHE_HOME=/var/lib/ZyraX_Home/data"
+Environment="XDG_DATA_HOME=/var/lib/ZyraX_Home/data"
+
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/lib/ZyraX_Home/data
 
 [Install]
 WantedBy=multi-user.target

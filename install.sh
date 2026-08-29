@@ -15,6 +15,25 @@ set -Eeuo pipefail
 
 APPLICATION_NAME="ZyraX_Home"
 SERVICE_USER="zyraxhome"
+INSTALL_MODE="update"
+
+case "${1:-}" in
+    "")
+        ;;
+    --fresh)
+        INSTALL_MODE="fresh"
+        ;;
+    --help|-h)
+        echo "Usage: sudo bash install.sh [--fresh]"
+        echo "  --fresh  Archive existing app data and install with new keys"
+        exit 0
+        ;;
+    *)
+        echo "Unknown option: $1" >&2
+        echo "Usage: sudo bash install.sh [--fresh]" >&2
+        exit 64
+        ;;
+esac
 
 SOURCE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 APPLICATION_SOURCE_PATH="$SOURCE_ROOT/application"
@@ -100,6 +119,24 @@ fi
 
 echo "Stopping ZyraX Home services"
 systemctl stop "${SERVICES[@]}" 2>/dev/null || true
+
+if [ "$INSTALL_MODE" = "fresh" ]; then
+    BACKUP_ROOT="/var/backups/$APPLICATION_NAME"
+    BACKUP_PATH="$BACKUP_ROOT/$(date +%Y%m%d-%H%M%S)"
+
+    if [ -d "$DATA_PATH" ] || [ -f "$KEYRING_ENV_FILE" ]; then
+        echo "Archiving existing application data to $BACKUP_PATH"
+        install -d -o root -g root -m 700 "$BACKUP_ROOT" "$BACKUP_PATH"
+
+        if [ -d "$DATA_PATH" ]; then
+            mv "$DATA_PATH" "$BACKUP_PATH/data"
+        fi
+
+        if [ -f "$KEYRING_ENV_FILE" ]; then
+            mv "$KEYRING_ENV_FILE" "$BACKUP_PATH/keyring.env"
+        fi
+    fi
+fi
 
 echo "Creating installation and runtime directories"
 install -d -m 755 "$SYSTEM_PATH" "$INSTALL_PATH"

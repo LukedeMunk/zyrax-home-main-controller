@@ -235,10 +235,10 @@ async function submitTelegramModuleConfiguration() {
 */
 /******************************************************************************/
 async function submitRpiRfModuleEnabled() {
-    rpiRfReceiverEnabled = rpiRfModuleEnabledCbElem.checked;
+    const requestedRpiRfEnabled = rpiRfModuleEnabledCbElem.checked;
 
     let data = {
-        rpi_rf_receiver_enabled: +rpiRfReceiverEnabled
+        rpi_rf_receiver_enabled: +requestedRpiRfEnabled
     }
 
     const result = await httpPostRequestJsonReturn("/update_rpi_rf_module", data);
@@ -247,11 +247,11 @@ async function submitRpiRfModuleEnabled() {
         errorMessageModuleConfigurationFieldElem.style.display = "inline-block";
         errorMessageModuleConfigurationFieldElem.textContent = result.message;
         
-        rpiRfReceiverEnabled = false;
-        rpiRfModuleEnabledCbElem.checked = rpiRfReceiverEnabled;
+        rpiRfModuleEnabledCbElem.checked = rpiRfEnabled;
         return;
     }
-    
+
+    rpiRfEnabled = requestedRpiRfEnabled;
     banners.show(TEXT_SUCCESS, TEXT_CHANGES_SAVED_SUCCESSFULLY, MESSAGE_TYPE_SUCCESS);
 }
 //#endregion

@@ -34,6 +34,7 @@ const logTableElem = document.getElementById("logTable");
 const deviceModalElem = document.getElementById("deviceModal");
 
 /* Other */
+const errorMessageModuleConfigurationFieldElem = document.getElementById("errorMessageModuleConfigurationField");//
 const searchingDevicesContainerElem = document.getElementById("searchingDevicesContainer");
 const automaticDevicePairContainerElem = document.getElementById("automaticDevicePairContainer");
 const manualDevicePairContainerElem = document.getElementById("manualDevicePairContainer");
@@ -171,7 +172,7 @@ $(document).ready(function() {
         telegramBotTokenTxtElem.disabled = false;
         telegramBotTokenTxtElem.classList.remove("disabled");
     }
-    rpiRfModuleEnabledCbElem.checked = rpiRfReceiverEnabled;
+    rpiRfModuleEnabledCbElem.checked = rpiRfEnabled;
 
     generateDeviceDetailTiles();
     generateLogTable();

@@ -110,6 +110,7 @@ def initial_setup():
                             RF_TRANSMITTER_PRESENT=c.RF_TRANSMITTER_PRESENT,
                             alarm_activated=db_util.get_alarm()["activated"],
                             user_profiles=[],
+                            rpi_rf_receiver_enabled=c.dynamic_config.rpi_rf_enabled,
                             SUPPORTED_UI_LANGUAGES=c.SUPPORTED_UI_LANGUAGES)
 
 ################################################################################
@@ -294,5 +295,6 @@ def control_led_groups_page():
                             devices=dm.get_devices_dict(type=c.DEVICE_TYPE_LEDSTRIP),
                             group=group,
                             palettes=c.PALETTES,
+                            LEDSTRIP_MODES=c.LEDSTRIP_MODES,
                             group_selected=True)
 #endregion

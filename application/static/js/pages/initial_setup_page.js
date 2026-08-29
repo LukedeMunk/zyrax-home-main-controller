@@ -112,6 +112,7 @@ let languageIndex = 0;                                                          
 //#endregion
 
 let selectedProfilePictureFile = null;
+rpiRfModuleEnabledCbElem.checked = rpiRfEnabled;
 
 /* Account flow */
 if (accountEmailTxtElem != null) {

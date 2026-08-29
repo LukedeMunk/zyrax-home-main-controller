@@ -1062,9 +1062,9 @@ function updateDeviceTileStates(tile, showErrorMessages=false) {
         const icon = {};
 
         if (device.power) {
-            icon.icon = device.icon + " fa-xl";
+            icon.icon = device.icon;// + " fa-xl";
         } else {
-            icon.icon = device.icon_low_state + " fa-xl";
+            icon.icon = device.icon_low_state;// + " fa-xl";
         }
 
         tileObject.setIcon(icon);
@@ -1079,9 +1079,9 @@ function updateDeviceTileStates(tile, showErrorMessages=false) {
         }
         
         if (device.state) {
-            icon.icon = device.icon + " fa-xl";
+            icon.icon = device.icon;// + " fa-xl";
         } else {
-            icon.icon = device.icon_low_state + " fa-xl";
+            icon.icon = device.icon_low_state;// + " fa-xl";
         }
 
         tileObject.setIcon(icon);
@@ -1102,7 +1102,7 @@ function updateDeviceTileStates(tile, showErrorMessages=false) {
         const icon = {};
         
         if (device.state) {
-            icon.icon = device.icon + " fa-xl";
+            icon.icon = device.icon;// + " fa-xl";
         } else {
             icon.icon = "fa-duotone fa-solid fa-circle-exclamation fa-xl";
         }
@@ -1155,7 +1155,7 @@ function updateGroupTileStates(tile) {
     }
 
     if (document.getElementById("deviceGroupIcon" + group.id) != undefined) {
-        document.getElementById("deviceGroupIcon" + group.id).className = group.icon + " fa-xl";
+        document.getElementById("deviceGroupIcon" + group.id).className = group.icon;// + " fa-xl";
     }
 }
 

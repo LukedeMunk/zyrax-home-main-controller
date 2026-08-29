@@ -20,7 +20,7 @@
     let weatherApiKey = "{{ weather_api_key }}";
     let telegramServiceEnabled = "{{ telegram_service_enabled }}" == "True";
     let telegramBotToken = "{{ telegram_bot_token }}";
-    let rpiRfReceiverEnabled = "{{ rpi_rf_receiver_enabled }}" == "True";
+    let rpiRfEnabled = "{{ rpi_rf_receiver_enabled }}" == "True";
 
     /* List of update files */
     let otaVersionsReady = JSON.parse('{{ ota_files | tojson | safe }}');
@@ -125,8 +125,8 @@
 <div class="container-form">
     <div class="base-container">
         <p id="errorMessageModuleConfigurationField" class="message error" style="margin-top: 0px;"></p>
-            <fieldset style="margin-top: 0px;">
-                <legend id="modulesTitle">Modules</legend>
+        <fieldset style="margin-top: 0px;">
+            <legend id="modulesTitle">Modules</legend>
 
             <div class="flex-wrap" style="margin: 10px 20px;">
                 <fieldset style="margin-top: 0px; width: 30%; flex: auto; min-width: 250px; max-width: 500px;">

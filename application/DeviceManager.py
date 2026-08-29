@@ -1168,6 +1168,12 @@ class DeviceManager:
         self.devices = db_util.get_devices()                                        #Get data from database
         self.ledstrips = []                                                         #Reset list
         self.cameras = []                                                           #Reset list
+
+        # The temporary receiver connected directly to the Raspberry Pi is
+        # configured independently from an RF/IR bridge. Recalculate both
+        # capability flags on every reload so removing a bridge cannot leave
+        # stale True values behind.
+        rf_bridge_present = False
         
         #Create a list of sensor objects
         for device in self.devices:
@@ -1176,8 +1182,12 @@ class DeviceManager:
             if device["type"] == c.DEVICE_TYPE_IP_CAMERA:
                 self.cameras.append(IpCamera(device))
             if device["type"] == c.DEVICE_TYPE_RF_BRIDGE:
-                c.RF_RECEIVER_PRESENT = True
-                c.RF_TRANSMITTER_PRESENT = True
+                rf_bridge_present = True
+
+        c.RF_RECEIVER_PRESENT = (
+            bool(c.dynamic_config.rpi_rf_enabled) or rf_bridge_present
+        )
+        c.RF_TRANSMITTER_PRESENT = rf_bridge_present
 
         if hasattr(self, "rf_input_adapter"):
             self.rf_input_adapter.refresh()

@@ -184,9 +184,9 @@ function loadStates() {
 
         icon = document.createElement("i");
         if (device.state) {
-            icon.className = device.icon + " fa-xl";
+            icon.className = device.icon;// + " fa-xl";
         } else {
-            icon.className = device.icon_low_state + " fa-xl";
+            icon.className = device.icon_low_state;// + " fa-xl";
         }
 
         fieldset.append(legend);

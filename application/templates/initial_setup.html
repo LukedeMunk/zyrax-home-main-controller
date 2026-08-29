@@ -8,6 +8,7 @@
     const SUPPORTED_UI_LANGUAGES = JSON.parse('{{ SUPPORTED_UI_LANGUAGES | tojson | safe }}');
     let loginAccount = [];
     let selectedProfile = {};
+    let rpiRfEnabled = "{{ rpi_rf_receiver_enabled }}" == "True";
 </script>
 
 <script src="../static/js/pages/initial_setup_page.js" defer></script>

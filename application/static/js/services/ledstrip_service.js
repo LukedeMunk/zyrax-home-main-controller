@@ -53,7 +53,6 @@ function loadLedstripModal(id=undefined, modelId=undefined, hostname=undefined) 
             ledstrip.model_id,
             ledstrip.icon + " fa-xl",
             ledstrip.icon_low_state + " fa-xl",
-            ledstrip.type,
             ledstrip.has_sensor,
             ledstrip.sensor_inverted,
             ledstrip.sensor_model

@@ -47,7 +47,7 @@ required_files=(
     "$MAIN_SERVICE_FILE"
     "$REQUIREMENTS_FILE"
     "$APPLICATION_SOURCE_PATH/ConfigurationManager.py"
-    "$APPLICATION_SOURCE_PATH/populate_db.py"
+    #"$APPLICATION_SOURCE_PATH/populate_db.py"
     "$APPLICATION_SOURCE_PATH/database_utility/__init__.py"
     "$APPLICATION_SOURCE_PATH/services/zyrax_home_telegram.service"
     "$APPLICATION_SOURCE_PATH/services/zyrax_home_weather.service"

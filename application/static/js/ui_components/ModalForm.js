@@ -789,6 +789,7 @@ class ModalForm {
             }
 
             switch (field.type) {
+                case "range": fieldElem.value = 0; break;
                 case "checkbox": fieldElem.checked = false; break;
                 case "toggle": fieldElem.checked = false; break;
                 case "select": fieldElem.value = -1; break;
@@ -1385,6 +1386,12 @@ class ModalForm {
             fieldTitleElem.style.textAlign = "center";
             fieldTitleElem.style.width = "unset";
             fieldTitleElem.style.margin = "0px";
+        }
+
+        if (block.type == "range") {
+            fieldTitleElem.style.top = "0px";
+            fieldTitleElem.style.margin = "auto";
+            fieldTitleElem.style.marginTop = "20px";
         }
 
         let fieldElem;

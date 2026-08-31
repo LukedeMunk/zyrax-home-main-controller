@@ -68,7 +68,7 @@ function loadAutomationModal(event, id=undefined) {
             automation.days,
             automation.trigger_device_ids,
             automation.trigger_state,
-            automation.delay_minutes,
+            Math.max(automation.delay_minutes, automation.inverted_delay_minutes),
             automation.target_device_ids,
             automation.action,
             automation.parameters[getIndexFromId(automation.parameters, "power", "name")]?.value,
@@ -96,11 +96,13 @@ function loadAutomationModal(event, id=undefined) {
     if (automation.trigger == AUTOMATION_TRIGGER_DOOR_SENSOR || automation.trigger == AUTOMATION_TRIGGER_MOTION_SENSOR) {
         automationModalObject.setValue("automationTriggerDevicesTileSelect", automation.trigger_device_ids);
         automationModalObject.setSelectOptions("automationTriggerStateSelect", getTriggerSensorStateOptions(automation.trigger_device_ids[0]));
+        automationModalObject.setValue("automationTriggerStateSelect", automation.trigger_state);
     }
 
     automationModalObject.setBlockVisibility("automationActionSelectContainer", true);
     const targetDevice = devices[getIndexFromId(devices, automation.target_device_ids[0])];
     automationModalObject.setSelectOptions("automationActionSelect", getAutomationActionSelectOptions(targetDevice.type));
+    automationModalObject.setValue("automationActionSelect", automation.action);
     loadActionParameters();
     loadInvertedAutomationCopyFields();
 }

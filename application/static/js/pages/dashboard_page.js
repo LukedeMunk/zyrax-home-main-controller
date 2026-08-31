@@ -1073,10 +1073,12 @@ function updateDeviceTileStates(tile, showErrorMessages=false) {
     
     if (device.type == DEVICE_TYPE_RF_DEVICE) {
         if (!RF_RECEIVER_PRESENT) {
-            icon = {icon: "fa-duotone fa-solid fa-circle-exclamation", title: TEXT_NO_RF_RECEIVER_PRESENT};
+            const icon = {icon: "fa-duotone fa-solid fa-circle-exclamation", title: TEXT_NO_RF_RECEIVER_PRESENT};
             tileObject.setIcon(icon);
             return;
         }
+        
+        const icon = {};
         
         if (device.state) {
             icon.icon = device.icon;// + " fa-xl";

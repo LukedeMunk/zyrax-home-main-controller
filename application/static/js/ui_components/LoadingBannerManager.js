@@ -36,8 +36,8 @@ class LoadingBannerManager {
         this.overlay = configuration.overlayObject ?? null;
         this.banners = configuration.banners ?? null;
 
-        this._stacks = new Map();                                               //Key = targetElement, Value = stack element
-        this._bannerStates = new Map();                                         //Key = banner element, Value = polling and overlay state
+        this._stacks = new Map();                                                   //Key = targetElement, Value = stack element
+        this._bannerStates = new Map();                                             //Key = banner element, Value = polling and overlay state
     }
 
     /******************************************************************************/
@@ -85,7 +85,6 @@ class LoadingBannerManager {
 
         this._bannerStates.set(bannerElem, state);
         bannerStackElem.appendChild(bannerElem);
-        this.#setLegacyElementReferences(bannerElem);
 
         if (showOverlay && this.overlay) {
             this.overlay.show(targetElement, false);
@@ -394,25 +393,7 @@ class LoadingBannerManager {
 
         if (typeof loadingBannerElem !== "undefined" && loadingBannerElem === bannerElem) {
             const nextBannerElem = Array.from(this._bannerStates.keys()).at(-1) ?? null;
-            this.#setLegacyElementReferences(nextBannerElem);
         }
-    }
-
-    /******************************************************************************/
-    /*!
-        @brief  Updates deprecated global DOM references used by legacy pages.
-        @param  bannerElem          Loading banner DOM element
-    */
-    /******************************************************************************/
-    #setLegacyElementReferences(bannerElem) {
-        if (typeof loadingBannerElem === "undefined") {
-            return;
-        }
-
-        loadingBannerElem = bannerElem;
-        loadingBannerMessageFieldElem = bannerElem?.querySelector(".loading-banner-message") ?? null;
-        loadingBannerProgressElem = bannerElem?.querySelector(".loading-banner-progress") ?? null;
-        loadingBannerProgressBarElem = bannerElem?.querySelector(".loading-banner-progress-bar") ?? null;
     }
 
     /******************************************************************************/
@@ -525,6 +506,7 @@ class LoadingBannerManager {
 /******************************************************************************/
 /* Backwards-compatible functions used by existing application code. */
 /******************************************************************************/
+/*
 function showLoadingBanner(message,
                            statusUrl=undefined,
                            statusVariable=undefined,
@@ -546,7 +528,6 @@ function showLoadingBanner(message,
     );
 }
 
-/*
 function closeLoadingBanner() {
     loadingBanners.closeAll();
 }

@@ -560,11 +560,7 @@ async function checkDeviceConnectionStatus(id) {
 /******************************************************************************/
 function startOta(version) {
     isFetchingSystemInformation = false;
-    
-    loadingBanners.show(TEXT_SYSTEM_UPDATING, undefined, undefined, undefined, undefined, undefined, true);
-    //showPageOverlay();
-
-    setTimeout(fetchOtaProgress, BACK_END_UPDATE_INTERVAL_1S);
+    loadingBanners.show(TEXT_SYSTEM_UPDATING, "/get_ledstrip_ota_progress", "progress", 100, TEXT_SUCCESS, TEXT_UPDATE_SUCCESSFULL, true, true);
 }
 
 /******************************************************************************/
@@ -692,9 +688,8 @@ function uploadUpdateFile(url, file, retries=MAX_UPLOAD_RETRIES) {
             return;
         }
 
-        //loadingBanners.closeAll();
+        loadingBanners.close();
         banners.show(TEXT_SUCCESS, TEXT_UPLOAD_SUCCESSFULL, MESSAGE_TYPE_SUCCESS);
-       // showProgress(0, loadingBannerProgressBarElem);
     };
 
     let formData = new FormData();
@@ -705,44 +700,6 @@ function uploadUpdateFile(url, file, retries=MAX_UPLOAD_RETRIES) {
 //#endregion
 
 //#region Interval update requests
-/******************************************************************************/
-/*!
-    @brief  Asynchronous function that fetches and displays the OTA progress.
-*/
-/******************************************************************************/
-async function fetchOtaProgress() {
-    let response;
-    try {
-        response = await fetch("get_ledstrip_ota_progress", {signal: AbortSignal.timeout(FETCH_TIMEOUT)});
-    } catch {
-        loadingBanners.show(TEXT_DISCONNECTED_CONNECTING);
-        setTimeout(waitUntilConnected, BACK_END_UPDATE_INTERVAL_1S, fetchOtaProgress);
-        return;
-    }
-
-    let data = await response.json();
-
-    if (data.progress == -1) {
-        //loadingBanners.closeAll();
-        //hideOverlay();
-        return;
-    }
-
-    //showProgress(data.progress, loadingBannerProgressBarElem);
-
-    /* If update is not finished */
-    if (data.progress < 100) {
-        setTimeout(fetchOtaProgress, BACK_END_UPDATE_INTERVAL_1S);
-        return;
-    }
-
-    /* When ready, do this */
-    //loadingBanners.closeAll();
-    //hideOverlay();
-    banners.show(TEXT_SUCCESS, TEXT_UPDATE_SUCCESSFULL, MESSAGE_TYPE_SUCCESS);
-    currentFirmwareVersionFieldElem.textContent = currentFirmwareVersion;
-}
-
 /******************************************************************************/
 /*!
     @brief  Asynchronous interval function for fetching connected (yet)

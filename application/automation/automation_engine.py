@@ -250,7 +250,9 @@ class AutomationEngine:
 
     ############################################################################
     #
-    #   @brief  XXX
+    #   @brief  Checks whether every state trigger is currently active.
+    #   @param  automation      Automation dictionary
+    #   @return                 Whether every state trigger is active
     #
     ############################################################################
     def _all_state_triggers_active(self, automation):
@@ -344,7 +346,11 @@ class AutomationEngine:
 
     ############################################################################
     #
-    #   @brief  XXX
+    #   @brief  Compares an actual value with an expected value.
+    #   @param  actual          Actual value
+    #   @param  expected        Expected value
+    #   @param  operator        Comparison operator
+    #   @return                 Whether the comparison matches
     #
     ############################################################################
     def _compare(self, actual, expected, operator):
@@ -437,7 +443,10 @@ class AutomationEngine:
 
     ############################################################################
     #
-    #   @brief  XXX
+    #   @brief  Creates a scheduler wait command.
+    #   @param  configuration   Wait action configuration
+    #   @param  context         Automation execution context
+    #   @return                 List containing the wait command
     #
     ############################################################################
     def _create_wait_commands(self, configuration, context):

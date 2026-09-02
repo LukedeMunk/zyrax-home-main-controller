@@ -47,7 +47,8 @@ const NOTICE_TYPE_WARNING = "warning";
 class AutomationDraftAdapter {
     /******************************************************************************/
     /*!
-        @brief  XXX
+        @brief  Creates a unique identifier for a draft rule.
+        @return                     Unique draft rule identifier
     */
     /******************************************************************************/
     static createId() {
@@ -56,7 +57,8 @@ class AutomationDraftAdapter {
     
     /******************************************************************************/
     /*!
-        @brief  XXX
+        @brief  Creates a trigger with default draft values.
+        @return                     Trigger draft
     */
     /******************************************************************************/
     static createTrigger() {
@@ -69,7 +71,8 @@ class AutomationDraftAdapter {
     
     /******************************************************************************/
     /*!
-        @brief  XXX
+        @brief  Creates a condition with default draft values.
+        @return                     Condition draft
     */
     /******************************************************************************/
     static createCondition() {
@@ -82,7 +85,8 @@ class AutomationDraftAdapter {
     
     /******************************************************************************/
     /*!
-        @brief  XXX
+        @brief  Creates an action with default draft values.
+        @return                     Action draft
     */
     /******************************************************************************/
     static createAction() {
@@ -94,7 +98,8 @@ class AutomationDraftAdapter {
     
     /******************************************************************************/
     /*!
-        @brief  XXX
+        @brief  Creates an empty automation draft.
+        @return                     Automation draft
     */
     /******************************************************************************/
     static createEmpty() {
@@ -107,7 +112,9 @@ class AutomationDraftAdapter {
     
     /******************************************************************************/
     /*!
-        @brief  XXX
+        @brief  Creates an editable draft from an automation.
+        @param  automation          Automation returned by the API
+        @return                     Editable automation draft
     */
     /******************************************************************************/
     static fromAutomation(automation) {
@@ -133,7 +140,9 @@ class AutomationDraftAdapter {
     
     /******************************************************************************/
     /*!
-        @brief  XXX
+        @brief  Creates a trigger draft from an API trigger.
+        @param  item                Normalized API trigger
+        @return                     Trigger draft
     */
     /******************************************************************************/
     static fromTrigger(item) {
@@ -167,7 +176,9 @@ class AutomationDraftAdapter {
     
     /******************************************************************************/
     /*!
-        @brief  XXX
+        @brief  Creates a condition draft from an API condition.
+        @param  item                Normalized API condition
+        @return                     Condition draft
     */
     /******************************************************************************/
     static fromCondition(item) {
@@ -192,7 +203,9 @@ class AutomationDraftAdapter {
     
     /******************************************************************************/
     /*!
-        @brief  XXX
+        @brief  Creates an action draft from an API action.
+        @param  item                Normalized API action
+        @return                     Action draft
     */
     /******************************************************************************/
     static fromAction(item) {
@@ -210,7 +223,9 @@ class AutomationDraftAdapter {
     
     /******************************************************************************/
     /*!
-        @brief  XXX
+        @brief  Creates an API payload from an automation draft.
+        @param  draft               Automation draft
+        @return                     Normalized automation payload
     */
     /******************************************************************************/
     static toApiPayload(draft) {
@@ -227,7 +242,9 @@ class AutomationDraftAdapter {
     
     /******************************************************************************/
     /*!
-        @brief  XXX
+        @brief  Normalizes a trigger draft for the API.
+        @param  item                Trigger draft
+        @return                     Normalized trigger
     */
     /******************************************************************************/
     static normalizeTrigger(item) {
@@ -266,7 +283,9 @@ class AutomationDraftAdapter {
     
     /******************************************************************************/
     /*!
-        @brief  XXX
+        @brief  Normalizes a condition draft for the API.
+        @param  item                Condition draft
+        @return                     Normalized condition
     */
     /******************************************************************************/
     static normalizeCondition(item) {
@@ -292,7 +311,9 @@ class AutomationDraftAdapter {
     
     /******************************************************************************/
     /*!
-        @brief  XXX
+        @brief  Normalizes an action draft for the API.
+        @param  item                Action draft
+        @return                     Normalized action
     */
     /******************************************************************************/
     static normalizeAction(item) {
@@ -315,7 +336,9 @@ class AutomationDraftAdapter {
     
     /******************************************************************************/
     /*!
-        @brief  XXX
+        @brief  Converts a time string to minutes after midnight.
+        @param  value               Time formatted as HH:MM
+        @return                     Minutes after midnight
     */
     /******************************************************************************/
     static timeToMinutes(value) {
@@ -325,7 +348,9 @@ class AutomationDraftAdapter {
     
     /******************************************************************************/
     /*!
-        @brief  XXX
+        @brief  Converts minutes after midnight to a time string.
+        @param  value               Minutes after midnight
+        @return                     Time formatted as HH:MM
     */
     /******************************************************************************/
     static minutesToTime(value=0) {
@@ -335,6 +360,13 @@ class AutomationDraftAdapter {
 }
 
 class AutomationModal {
+    /******************************************************************************/
+    /*!
+        @brief  Creates an automation wizard.
+        @param  configuration       Automation wizard configuration
+        @return                     Automation wizard
+    */
+    /******************************************************************************/
     constructor(configuration) {
         Object.assign(this, configuration);
         this.id = configuration.id ?? "automationModal";
@@ -344,6 +376,11 @@ class AutomationModal {
         this.highestStep = 0;
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Renders the automation wizard modal.
+    */
+    /******************************************************************************/
     render() {
         this.modal = new ModalForm({
             id: this.id, title: TEXT_ADD_AUTOMATION, isBigModal: true,
@@ -369,6 +406,12 @@ class AutomationModal {
         this.renderWizard();
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Opens the wizard for a new or existing automation.
+        @param  id                  Automation ID, if editing
+    */
+    /******************************************************************************/
     open(id=undefined) {
         const automation = this.getAutomations().find((item) => item.id == id);
 
@@ -388,21 +431,45 @@ class AutomationModal {
         this.focusFirstField();
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Closes the wizard when closing is allowed.
+        @param  force               Whether to skip unsaved-change protection
+    */
+    /******************************************************************************/
     close(force=false) {
         if (!force && this.hasChanges()) return this.requestClose();
         this.modal.close();
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Finishes the UI flow after a successful save.
+        @param  id                  Saved automation ID
+    */
+    /******************************************************************************/
     finishSave(id) {
         this.draft.id = id;
         this.initialDraft = JSON.stringify(this.draft);
         this.close(true);
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Displays an error message in the modal.
+        @param  message             Error message
+    */
+    /******************************************************************************/
     setErrorMessage(message) {
         this.modal.setErrorMessage(message);
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Handles wizard click actions.
+        @param  event               Click event
+    */
+    /******************************************************************************/
     onClick(event) {
         const button = event.target.closest("[data-automation-action]");
         if (!button) return;
@@ -440,6 +507,13 @@ class AutomationModal {
         this.renderWizard();
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Updates draft data after a field changes.
+        @param  event               Input or change event
+        @param  rerender            Whether to rerender the wizard
+    */
+    /******************************************************************************/
     onInput(event, rerender) {
         const field = event.target.dataset.field;
 
@@ -462,6 +536,15 @@ class AutomationModal {
         if (rerender) this.renderWizard();
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Updates a draft rule field.
+        @param  item                Draft rule
+        @param  field               Field name
+        @param  value               New field value
+        @param  input               Changed input element
+    */
+    /******************************************************************************/
     updateItem(item, field, value, input) {
         if (["days", "target_ids"].includes(field)) {
             const option = Number(input.dataset.value);
@@ -495,6 +578,13 @@ class AutomationModal {
         }
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Moves an action within the ordered action list.
+        @param  id                  Action identifier
+        @param  direction           Movement offset
+    */
+    /******************************************************************************/
     moveAction(id, direction) {
         const index = this.draft.actions.findIndex((item) => item.id == id);
         const destination = index + direction;
@@ -504,6 +594,11 @@ class AutomationModal {
         this.draft.actions.splice(destination, 0, this.draft.actions.splice(index, 1)[0]);
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Moves to the next wizard step.
+    */
+    /******************************************************************************/
     next() {
         if (!this.validateStep(this.currentStep)) return this.showValidation();
 
@@ -513,12 +608,23 @@ class AutomationModal {
         this.focusFirstField();
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Moves to the previous wizard step.
+    */
+    /******************************************************************************/
     previous() {
         if (this.currentStep > 0) this.currentStep--;
 
         this.renderWizard();
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Navigates to a wizard step.
+        @param  step                Target step index
+    */
+    /******************************************************************************/
     goToStep(step) {
         if (step > this.highestStep + 1) return;
         if (step > this.currentStep && !this.validateStep(this.currentStep)) {
@@ -530,6 +636,11 @@ class AutomationModal {
         this.renderWizard();
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Validates and saves the automation draft.
+    */
+    /******************************************************************************/
     async save() {
         this.errors = {};
 
@@ -543,6 +654,11 @@ class AutomationModal {
         await this.submitFunction(this.draft.id, AutomationDraftAdapter.toApiPayload(this.draft));
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Shows validation feedback for the current step.
+    */
+    /******************************************************************************/
     showValidation() {
         this.renderWizard();
         requestAnimationFrame(() => {
@@ -550,6 +666,14 @@ class AutomationModal {
         });
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Validates a wizard step.
+        @param  step                Step index
+        @param  reset               Whether to clear previous validation errors
+        @return                     Whether the step is valid
+    */
+    /******************************************************************************/
     validateStep(step, reset=true) {
         if (reset) this.errors = {};
         if (step == 0) this.validateGeneral();
@@ -559,6 +683,12 @@ class AutomationModal {
         return Object.keys(this.errors).length == 0;
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Validates the general automation settings.
+        @return                     Whether the settings are valid
+    */
+    /******************************************************************************/
     validateGeneral() {
         const name = this.draft.name.trim();
         if (!name) this.errors.name = TEXT_FIELD_REQUIRED;
@@ -572,6 +702,12 @@ class AutomationModal {
         })) this.errors.name = TEXT_FIELD_UNIQUE;
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Validates all configured triggers.
+        @return                     Whether all triggers are valid
+    */
+    /******************************************************************************/
     validateTriggers() {
         if (!this.draft.triggers.length) this.errors.triggers = TEXT_AUTOMATION_TRIGGER_REQUIRED;
 
@@ -587,6 +723,12 @@ class AutomationModal {
         }
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Validates all configured conditions.
+        @return                     Whether all conditions are valid
+    */
+    /******************************************************************************/
     validateConditions() {
         for (const item of this.draft.conditions) {
             const invalidTime = item.type == "time_window" && (!item.start_time || !item.end_time);
@@ -610,6 +752,12 @@ class AutomationModal {
         }
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Validates all configured actions.
+        @return                     Whether all actions are valid
+    */
+    /******************************************************************************/
     validateActions() {
         if (!this.draft.actions.length) this.errors.actions = TEXT_AUTOMATION_ACTION_REQUIRED;
 
@@ -638,10 +786,21 @@ class AutomationModal {
         }
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Checks whether the draft contains unsaved changes.
+        @return                     Whether the draft has changed
+    */
+    /******************************************************************************/
     hasChanges() {
         return JSON.stringify(this.draft) != this.initialDraft;
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Requests closing and protects unsaved changes.
+    */
+    /******************************************************************************/
     requestClose() {
         if (!this.hasChanges()) return this.close(true);
 
@@ -657,6 +816,11 @@ class AutomationModal {
         ], MESSAGE_TYPE_WARNING);
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Renders all visible wizard content.
+    */
+    /******************************************************************************/
     renderWizard() {
         if (!this.wizardElement) return;
 
@@ -667,6 +831,12 @@ class AutomationModal {
         this.wizardElement.replaceChildren(this.renderProgress(), body, this.renderFooter());
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Renders the wizard progress navigation.
+        @return                     Progress navigation element
+    */
+    /******************************************************************************/
     renderProgress() {
         const labels = [
             TEXT_AUTOMATION_GENERAL, TEXT_AUTOMATION_WHEN,
@@ -693,6 +863,12 @@ class AutomationModal {
         return navigation;
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Renders the active wizard step.
+        @return                     Active step element
+    */
+    /******************************************************************************/
     renderStep() {
         if (this.currentStep == 0) return this.renderGeneral();
         if (this.currentStep == 1) return this.renderTriggers();
@@ -702,6 +878,12 @@ class AutomationModal {
         return this.renderReview();
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Renders the general settings step.
+        @return                     General settings element
+    */
+    /******************************************************************************/
     renderGeneral() {
         const section = this.section(TEXT_AUTOMATION_GENERAL_TITLE, TEXT_AUTOMATION_GENERAL_DESCRIPTION);
 
@@ -714,6 +896,12 @@ class AutomationModal {
         return section;
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Renders the trigger configuration step.
+        @return                     Trigger step element
+    */
+    /******************************************************************************/
     renderTriggers() {
         const section = this.section(TEXT_AUTOMATION_WHEN_TITLE, TEXT_AUTOMATION_WHEN_DESCRIPTION);
         section.appendChild(this.error("triggers"));
@@ -742,6 +930,13 @@ class AutomationModal {
         return section;
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Renders fields for a trigger.
+        @param  item                Trigger draft
+        @return                     Trigger fields fragment
+    */
+    /******************************************************************************/
     triggerFields(item) {
         const fragment = document.createDocumentFragment();
 
@@ -823,6 +1018,12 @@ class AutomationModal {
         return fragment;
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Renders the condition configuration step.
+        @return                     Condition step element
+    */
+    /******************************************************************************/
     renderConditions() {
         const section = this.section(
             TEXT_AUTOMATION_CONDITIONS_TITLE,
@@ -855,6 +1056,13 @@ class AutomationModal {
         return section;
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Renders fields for a condition.
+        @param  condition           Condition draft
+        @return                     Condition fields fragment
+    */
+    /******************************************************************************/
     conditionFields(condition) {
         const fragment = document.createDocumentFragment();
         const conditionTypeOptions = [
@@ -895,6 +1103,13 @@ class AutomationModal {
         return fragment;
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Renders fields for a time-window condition.
+        @param  condition           Time-window condition draft
+        @return                     Condition fields fragment
+    */
+    /******************************************************************************/
     timeWindowConditionFields(condition) {
         const fieldGrid = this.element("div", "automation-field-grid");
 
@@ -947,6 +1162,13 @@ class AutomationModal {
         return fieldGrid;
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Renders fields for a source condition.
+        @param  condition           Source condition draft
+        @return                     Condition fields fragment
+    */
+    /******************************************************************************/
     sourceConditionFields(condition) {
         const fieldGrid = this.element("div", "automation-field-grid");
 
@@ -1006,6 +1228,12 @@ class AutomationModal {
         return fieldGrid;
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Renders the ordered action configuration step.
+        @return                     Action step element
+    */
+    /******************************************************************************/
     renderActions() {
         const section = this.section(TEXT_AUTOMATION_ACTIONS_TITLE, TEXT_AUTOMATION_ACTIONS_DESCRIPTION);
 
@@ -1041,6 +1269,13 @@ class AutomationModal {
         return section;
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Renders fields for an action.
+        @param  action              Action draft
+        @return                     Action fields fragment
+    */
+    /******************************************************************************/
     renderActionFields(action) {
         const fragment = document.createDocumentFragment();
 
@@ -1096,6 +1331,13 @@ class AutomationModal {
         return fragment;
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Renders the duration field for a wait action.
+        @param  action              Wait action draft
+        @return                     Wait duration field
+    */
+    /******************************************************************************/
     renderWaitActionField(action) {
         return this.input(
             TEXT_AUTOMATION_DURATION_MINUTES,
@@ -1109,6 +1351,13 @@ class AutomationModal {
         );
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Checks whether an action type is unavailable.
+        @param  actionType          Action type
+        @return                     Whether the action is unavailable
+    */
+    /******************************************************************************/
     isUnavailableAction(actionType) {
         const unavailableActionTypes = [
             AUTOMATION_ACTION_SEND_IR,
@@ -1119,6 +1368,13 @@ class AutomationModal {
         return unavailableActionTypes.includes(actionType);
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Renders the capability parameter for an action.
+        @param  action              Action draft
+        @return                     Parameter field or null
+    */
+    /******************************************************************************/
     renderActionParameterField(action) {
         if (action.type == AUTOMATION_ACTION_SET_DEVICE_POWER) {
             return this.renderPowerActionField(action);
@@ -1135,6 +1391,13 @@ class AutomationModal {
         return null;
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Renders the power parameter for an action.
+        @param  action              Power action draft
+        @return                     Power parameter field
+    */
+    /******************************************************************************/
     renderPowerActionField(action) {
         const powerOptions = [
             [1, TEXT_ON],
@@ -1151,6 +1414,13 @@ class AutomationModal {
         );
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Renders the color parameter for an action.
+        @param  action              Color action draft
+        @return                     Color parameter field
+    */
+    /******************************************************************************/
     renderColorActionField(action) {
         let color = action.parameters.color;
 
@@ -1169,6 +1439,13 @@ class AutomationModal {
         );
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Renders the mode parameter for an action.
+        @param  action              Mode action draft
+        @return                     Mode parameter field
+    */
+    /******************************************************************************/
     renderModeActionField(action) {
         const modeOptions = [];
 
@@ -1190,6 +1467,12 @@ class AutomationModal {
         );
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Renders the review step.
+        @return                     Review step element
+    */
+    /******************************************************************************/
     renderReview() {
         const section = this.section(
             TEXT_AUTOMATION_REVIEW_TITLE,
@@ -1235,6 +1518,12 @@ class AutomationModal {
         return section;
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Renders the wizard footer controls.
+        @return                     Footer element
+    */
+    /******************************************************************************/
     renderFooter() {
         const footer = this.element("footer", "automation-wizard-footer");
         const spacer = this.element("div");
@@ -1270,6 +1559,17 @@ class AutomationModal {
         return footer;
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Renders a rule card.
+        @param  type                Rule type
+        @param  item                Rule draft
+        @param  index               Rule index
+        @param  fields              Rule field elements
+        @param  movable             Whether the rule can be reordered
+        @return                     Rule card element
+    */
+    /******************************************************************************/
     ruleCard(type, item, index, fields, movable=false) {
         const errorKey = type + "-" + item.id;
 
@@ -1296,6 +1596,16 @@ class AutomationModal {
         return card;
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Renders controls for a rule card.
+        @param  type                Rule type
+        @param  item                Rule draft
+        @param  index               Rule index
+        @param  movable             Whether the rule can be reordered
+        @return                     Rule toolbar element
+    */
+    /******************************************************************************/
     ruleTools(type, item, index, movable) {
         const tools = this.element(
             "div",
@@ -1341,6 +1651,13 @@ class AutomationModal {
         return tools;
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Returns the visible title for a rule type.
+        @param  type                Rule type
+        @return                     Localized rule title
+    */
+    /******************************************************************************/
     ruleTitle(type) {
         if (type == AUTOMATION_RULE_ACTION) {
             return TEXT_AUTOMATION_ACTION;
@@ -1353,6 +1670,14 @@ class AutomationModal {
         return TEXT_AUTOMATION_CONDITION;
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Creates a wizard section.
+        @param  title               Section title
+        @param  description         Section description
+        @return                     Section element
+    */
+    /******************************************************************************/
     section(title, description) {
         const section = this.element("section");
         const header = this.element("header", "automation-step-heading");
@@ -1363,6 +1688,20 @@ class AutomationModal {
         return section;
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Creates a labeled input field.
+        @param  labelText           Visible field label
+        @param  field               Draft field name
+        @param  value               Current value
+        @param  type                Input type
+        @param  collection          Draft collection name
+        @param  errorKey            Validation error key
+        @param  itemId              Draft item identifier
+        @param  min                 Minimum numeric value
+        @return                     Field element
+    */
+    /******************************************************************************/
     input(labelText, field, value, type, collection=null, errorKey=null, itemId=null, min=null) {
         const container = this.element("div", "automation-field");
         const input = this.element("input", "input-field");
@@ -1382,6 +1721,19 @@ class AutomationModal {
         return container;
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Creates a labeled select field.
+        @param  labelText           Visible field label
+        @param  field               Draft field name
+        @param  value               Selected value
+        @param  options             Available options
+        @param  collection          Draft collection name
+        @param  itemId              Draft item identifier
+        @param  placeholder         Optional placeholder
+        @return                     Field element
+    */
+    /******************************************************************************/
     select(labelText, field, value, options, collection=null, itemId=null, placeholder=null) {
         const container = this.element("div", "automation-field");
         const select = this.element("select", "input-field");
@@ -1402,10 +1754,28 @@ class AutomationModal {
         return container;
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Creates a unique identifier for a draft field.
+        @param  collection          Draft collection name
+        @param  field               Field name
+        @param  itemId              Draft item identifier
+        @return                     Field identifier
+    */
+    /******************************************************************************/
     fieldId(collection, field, itemId) {
         return this.id + "-" + (collection ?? "general") + "-" + field + (itemId == null ? "" : "-" + itemId);
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Creates a labeled checkbox.
+        @param  text                Visible checkbox text
+        @param  field               Draft field name
+        @param  checked             Whether the checkbox is selected
+        @return                     Checkbox label element
+    */
+    /******************************************************************************/
     checkbox(text, field, checked) {
         const label = this.element("label", "automation-checkbox-row");
         const input = this.element("input");
@@ -1416,6 +1786,13 @@ class AutomationModal {
         return label;
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Creates the weekday selector for a trigger.
+        @param  item                Trigger draft
+        @return                     Weekday field element
+    */
+    /******************************************************************************/
     dayField(item) {
         const fieldset = this.element("fieldset", "automation-day-field");
         fieldset.appendChild(this.element("legend", "", TEXT_DAYS));
@@ -1436,6 +1813,13 @@ class AutomationModal {
         return fieldset;
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Creates the target selector for an action.
+        @param  item                Action draft
+        @return                     Target field element
+    */
+    /******************************************************************************/
     targetField(item) {
         const fieldset = this.element("fieldset", "automation-target-field");
         fieldset.appendChild(this.element("legend", "", TEXT_AUTOMATION_TARGETS));
@@ -1456,6 +1840,12 @@ class AutomationModal {
         return fieldset;
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Creates advanced execution settings.
+        @return                     Execution settings element
+    */
+    /******************************************************************************/
     executionFields() {
         const details = this.element("details", "automation-advanced");
         details.appendChild(this.element("summary", "", TEXT_AUTOMATION_ADVANCED_EXECUTION));
@@ -1511,6 +1901,14 @@ class AutomationModal {
         return details;
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Creates a section for review summary lines.
+        @param  title               Section title
+        @param  lines               Summary lines
+        @return                     Review section element
+    */
+    /******************************************************************************/
     reviewSection(title, lines) {
         const section = this.element("section", "automation-review-section");
         section.appendChild(this.element("span", "", title));
@@ -1519,6 +1917,14 @@ class AutomationModal {
         return section;
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Creates a notice message.
+        @param  text                Notice text
+        @param  type                Notice type
+        @return                     Notice element
+    */
+    /******************************************************************************/
     notice(text, type) {
         const notice = this.element("div", "automation-notice " + type, text);
         notice.setAttribute("role", "status");
@@ -1526,6 +1932,13 @@ class AutomationModal {
         return notice;
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Creates validation feedback for an error key.
+        @param  key                 Validation error key
+        @return                     Error element
+    */
+    /******************************************************************************/
     error(key) {
         if (!this.errors[key]) return this.element("span");
         const error = this.element("p", "automation-field-error", this.errors[key]);
@@ -1536,6 +1949,14 @@ class AutomationModal {
         return error;
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Creates an add-rule button.
+        @param  text                Button text
+        @param  action              Button action
+        @return                     Button element
+    */
+    /******************************************************************************/
     addButton(text, action) {
         const button = this.button(text, action);
         button.classList.add("automation-add-button");
@@ -1543,6 +1964,14 @@ class AutomationModal {
         return button;
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Creates a wizard button.
+        @param  text                Button text
+        @param  action              Button action
+        @return                     Button element
+    */
+    /******************************************************************************/
     button(text, action) {
         const button = this.element("button", "toolbar-button", text);
         button.type = "button";
@@ -1551,6 +1980,17 @@ class AutomationModal {
         return button;
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Creates an icon-only rule button.
+        @param  label               Accessible button label
+        @param  iconClass           Icon class
+        @param  action              Button action
+        @param  id                  Rule identifier
+        @param  disabled            Whether the button is disabled
+        @return                     Button element
+    */
+    /******************************************************************************/
     iconButton(label, iconClass, action, id, disabled=false) {
         const button = this.element("button");
         button.type = "button";
@@ -1563,6 +2003,15 @@ class AutomationModal {
         return button;
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Creates an option element.
+        @param  value               Option value
+        @param  text                Visible option text
+        @param  selected            Whether the option is selected
+        @return                     Option element
+    */
+    /******************************************************************************/
     option(value, text, selected) {
         const option = this.element("option", "", text);
         option.value = value;
@@ -1571,6 +2020,15 @@ class AutomationModal {
         return option;
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Creates a DOM element with common properties.
+        @param  tag                 HTML tag name
+        @param  className           CSS class names
+        @param  text                Optional text content
+        @return                     DOM element
+    */
+    /******************************************************************************/
     element(tag, className="", text=undefined) {
         const element = document.createElement(tag);
         if (className) element.className = className;
@@ -1579,6 +2037,16 @@ class AutomationModal {
         return element;
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Attaches draft metadata to a field element.
+        @param  element             Field element
+        @param  field               Draft field name
+        @param  collection          Draft collection name
+        @param  id                  Draft item identifier
+        @param  errorKey            Validation error key
+    */
+    /******************************************************************************/
     fieldData(element, field, collection, id, errorKey) {
         element.dataset.field = field;
         if (collection) element.dataset.collection = collection;
@@ -1586,10 +2054,24 @@ class AutomationModal {
         if (errorKey) element.dataset.errorKey = errorKey;
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Returns source-type options.
+        @return                     Source-type options
+    */
+    /******************************************************************************/
     sourceTypeOptions() {
         return [["device", TEXT_DEVICE], ["group", TEXT_GROUP]];
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Returns available source or target options.
+        @param  type                Reference type
+        @param  target              Whether options are for an action target
+        @return                     Reference options
+    */
+    /******************************************************************************/
     sourceOptions(type, target=false) {
         if (type == "group") {
             return this.getGroups().map((group) => [
@@ -1605,6 +2087,12 @@ class AutomationModal {
             .map((device) => [device.id, device.name]);
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Returns trigger event options.
+        @return                     Event options
+    */
+    /******************************************************************************/
     eventOptions() {
         return [
             ["state", TEXT_AUTOMATION_STATE_CHANGES],
@@ -1613,6 +2101,13 @@ class AutomationModal {
         ];
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Returns comparison operator options.
+        @param  numeric             Whether numeric operators are required
+        @return                     Operator options
+    */
+    /******************************************************************************/
     operatorOptions(numeric) {
         const options = [["equals", TEXT_AUTOMATION_EQUALS], ["not_equals", TEXT_AUTOMATION_NOT_EQUALS]];
 
@@ -1623,6 +2118,13 @@ class AutomationModal {
         return options;
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Returns state options for a trigger.
+        @param  item                Trigger draft
+        @return                     State options
+    */
+    /******************************************************************************/
     stateOptions(item) {
         if (item.event == "button") {
             return [["short_press", TEXT_AUTOMATION_SHORT_PRESS],
@@ -1636,6 +2138,12 @@ class AutomationModal {
         return model?.states?.map((state) => [state.state, state.name]) ?? [[1, TEXT_ON], [0, TEXT_OFF]];
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Returns action-type options.
+        @return                     Action-type options
+    */
+    /******************************************************************************/
     actionOptions() {
         const options = this.getActions().map((item) => [item.function, item.name]);
 
@@ -1649,6 +2157,12 @@ class AutomationModal {
         return options;
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Returns weekday options.
+        @return                     Weekday options
+    */
+    /******************************************************************************/
     dayOptions() {
         return [
             [0, TEXT_AUTOMATION_MONDAY_SHORT], [1, TEXT_AUTOMATION_TUESDAY_SHORT],
@@ -1658,6 +2172,12 @@ class AutomationModal {
         ];
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Creates plain-language trigger summaries.
+        @return                     Trigger summary lines
+    */
+    /******************************************************************************/
     triggerSummary() {
         return this.draft.triggers.map((item) => {
             if (item.kind == "time") return VAR_TEXT_AUTOMATION_TIME(item.time);
@@ -1671,6 +2191,12 @@ class AutomationModal {
         });
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Creates plain-language condition summaries.
+        @return                     Condition summary lines
+    */
+    /******************************************************************************/
     conditionSummary() {
         if (!this.draft.conditions.length) return [TEXT_AUTOMATION_NO_CONDITIONS];
 
@@ -1682,6 +2208,12 @@ class AutomationModal {
             ));
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Creates plain-language action summaries.
+        @return                     Action summary lines
+    */
+    /******************************************************************************/
     actionSummary() {
         return this.draft.actions.map((item, index) => item.type == "wait" ?
             VAR_TEXT_AUTOMATION_WAIT_SUMMARY(index + 1, item.duration_minutes) :
@@ -1694,16 +2226,39 @@ class AutomationModal {
             ));
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Returns the visible name of a source or target.
+        @param  type                Reference type
+        @param  id                  Reference identifier
+        @return                     Reference name
+    */
+    /******************************************************************************/
     sourceName(type, id) {
         const source = type == "group" ? this.getGroups() : this.getDevices();
         return source.find((item) => item.id == id)?.name ?? TEXT_AUTOMATION_MISSING_SOURCE;
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Checks whether a source or target exists.
+        @param  type                Reference type
+        @param  id                  Reference identifier
+        @return                     Whether the reference exists
+    */
+    /******************************************************************************/
     sourceExists(type, id) {
         const source = type == "group" ? this.getGroups() : this.getDevices();
         return id !== "" && source.some((item) => item.id == id);
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Checks whether an action supports all selected targets.
+        @param  action              Action draft
+        @return                     Whether the action is compatible
+    */
+    /******************************************************************************/
     actionCompatible(action) {
         if (action.type == "wait" || !action.target_ids.length) return true;
 
@@ -1731,10 +2286,23 @@ class AutomationModal {
         });
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Returns visible text for an option value.
+        @param  options             Available options
+        @param  value               Option value
+        @return                     Visible option text
+    */
+    /******************************************************************************/
     optionText(options, value) {
         return options.find((item) => String(item[0]) == String(value))?.[1] ?? TEXT_AUTOMATION_NOT_CONFIGURED;
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  Moves focus to the first field in the active step.
+    */
+    /******************************************************************************/
     focusFirstField() {
         requestAnimationFrame(() => {
             this.wizardElement.querySelector(

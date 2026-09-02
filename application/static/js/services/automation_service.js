@@ -139,7 +139,8 @@ async function saveAutomationConfiguration(id, data) {
 
 /******************************************************************************/
 /*!
-    @brief  XXX
+    @brief  Requests confirmation before deleting an automation.
+    @return                     Selected confirmation option
 */
 /******************************************************************************/
 function deleteAutomationConfirm() {
@@ -155,7 +156,9 @@ function deleteAutomationConfirm() {
 
 /******************************************************************************/
 /*!
-    @brief  XXX
+    @brief  Deletes an automation after confirmation.
+    @param  id                  Automation identifier
+    @return                     Nothing
 */
 /******************************************************************************/
 async function deleteAutomation(id) {
@@ -174,7 +177,9 @@ async function deleteAutomation(id) {
 
 /******************************************************************************/
 /*!
-    @brief  XXX
+    @brief  Toggles whether an automation is enabled.
+    @param  id                  Automation identifier
+    @return                     Nothing
 */
 /******************************************************************************/
 async function toggleAutomationEnabled(id) {
@@ -189,7 +194,10 @@ async function toggleAutomationEnabled(id) {
 
 /******************************************************************************/
 /*!
-    @brief  XXX
+    @brief  Runs an automation.
+    @param  id                  Automation identifier
+    @param  source              Execution source
+    @return                     Nothing
 */
 /******************************************************************************/
 async function runAutomation(id, source="manual") {

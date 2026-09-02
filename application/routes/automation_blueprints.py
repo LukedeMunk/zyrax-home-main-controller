@@ -224,7 +224,9 @@ def generate_automation_dict_from_request(request_data):
 
 ################################################################################
 #
-#   @brief  XXX
+#   @brief  Checks whether an automation request contains a valid definition.
+#   @param  request_data   Automation request dictionary
+#   @return                Whether the request is valid
 #
 ################################################################################
 def is_valid_automation_request(request_data):

@@ -838,8 +838,8 @@ class DeviceManager:
     ################################################################################
     #
     #   @brief  Returns the ledstrips in a list of dictionaries.
-    #   @param  id          ID of the ledstrip to return
-    #   @return ledstrips   Dicts of ledstrips
+    #   @param  id                  ID of the ledstrip to return
+    #   @return ledstrips           Dicts of ledstrips
     #
     ################################################################################
     def get_ledstrip_dict(self, id, update_states=False):

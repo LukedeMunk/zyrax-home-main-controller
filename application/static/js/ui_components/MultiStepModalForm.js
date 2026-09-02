@@ -4,7 +4,7 @@
  * Version: 0.9.0
  * Author:  Luke de Munk
  * 
- * Brief:   XXX
+ * Brief:   Reusable modal form with multiple configurable steps.
  * 
  *          More information:
  *          https://github.com/LukedeMunk/zyrax-home-main-controller
@@ -17,7 +17,9 @@
 class MultiStepModalForm {
     /******************************************************************************/
     /*!
-        @brief  XXX
+        @brief  Creates a multi-step modal form.
+        @param  configuration       Multi-step modal configuration
+        @return                     Multi-step modal form
     */
     /******************************************************************************/
     constructor(configuration) {
@@ -26,7 +28,8 @@ class MultiStepModalForm {
 
     /******************************************************************************/
     /*!
-        @brief  XXX
+        @brief  Applies the modal and step configuration.
+        @param  configuration       Multi-step modal configuration
     */
     /******************************************************************************/
     setConfiguration(configuration) {
@@ -72,7 +75,7 @@ class MultiStepModalForm {
 
     /******************************************************************************/
     /*!
-        @brief  XXX
+        @brief  Renders every modal step.
     */
     /******************************************************************************/
     render() {
@@ -84,7 +87,7 @@ class MultiStepModalForm {
 
     /******************************************************************************/
     /*!
-        @brief  XXX
+        @brief  Shows the first enabled step.
     */
     /******************************************************************************/
     show() {
@@ -93,7 +96,7 @@ class MultiStepModalForm {
 
     /******************************************************************************/
     /*!
-        @brief  XXX
+        @brief  Closes the current modal step.
     */
     /******************************************************************************/
     close() {
@@ -102,7 +105,9 @@ class MultiStepModalForm {
 
     /******************************************************************************/
     /*!
-        @brief  XXX
+        @brief  Shows a configured modal step.
+        @param  index               Target step index
+        @param  closeCurrent        Whether to close the current step
     */
     /******************************************************************************/
     showStep(index, closeCurrent=true) {
@@ -127,7 +132,7 @@ class MultiStepModalForm {
 
     /******************************************************************************/
     /*!
-        @brief  XXX
+        @brief  Shows the next enabled step.
     */
     /******************************************************************************/
     next() {
@@ -137,7 +142,7 @@ class MultiStepModalForm {
 
     /******************************************************************************/
     /*!
-        @brief  XXX
+        @brief  Shows the previous enabled step.
     */
     /******************************************************************************/
     previous() {
@@ -147,7 +152,7 @@ class MultiStepModalForm {
 
     /******************************************************************************/
     /*!
-        @brief  XXX
+        @brief  Validates and submits all steps.
     */
     /******************************************************************************/
     submit() {
@@ -157,7 +162,9 @@ class MultiStepModalForm {
 
     /******************************************************************************/
     /*!
-        @brief  XXX
+        @brief  Validates all enabled steps.
+        @param  id                  Optional field identifier
+        @return                     Form values or false when invalid
     */
     /******************************************************************************/
     validate(id=undefined) {
@@ -172,7 +179,8 @@ class MultiStepModalForm {
 
     /******************************************************************************/
     /*!
-        @brief  XXX
+        @brief  Returns the current modal DOM element.
+        @return                     Current modal DOM element
     */
     /******************************************************************************/
     getDomElement() {
@@ -181,7 +189,8 @@ class MultiStepModalForm {
 
     /******************************************************************************/
     /*!
-        @brief  XXX
+        @brief  Sets the modal title.
+        @param  title               Modal title
     */
     /******************************************************************************/
     setTitle(title) {
@@ -191,7 +200,8 @@ class MultiStepModalForm {
     
     /******************************************************************************/
     /*!
-        @brief  XXX
+        @brief  Sets the form submit callback.
+        @param  callback            Submit callback
     */
     /******************************************************************************/
     setSubmitFunction(callback) {
@@ -200,7 +210,8 @@ class MultiStepModalForm {
     
     /******************************************************************************/
     /*!
-        @brief  XXX
+        @brief  Sets the callback for the current next button.
+        @param  callback            Next-step callback
     */
     /******************************************************************************/
     setNextStepFunction(callback) {
@@ -216,7 +227,8 @@ class MultiStepModalForm {
     
     /******************************************************************************/
     /*!
-        @brief  XXX
+        @brief  Sets the previous-step callback.
+        @param  callback            Previous-step callback
     */
     /******************************************************************************/
     setPreviousStepFunction(callback) {
@@ -225,7 +237,8 @@ class MultiStepModalForm {
     
     /******************************************************************************/
     /*!
-        @brief  XXX
+        @brief  Sets the delete callback for every step.
+        @param  callback            Delete callback
     */
     /******************************************************************************/
     setDeleteFunction(callback) {
@@ -235,7 +248,7 @@ class MultiStepModalForm {
     
     /******************************************************************************/
     /*!
-        @brief  XXX
+        @brief  Resets values in every modal step.
     */
     /******************************************************************************/
     resetValues() {
@@ -244,7 +257,7 @@ class MultiStepModalForm {
     
     /******************************************************************************/
     /*!
-        @brief  XXX
+        @brief  Clears validation feedback in every step.
     */
     /******************************************************************************/
     resetValidationElements() {
@@ -253,7 +266,9 @@ class MultiStepModalForm {
     
     /******************************************************************************/
     /*!
-        @brief  XXX
+        @brief  Sets options for a select field.
+        @param  fieldId             Field identifier
+        @param  options             Select options
     */
     /******************************************************************************/
     setSelectOptions(fieldId, options) {
@@ -262,7 +277,9 @@ class MultiStepModalForm {
     
     /******************************************************************************/
     /*!
-        @brief  XXX
+        @brief  Sets options for a tile-select field.
+        @param  fieldId             Field identifier
+        @param  tiles               Tile options
     */
     /******************************************************************************/
     setTileSelectOptions(fieldId, tiles) {
@@ -271,7 +288,9 @@ class MultiStepModalForm {
     
     /******************************************************************************/
     /*!
-        @brief  XXX
+        @brief  Sets a field value.
+        @param  fieldId             Field identifier
+        @param  value               Field value
     */
     /******************************************************************************/
     setValue(fieldId, value) {
@@ -280,7 +299,8 @@ class MultiStepModalForm {
     
     /******************************************************************************/
     /*!
-        @brief  XXX
+        @brief  Sets all form values in field order.
+        @param  values              Ordered field values
     */
     /******************************************************************************/
     setValues(values) {
@@ -289,7 +309,9 @@ class MultiStepModalForm {
     
     /******************************************************************************/
     /*!
-        @brief  XXX
+        @brief  Returns a field value.
+        @param  fieldId             Field identifier
+        @return                     Field value
     */
     /******************************************************************************/
     getValue(fieldId) {
@@ -298,7 +320,8 @@ class MultiStepModalForm {
     
     /******************************************************************************/
     /*!
-        @brief  XXX
+        @brief  Returns all form values.
+        @return                     Form values
     */
     /******************************************************************************/
     getValues() {
@@ -307,12 +330,22 @@ class MultiStepModalForm {
     
     /******************************************************************************/
     /*!
-        @brief  XXX
+        @brief  Sets whether a field is disabled.
+        @param  fieldId             Field identifier
+        @param  disabled            Whether the field is disabled
+        @param  title               Disabled-state title
     */
     /******************************************************************************/
     setFieldDisabled(fieldId, disabled, title = "") {
         this.#getModalForField(fieldId).setFieldDisabled(fieldId, disabled, title);
     }
+    /******************************************************************************/
+    /*!
+        @brief  Sets whether a modal step is disabled.
+        @param  stepIndex           Step index
+        @param  disabled            Whether the step is disabled
+    */
+    /******************************************************************************/
     setStepDisabled(stepIndex, disabled = true) {//TODO use id instead of indexes
         if (stepIndex < 0 || stepIndex >= this.modals.length) return;
         this.disabledSteps[stepIndex] = disabled;
@@ -320,7 +353,10 @@ class MultiStepModalForm {
     
     /******************************************************************************/
     /*!
-        @brief  XXX
+        @brief  Sets the visibility of a form block.
+        @param  blockId             Block identifier
+        @param  visible             Whether the block is visible
+        @param  displayType         Visible CSS display value
     */
     /******************************************************************************/
     setBlockVisibility(blockId, visible, displayType = "block") {
@@ -329,7 +365,10 @@ class MultiStepModalForm {
     
     /******************************************************************************/
     /*!
-        @brief  XXX
+        @brief  Sets the icon for a form block.
+        @param  blockId             Block identifier
+        @param  iconClass           Icon class
+        @param  onclickFunction     Optional click callback
     */
     /******************************************************************************/
     setIcon(blockId, iconClass, onclickFunction = undefined) {
@@ -338,7 +377,9 @@ class MultiStepModalForm {
     
     /******************************************************************************/
     /*!
-        @brief  XXX
+        @brief  Sets the title of a form field.
+        @param  fieldId             Field identifier
+        @param  title               Field title
     */
     /******************************************************************************/
     setFieldTitle(fieldId, title) {
@@ -347,7 +388,8 @@ class MultiStepModalForm {
     
     /******************************************************************************/
     /*!
-        @brief  XXX
+        @brief  Sets the error message for the current step.
+        @param  message             Error message
     */
     /******************************************************************************/
     setErrorMessage(message) {
@@ -356,7 +398,9 @@ class MultiStepModalForm {
     
     /******************************************************************************/
     /*!
-        @brief  XXX
+        @brief  Returns the modal that contains a field.
+        @param  fieldId             Field identifier
+        @return                     Modal form
     */
     /******************************************************************************/
     #getModalForField(fieldId) {
@@ -365,7 +409,9 @@ class MultiStepModalForm {
     
     /******************************************************************************/
     /*!
-        @brief  XXX
+        @brief  Returns the modal that contains a block.
+        @param  blockId             Block identifier
+        @return                     Modal form
     */
     /******************************************************************************/
     #getModalForBlock(blockId) {
@@ -374,7 +420,10 @@ class MultiStepModalForm {
     
     /******************************************************************************/
     /*!
-        @brief  XXX
+        @brief  Validates one modal step.
+        @param  stepIndex           Step index
+        @param  id                  Optional field identifier
+        @return                     Step values or false when invalid
     */
     /******************************************************************************/
     #validateStep(stepIndex, id=undefined) {
@@ -384,7 +433,10 @@ class MultiStepModalForm {
     
     /******************************************************************************/
     /*!
-        @brief  XXX
+        @brief  Finds the next enabled step in a direction.
+        @param  stepIndex           Starting step index
+        @param  direction           Search direction
+        @return                     Enabled step index
     */
     /******************************************************************************/
     #findEnabledStepIndex(stepIndex, direction) {
@@ -396,7 +448,8 @@ class MultiStepModalForm {
 
     /******************************************************************************/
     /*!
-        @brief  XXX
+        @brief  Returns all configured field identifiers.
+        @return                     Field identifiers
     */
     /******************************************************************************/
     #allFieldIds() {
@@ -405,7 +458,9 @@ class MultiStepModalForm {
 
     /******************************************************************************/
     /*!
-        @brief  XXX
+        @brief  Renders the previous button for a step.
+        @param  modal               Modal form
+        @param  stepIndex           Step index
     */
     /******************************************************************************/
     #renderPreviousButton(modal, stepIndex) {
@@ -436,7 +491,9 @@ class MultiStepModalForm {
 
     /******************************************************************************/
     /*!
-        @brief  XXX
+        @brief  Returns field identifiers configured in a step.
+        @param  step                Step configuration
+        @return                     Field identifiers
     */
     /******************************************************************************/
     #fieldIds(step) {
@@ -448,7 +505,9 @@ class MultiStepModalForm {
 
     /******************************************************************************/
     /*!
-        @brief  XXX
+        @brief  Returns block identifiers configured in a step.
+        @param  step                Step configuration
+        @return                     Block identifiers
     */
     /******************************************************************************/
     #blockIds(step) {

@@ -140,7 +140,9 @@ def get_automation(id=None, name=None):
 
 ################################################################################
 #
-#   @brief  XXX
+#   @brief  Returns automations, optionally filtered by trigger event type.
+#   @param  event_type     Optional trigger event type
+#   @return                Automation dictionaries
 #
 ################################################################################
 def get_automations(event_type=None):
@@ -158,7 +160,11 @@ def get_automations(event_type=None):
 
 ################################################################################
 #
-#   @brief  XXX
+#   @brief  Returns automations matching an event source.
+#   @param  event_type     Trigger event type
+#   @param  source_id      Optional source identifier
+#   @param  source_type    Optional source type
+#   @return                Automation dictionaries
 #
 ################################################################################
 def get_automations_for_event(event_type, source_id=None, source_type=None):
@@ -203,7 +209,9 @@ def get_automations_for_event(event_type, source_id=None, source_type=None):
 
 ################################################################################
 #
-#   @brief  XXX
+#   @brief  Replaces the normalized definition of an automation.
+#   @param  automation_id  Automation identifier
+#   @param  configuration  Normalized automation configuration
 #
 ################################################################################
 def _replace_definition(automation_id, configuration):
@@ -239,7 +247,9 @@ def _replace_definition(automation_id, configuration):
 
 ################################################################################
 #
-#   @brief  XXX
+#   @brief  Converts an automation row to a dictionary.
+#   @param  automation     Automation database row
+#   @return                Automation dictionary
 #
 ################################################################################
 def _automation_to_dictionary(automation):
@@ -252,7 +262,10 @@ def _automation_to_dictionary(automation):
 
 ################################################################################
 #
-#   @brief  XXX
+#   @brief  Returns ordered normalized definitions for an automation.
+#   @param  model          Definition database model
+#   @param  automation_id  Automation identifier
+#   @return                Definition dictionaries
 #
 ################################################################################
 def _definitions(model, automation_id):

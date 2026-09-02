@@ -87,7 +87,6 @@ class DeviceManager:
     #
     ################################################################################
     def initialize(self):
-        db_util.ensure_automation_definitions()
         self.load_devices()
         self.initialize_ledstrips()
 

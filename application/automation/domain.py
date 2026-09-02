@@ -16,6 +16,7 @@ from uuid import uuid4
 
 
 class Capability:
+    AUTOMATION_WAIT = "automation.wait"
     POWER_SET = "power.set"
     COLOR_SET = "color.set"
     MODE_SET = "mode.set"
@@ -66,4 +67,3 @@ class Command:
     id: str = field(default_factory=lambda: str(uuid4()))
     correlation_id: str = None
     causation_id: str = None
-

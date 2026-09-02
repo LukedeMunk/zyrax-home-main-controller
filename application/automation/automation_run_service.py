@@ -11,12 +11,13 @@
 #
 ################################################################################
 from datetime import datetime, timedelta
+from time import sleep
 from uuid import NAMESPACE_URL, uuid5
 
 import configuration as c
 import database_utility as db_util
 from logger import loge, logi
-from automation.domain import Event, EventType
+from automation.domain import Capability, Event, EventType
 
 
 class AutomationRunService:
@@ -77,19 +78,21 @@ class AutomationRunService:
     #
     ############################################################################
     def run_automation(
-            self, automation, event=None, source="manual", delay_seconds=0,
-            scheduled_for=None, deduplication_key=None):
+            self,
+            automation,
+            event=None,
+            source="manual",
+            delay_seconds=0,
+            scheduled_for=None,
+            deduplication_key=None):
+        
         current_date_time = datetime.now(c.TIME_ZONE)
 
-        print("run_automation")
-        concurrency_policy = automation.get(
-            "concurrency_policy",
-            c.AUTOMATION_CONCURRENCY_RESTART
-        )
+        logi("run_automation")
+        concurrency_policy = automation.get("concurrency_policy", c.AUTOMATION_CONCURRENCY_RESTART)
         active_run = db_util.get_active_automation_run(automation["id"])
 
-        if concurrency_policy == c.AUTOMATION_CONCURRENCY_SINGLE and \
-                active_run is not None:
+        if concurrency_policy == c.AUTOMATION_CONCURRENCY_SINGLE and active_run is not None:
             return (True, active_run["id"])
 
         if concurrency_policy == c.AUTOMATION_CONCURRENCY_RESTART:
@@ -98,7 +101,11 @@ class AutomationRunService:
         scheduled_for = scheduled_for or (
             current_date_time + timedelta(seconds=delay_seconds)
         )
-        event_id = event.id if event is not None else None
+
+        event_id = None
+        if event is not None:
+            event_id = event.id
+            
         correlation_id = (
             event.get_correlation_id() if event is not None else None
         )
@@ -138,11 +145,7 @@ class AutomationRunService:
         automation = db_util.get_automation(id=run["automation_id"])
 
         if automation is None:
-            db_util.finish_automation_run(
-                run_id,
-                c.AUTOMATION_RUN_STATUS_FAILED,
-                "Automation no longer exists"
-            )
+            db_util.finish_automation_run(run_id, c.AUTOMATION_RUN_STATUS_FAILED, "Automation no longer exists")
             return False
 
         context = {
@@ -166,7 +169,10 @@ class AutomationRunService:
                 )
 
                 try:
-                    self.automation_engine.execute_command(command)
+                    if command.capability == Capability.AUTOMATION_WAIT:
+                        sleep(command.parameters["duration_seconds"])
+                    else:
+                        self.automation_engine.execute_command(command)
                     db_util.finish_automation_action_run(
                         action_run_id,
                         c.AUTOMATION_RUN_STATUS_COMPLETED
@@ -177,37 +183,23 @@ class AutomationRunService:
                         c.AUTOMATION_RUN_STATUS_FAILED,
                         str(exception)
                     )
-                    if automation.get(
-                            "error_policy",
-                            c.AUTOMATION_ERROR_STOP
-                            ) == c.AUTOMATION_ERROR_STOP:
+                    if automation.get("error_policy", c.AUTOMATION_ERROR_STOP) == c.AUTOMATION_ERROR_STOP:
                         raise
 
                     command_errors.append(str(exception))
 
             if command_errors:
                 error = "; ".join(command_errors)
-                db_util.finish_automation_run(
-                    run_id,
-                    c.AUTOMATION_RUN_STATUS_FAILED,
-                    error
-                )
+                db_util.finish_automation_run(run_id, c.AUTOMATION_RUN_STATUS_FAILED, error)
                 return False
 
-            db_util.finish_automation_run(
-                run_id,
-                c.AUTOMATION_RUN_STATUS_COMPLETED
-            )
+            db_util.finish_automation_run(run_id, c.AUTOMATION_RUN_STATUS_COMPLETED)
             logi(c.VAR_TEXT_AUTOMATION_EXECUTED.format(automation["name"]))
             return True
 
         except Exception as exception:
             error = str(exception)
-            db_util.finish_automation_run(
-                run_id,
-                c.AUTOMATION_RUN_STATUS_FAILED,
-                error
-            )
+            db_util.finish_automation_run(run_id, c.AUTOMATION_RUN_STATUS_FAILED, error)
             loge("Automation execution failed: " + error)
             return False
 
@@ -219,6 +211,7 @@ class AutomationRunService:
     def process_pending_runs(self):
         for run_id in db_util.get_due_automation_run_ids(
                 datetime.now(c.TIME_ZONE)):
+            
             self.execute_run(run_id)
 
     ############################################################################
@@ -227,10 +220,7 @@ class AutomationRunService:
     #
     ############################################################################
     def process_time_triggers(self):
-        current_date_time = datetime.now(c.TIME_ZONE).replace(
-            second=0,
-            microsecond=0
-        )
+        current_date_time = datetime.now(c.TIME_ZONE).replace(second=0, microsecond=0)
         last_checked_at = db_util.get_automation_scheduler_check()
 
         if last_checked_at is None:
@@ -241,18 +231,14 @@ class AutomationRunService:
 
             first_slot = last_checked_at + timedelta(minutes=1)
 
-        grace_start = current_date_time - timedelta(
-            minutes=self.SCHEDULER_MISFIRE_GRACE_MINUTES
-        )
+        grace_start = current_date_time - timedelta(minutes=self.SCHEDULER_MISFIRE_GRACE_MINUTES)
         first_slot = max(first_slot, grace_start)
         slot = first_slot
 
         while slot <= current_date_time:
             for automation in self.automation_engine.get_time_automations(slot):
-                deduplication_key = (
-                    "time:" + str(automation["id"]) + ":" +
-                    slot.isoformat()
-                )
+                deduplication_key = ("time:" + str(automation["id"]) + ":" + slot.isoformat())
+                
                 event = Event(
                     event_type=EventType.TIME,
                     source_type="scheduler",

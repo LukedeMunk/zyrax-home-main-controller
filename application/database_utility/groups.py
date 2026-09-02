@@ -139,6 +139,9 @@ def get_group(id):
     with app.app_context():
         group = Group.query.filter_by(id=id).first()
 
+    if group is None:
+        return None
+
     group = core.row_to_dictionary(group)
     group["device_ids"] = _get_group_device_ids(group["id"])
     group["types"] = _get_group_types(group["id"])

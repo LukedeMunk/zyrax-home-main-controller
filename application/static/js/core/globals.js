@@ -46,14 +46,9 @@ const DEVICE_POWER_SELECT_OPTIONS = [
     {value: 0, text: TEXT_OFF},
 ]
 
-const AUTOMATION_TRIGGER_TIMER = 0;
-const AUTOMATION_TRIGGER_DOOR_SENSOR = 1;
-const AUTOMATION_TRIGGER_MOTION_SENSOR = 2;
-const AUTOMATION_TRIGGER_SWITCH = 3;
-
-const AUTOMATION_ACTION_SET_DEVICE_POWER = "set_device_power";
-const AUTOMATION_ACTION_SET_LEDSTRIP_COLOR = "set_ledstrip_color";
-const AUTOMATION_ACTION_SET_LEDSTRIP_MODE = "set_ledstrip_mode";
+//const AUTOMATION_ACTION_SET_DEVICE_POWER = "set_device_power";
+//const AUTOMATION_ACTION_SET_LEDSTRIP_COLOR = "set_ledstrip_color";
+//const AUTOMATION_ACTION_SET_LEDSTRIP_MODE = "set_ledstrip_mode";
 
 const ICONS_XL = [
     "fa-duotone fa-solid fa-door-open fa-xl",
@@ -127,13 +122,6 @@ const AUTOMATION_ICONS = [
     {action: "set_ledstrip_mode", icon: "fa-duotone fa-solid fa-wand-magic-sparkles fa-lg"}
 ]
 
-const TRIGGER_TYPE_ICONS = [
-    {triggerType: AUTOMATION_TRIGGER_TIMER, icon: "fa-duotone fa-solid fa-clock fa-lg"},
-    {triggerType: AUTOMATION_TRIGGER_DOOR_SENSOR, icon: "fa-duotone fa-solid fa-door-open fa-lg"},
-    {triggerType: AUTOMATION_TRIGGER_MOTION_SENSOR, icon: "fa-duotone fa-solid fa-person-walking fa-lg"},
-    {triggerType: AUTOMATION_TRIGGER_SWITCH, icon: "fa-duotone fa-solid fa-light-switch fa-lg"}
-]
-
 const DEVICE_TYPE_ICONS = [
     {type: DEVICE_TYPE_LEDSTRIP, icon: "fa-duotone fa-solid fa-lightbulb fa-2x"},
     {type: DEVICE_TYPE_RF_DEVICE, icon: "fa-duotone fa-solid fa-door-open fa-2x"},
@@ -202,44 +190,6 @@ const PARAMETER_ID_NUMBER_OF_ELEMENTS = 13;
 const PARAMETER_ID_PALETTE = 14;
 const PARAMETER_ID_FADE_LENGTH = 15;
 
-const DAYS_TILE_SELECT_OPTIONS = [
-    {id: "dayTile" + DAY_MONDAY, value: DAY_MONDAY, title: TEXT_MONDAY},
-    {id: "dayTile" + DAY_TUESDAY, value: DAY_TUESDAY, title: TEXT_TUESDAY},
-    {id: "dayTile" + DAY_WEDNESDAY, value: DAY_WEDNESDAY, title: TEXT_WEDNESDAY},
-    {id: "dayTile" + DAY_THURSDAY, value: DAY_THURSDAY, title: TEXT_THURSDAY},
-    {id: "dayTile" + DAY_FRIDAY, value: DAY_FRIDAY, title: TEXT_FRIDAY},
-    {id: "dayTile" + DAY_SATURDAY, value: DAY_SATURDAY, title: TEXT_SATURDAY},
-    {id: "dayTile" + DAY_SUNDAY, value: DAY_SUNDAY, title: TEXT_SUNDAY},
-]
-const AUTOMATION_TRIGGER_TILE_SELECT_OPTIONS = [{
-		id: "automationTriggerTile" + AUTOMATION_TRIGGER_TIMER,
-		value: AUTOMATION_TRIGGER_TIMER,
-		icon: "fa-duotone fa-solid fa-clock fa-lg",
-		title: TEXT_TIMER,
-		onclickFunction: () => updateAutomationModalStepButtons()
-	},
-	{
-		id: "automationTriggerTile" + AUTOMATION_TRIGGER_DOOR_SENSOR,
-		value: AUTOMATION_TRIGGER_DOOR_SENSOR,
-		icon: "fa-duotone fa-solid fa-door-open fa-lg",
-		title: TEXT_CONTACT_SENSOR,
-		onclickFunction: () => updateAutomationModalStepButtons()
-	},
-	{
-		id: "automationTriggerTile" + AUTOMATION_TRIGGER_MOTION_SENSOR,
-		value: AUTOMATION_TRIGGER_MOTION_SENSOR,
-		icon: "fa-duotone fa-solid fa-person-walking fa-lg",
-		title: TEXT_MOTION_SENSOR,
-		onclickFunction: () => updateAutomationModalStepButtons()
-	},
-	{
-		id: "automationTriggerTile" + AUTOMATION_TRIGGER_SWITCH,
-		value: AUTOMATION_TRIGGER_SWITCH,
-		icon: "fa-duotone fa-solid fa-light-switch fa-lg",
-		title: TEXT_SWITCH,
-		onclickFunction: () => updateAutomationModalStepButtons()
-	},
-]
 /* Dashboard tiles */
 
 const TILE_TYPE_SELECT_OPTIONS = [

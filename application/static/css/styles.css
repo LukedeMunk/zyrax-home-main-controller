@@ -82,6 +82,384 @@ input[type="range"]::-webkit-slider-runnable-track {
 }
 /* #endregion */
 
+/* #region Automation wizard */
+.automation-modal {
+    box-sizing: border-box;
+    max-width: 1000px;
+    overflow: hidden;
+    padding-bottom: 0px;
+    width: 90%;
+}
+
+.automation-wizard {
+    display: flex;
+    flex-direction: column;
+}
+
+.automation-modal[open] {
+    display: flex;
+    flex-direction: column;
+}
+
+.automation-progress {
+    background: transparent;
+    border: 0px;
+    border-radius: 0px;
+    box-shadow: none;
+    display: grid;
+    font-size: inherit;
+    gap: 8px;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    margin: 10px 0px;
+    max-width: none;
+    position: static;
+    white-space: normal;
+    z-index: auto;
+}
+
+.automation-progress-step {
+    background: var(--background4);
+    box-shadow: none;
+    display: flex;
+    gap: 8px;
+    height: 46px;
+    margin: 0px;
+    padding: 7px 10px;
+    width: 100%;
+}
+
+.automation-progress-step span {
+    align-items: center;
+    background: var(--background5);
+    border-radius: 50%;
+    display: flex;
+    flex: 0 0 28px;
+    height: 28px;
+    justify-content: center;
+}
+
+.automation-progress-step p {
+    font-size: var(--font-size-small);
+    margin: 0px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.automation-progress-step.current,
+.automation-progress-step.completed {
+    background: var(--button-background-1);
+}
+
+.automation-wizard-body {
+    min-height: 390px;
+    overflow-y: auto;
+    padding: 10px 4px;
+}
+
+.automation-step-heading {
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.automation-step-heading h4,
+.automation-step-heading p {
+    margin: 0px 0px 5px;
+}
+
+.automation-step-heading p {
+    color: var(--secondary-text);
+}
+
+.automation-field-grid {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.automation-field {
+    min-width: 0px;
+    text-align: left;
+}
+
+.automation-field label,
+.automation-day-field legend {
+    color: var(--secondary-text);
+    display: block;
+    font-size: var(--font-size-small);
+    margin-bottom: 2px;
+}
+
+.automation-field input,
+.automation-field select {
+    margin: 4px 0px;
+    max-width: none;
+    width: 100%;
+}
+
+.automation-checkbox-row {
+    align-items: center;
+    display: flex;
+    gap: 10px;
+    margin: 15px 0px;
+}
+
+.automation-checkbox-row input,
+.automation-day-option input {
+    height: 20px;
+    margin: 0px;
+    min-width: 20px;
+    width: 20px;
+}
+
+.automation-rule-list,
+.automation-review-list {
+    display: grid;
+    gap: 12px;
+}
+
+.automation-rule-card,
+.automation-review-section,
+.automation-notice {
+    background: var(--background4);
+    border-radius: 12px;
+    padding: 14px;
+    text-align: left;
+}
+
+.automation-rule-card.has-error {
+    border: 1px solid var(--error-border);
+}
+
+.automation-rule-header {
+    align-items: center;
+    display: flex;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.automation-rule-number {
+    align-items: center;
+    background: var(--background5);
+    border-radius: 50%;
+    display: flex;
+    flex: 0 0 30px;
+    height: 30px;
+    justify-content: center;
+}
+
+.automation-rule-tools {
+    display: flex;
+    gap: 4px;
+    margin-left: auto;
+}
+
+.automation-rule-tools button {
+    background: transparent;
+    box-shadow: none;
+    height: 38px;
+    margin: 0px;
+    padding: 8px;
+    width: 38px;
+}
+
+.automation-rule-tools button:disabled {
+    color: var(--icon-disabled);
+    cursor: not-allowed;
+}
+
+.automation-add-button,
+.automation-text-button {
+    background: transparent;
+    border: 1px dashed var(--border2);
+    box-shadow: none;
+    margin: 14px 0px;
+    width: 100%;
+}
+
+.automation-text-button {
+    border: none;
+    color: var(--link-text);
+    margin-top: 5px;
+    width: auto;
+}
+
+.automation-day-field {
+    border: 0px;
+    margin: 0px;
+    padding: 0px;
+    text-align: left;
+}
+
+.automation-target-field {
+    border: 0px;
+    margin: 0px;
+    min-width: 0px;
+    padding: 0px;
+    text-align: left;
+}
+
+.automation-target-field legend {
+    color: var(--secondary-text);
+    font-size: var(--font-size-small);
+}
+
+.automation-target-field > div {
+    background: var(--background3);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    display: grid;
+    gap: 4px;
+    max-height: 130px;
+    overflow-y: auto;
+    padding: 7px;
+}
+
+.automation-target-option {
+    align-items: center;
+    display: flex;
+    gap: 8px;
+    min-height: 32px;
+}
+
+.automation-target-option input {
+    height: 20px;
+    margin: 0px;
+    min-width: 20px;
+    width: 20px;
+}
+
+.automation-day-field > div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-top: 8px;
+}
+
+.automation-day-option {
+    align-items: center;
+    background: var(--background3);
+    border-radius: 8px;
+    display: flex;
+    gap: 5px;
+    padding: 7px;
+}
+
+.automation-notice {
+    margin: 10px 0px;
+}
+
+.automation-notice.info {
+    color: var(--secondary-text);
+}
+
+.automation-notice.warning {
+    background: var(--warning-background);
+    color: var(--warning-text);
+}
+
+.automation-notice.success {
+    background: var(--success-background);
+    color: var(--success-text);
+}
+
+.automation-notice ul {
+    margin-bottom: 0px;
+}
+
+.automation-field-error {
+    color: var(--error-text);
+    font-size: var(--font-size-small);
+    margin: 5px 0px;
+}
+
+.automation-advanced {
+    border-top: 1px solid var(--border3);
+    margin-top: 18px;
+    padding-top: 12px;
+    text-align: left;
+}
+
+.automation-advanced summary {
+    cursor: pointer;
+    font-weight: bold;
+    margin-bottom: 12px;
+}
+
+.automation-review-section > span {
+    color: var(--secondary-text);
+    font-size: var(--font-size-small);
+    text-transform: uppercase;
+}
+
+.automation-review-section p {
+    margin: 6px 0px 0px;
+}
+
+.automation-wizard-footer {
+    align-items: center;
+    background: var(--background3);
+    border-top: 1px solid var(--border3);
+    display: flex;
+    gap: 12px;
+    justify-content: space-between;
+    margin: 10px -20px 0px;
+    padding: 10px 20px;
+}
+
+.automation-wizard-footer .toolbar,
+.automation-wizard-footer .toolbar-button {
+    margin: 0px;
+}
+
+@media only screen and (max-width: 700px) {
+    .automation-modal {
+        border-radius: 0px;
+        height: 100%;
+        max-height: 100%;
+        padding-top: 16px;
+        width: 100%;
+    }
+
+    .automation-progress {
+        gap: 4px;
+    }
+
+    .automation-progress-step {
+        gap: 0px;
+        padding: 7px;
+    }
+
+    .automation-progress-step p {
+        display: none;
+    }
+
+    .automation-progress-step span {
+        margin: auto;
+    }
+
+    .automation-wizard-body {
+        flex: 1;
+        max-height: none;
+        min-height: 0px;
+    }
+
+    .automation-wizard {
+        flex: 1;
+        min-height: 0px;
+    }
+
+    .automation-field-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .automation-wizard-footer {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+}
+/* #endregion */
+
 /* #region Small bottom modal */
 .small-bottom-modal {
     position: fixed;

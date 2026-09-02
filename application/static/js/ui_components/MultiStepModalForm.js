@@ -1,8 +1,34 @@
+/******************************************************************************/
+/*
+ * File:    MultiStepModalForm.js
+ * Version: 0.9.0
+ * Author:  Luke de Munk
+ * 
+ * Brief:   XXX
+ * 
+ *          More information:
+ *          https://github.com/LukedeMunk/zyrax-home-main-controller
+ * 
+ * Template version:        0.0.4
+ * Template information:    https://github.com/LukedeMunk/templates
+ */
+/******************************************************************************/
+
 class MultiStepModalForm {
+    /******************************************************************************/
+    /*!
+        @brief  XXX
+    */
+    /******************************************************************************/
     constructor(configuration) {
         this.setConfiguration(configuration);
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  XXX
+    */
+    /******************************************************************************/
     setConfiguration(configuration) {
         this.id = configuration.id ?? "multiStepModalForm";
         this.title = configuration.title ?? "";
@@ -44,6 +70,11 @@ class MultiStepModalForm {
         });
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  XXX
+    */
+    /******************************************************************************/
     render() {
         this.modals.forEach((modal, index) => {
             modal.render();
@@ -51,14 +82,29 @@ class MultiStepModalForm {
         });
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  XXX
+    */
+    /******************************************************************************/
     show() {
         this.showStep(0, false);
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  XXX
+    */
+    /******************************************************************************/
     close() {
         this.modals[this.currentStepIndex]?.close();
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  XXX
+    */
+    /******************************************************************************/
     showStep(index, closeCurrent=true) {
         if (index < 0 || index >= this.modals.length || index === this.currentStepIndex && closeCurrent) return;
 
@@ -79,21 +125,41 @@ class MultiStepModalForm {
         }
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  XXX
+    */
+    /******************************************************************************/
     next() {
         const nextStepIndex = this.#findEnabledStepIndex(this.currentStepIndex + 1, 1);
         this.showStep(nextStepIndex);
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  XXX
+    */
+    /******************************************************************************/
     previous() {
         const previousStepIndex = this.#findEnabledStepIndex(this.currentStepIndex - 1, -1);
         this.showStep(previousStepIndex);
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  XXX
+    */
+    /******************************************************************************/
     submit() {
         const values = this.validate();
         if (values !== false) this.submitFunction?.(values);
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  XXX
+    */
+    /******************************************************************************/
     validate(id=undefined) {
         const values = [];
         for (let stepIndex = 0; stepIndex < this.modals.length; stepIndex++) {
@@ -104,16 +170,39 @@ class MultiStepModalForm {
         return values;
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  XXX
+    */
+    /******************************************************************************/
     getDomElement() {
 	    return this.modals[this.currentStepIndex]?.getDomElement();
     }
+
+    /******************************************************************************/
+    /*!
+        @brief  XXX
+    */
+    /******************************************************************************/
     setTitle(title) {
         this.title = title;
         //this.modals.forEach(modal => modal.setTitle(title));TODO
     }
+    
+    /******************************************************************************/
+    /*!
+        @brief  XXX
+    */
+    /******************************************************************************/
     setSubmitFunction(callback) {
         this.submitFunction = callback ?? null;
     }
+    
+    /******************************************************************************/
+    /*!
+        @brief  XXX
+    */
+    /******************************************************************************/
     setNextStepFunction(callback) {
         const isLastStep = this.currentStepIndex === this.modals.length - 1;
         const submitFunction = isLastStep
@@ -124,37 +213,103 @@ class MultiStepModalForm {
 
         this.modals[this.currentStepIndex]?.setSubmitFunction(submitFunction);
     }
+    
+    /******************************************************************************/
+    /*!
+        @brief  XXX
+    */
+    /******************************************************************************/
     setPreviousStepFunction(callback) {
         this.previousStepFunction = callback ?? (() => this.previous());
     }
+    
+    /******************************************************************************/
+    /*!
+        @brief  XXX
+    */
+    /******************************************************************************/
     setDeleteFunction(callback) {
         this.deleteFunction = callback ?? null;
         this.modals.forEach(modal => modal.setDeleteFunction(this.deleteFunction));
     }
+    
+    /******************************************************************************/
+    /*!
+        @brief  XXX
+    */
+    /******************************************************************************/
     resetValues() {
         this.modals.forEach(modal => modal.resetValues());
     }
+    
+    /******************************************************************************/
+    /*!
+        @brief  XXX
+    */
+    /******************************************************************************/
     resetValidationElements() {
         this.modals.forEach(modal => modal.resetValidationElements());
     }
+    
+    /******************************************************************************/
+    /*!
+        @brief  XXX
+    */
+    /******************************************************************************/
     setSelectOptions(fieldId, options) {
         this.#getModalForField(fieldId)?.setSelectOptions(fieldId, options);
     }
+    
+    /******************************************************************************/
+    /*!
+        @brief  XXX
+    */
+    /******************************************************************************/
     setTileSelectOptions(fieldId, tiles) {
         this.#getModalForField(fieldId)?.setTileSelectOptions(fieldId, tiles);
     }
+    
+    /******************************************************************************/
+    /*!
+        @brief  XXX
+    */
+    /******************************************************************************/
     setValue(fieldId, value) {
         this.#getModalForField(fieldId)?.setValue(fieldId, value);
     }
+    
+    /******************************************************************************/
+    /*!
+        @brief  XXX
+    */
+    /******************************************************************************/
     setValues(values) {
         this.#allFieldIds().forEach((fieldId, index) => this.setValue(fieldId, values[index]));
     }
+    
+    /******************************************************************************/
+    /*!
+        @brief  XXX
+    */
+    /******************************************************************************/
     getValue(fieldId) {
         return this.#getModalForField(fieldId)?.getValue(fieldId);
     }
+    
+    /******************************************************************************/
+    /*!
+        @brief  XXX
+    */
+    /******************************************************************************/
     getValues() {
         return this.modals.flatMap(modal => modal.getValues());
     }
+    
+    /******************************************************************************/
+    /*!
+        @brief  XXX
+    */
+    /******************************************************************************/
     setFieldDisabled(fieldId, disabled, title = "") {
         this.#getModalForField(fieldId).setFieldDisabled(fieldId, disabled, title);
     }
@@ -162,32 +317,97 @@ class MultiStepModalForm {
         if (stepIndex < 0 || stepIndex >= this.modals.length) return;
         this.disabledSteps[stepIndex] = disabled;
     }
+    
+    /******************************************************************************/
+    /*!
+        @brief  XXX
+    */
+    /******************************************************************************/
     setBlockVisibility(blockId, visible, displayType = "block") {
         this.#getModalForBlock(blockId).setBlockVisibility(blockId, visible, displayType);
     }
+    
+    /******************************************************************************/
+    /*!
+        @brief  XXX
+    */
+    /******************************************************************************/
     setIcon(blockId, iconClass, onclickFunction = undefined) {
         this.#getModalForField(blockId).setIcon(blockId, iconClass, onclickFunction);
     }
+    
+    /******************************************************************************/
+    /*!
+        @brief  XXX
+    */
+    /******************************************************************************/
     setFieldTitle(fieldId, title) {
         this.#getModalForField(fieldId).setFieldTitle(fieldId, title);
     }
+    
+    /******************************************************************************/
+    /*!
+        @brief  XXX
+    */
+    /******************************************************************************/
     setErrorMessage(message) {
         this.modals[this.currentStepIndex].setErrorMessage(message);
     }
-
-    #getModalForField(fieldId) { return this.fieldModalMap.get(fieldId); }
-    #getModalForBlock(blockId) { return this.blockModalMap.get(blockId); }
+    
+    /******************************************************************************/
+    /*!
+        @brief  XXX
+    */
+    /******************************************************************************/
+    #getModalForField(fieldId) {
+        return this.fieldModalMap.get(fieldId);
+    }
+    
+    /******************************************************************************/
+    /*!
+        @brief  XXX
+    */
+    /******************************************************************************/
+    #getModalForBlock(blockId) {
+        return this.blockModalMap.get(blockId);
+    }
+    
+    /******************************************************************************/
+    /*!
+        @brief  XXX
+    */
+    /******************************************************************************/
     #validateStep(stepIndex, id=undefined) {
         if (this.disabledSteps[stepIndex]) return [];
         return this.modals[stepIndex].validate(id);
     }
+    
+    /******************************************************************************/
+    /*!
+        @brief  XXX
+    */
+    /******************************************************************************/
     #findEnabledStepIndex(stepIndex, direction) {
         while (stepIndex >= 0 && stepIndex < this.modals.length && this.disabledSteps[stepIndex]) {
             stepIndex += direction;
         }
         return stepIndex;
     }
-    #allFieldIds() { return this.steps.flatMap(step => this.#fieldIds(step)); }
+
+    /******************************************************************************/
+    /*!
+        @brief  XXX
+    */
+    /******************************************************************************/
+    #allFieldIds() {
+        return this.steps.flatMap(step => this.#fieldIds(step));
+    }
+
+    /******************************************************************************/
+    /*!
+        @brief  XXX
+    */
+    /******************************************************************************/
     #renderPreviousButton(modal, stepIndex) {
         const button = document.createElement("button");
         button.className = "toolbar-button";
@@ -204,8 +424,7 @@ class MultiStepModalForm {
         icon.className = "fa-duotone fa-solid fa-arrow-left fa-lg";
 
         const title = document.createElement("p");
-        title.textContent =
-            this.steps[stepIndex].previousStepTitle ?? "Previous";
+        title.textContent = this.steps[stepIndex].previousStepTitle ?? "Previous";
 
         button.append(icon, title);
 
@@ -215,6 +434,11 @@ class MultiStepModalForm {
             ?.prepend(button);
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  XXX
+    */
+    /******************************************************************************/
     #fieldIds(step) {
         return (step.columns ?? []).flatMap(column => column.blocks ?? []).flatMap(block => {
             if (block.blockType === MODAL_BLOCK_TYPE_MULTIPLE_INPUTS) return (block.inputFields ?? []).map(field => field.id);
@@ -222,6 +446,11 @@ class MultiStepModalForm {
         }).filter(Boolean);
     }
 
+    /******************************************************************************/
+    /*!
+        @brief  XXX
+    */
+    /******************************************************************************/
     #blockIds(step) {
         return (step.columns ?? []).flatMap(column => column.blocks ?? []).flatMap(block => {
             return [block.blockId];

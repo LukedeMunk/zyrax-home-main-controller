@@ -195,7 +195,6 @@ def automations_page():
                             alarm_activated=db_util.get_alarm()["activated"],
                             user_profiles=db_util.get_profiles(session["account_id"]),
                             automations=dm.get_automations(),
-                            AUTOMATION_TRIGGERS=c.AUTOMATION_TRIGGERS,
                             modes=dm.get_ledstrip_modes(),
                             actions=c.AUTOMATION_ACTIONS,
                             DEVICE_TYPES=c.DEVICE_TYPES,

@@ -1020,7 +1020,7 @@ button:hover, .button:hover {
 }
 
 .progress {
-    background-color: var(--background4);
+    background-color: var(--background5);
     border-radius: 15px;
     height: 20px;
     width: 100%;

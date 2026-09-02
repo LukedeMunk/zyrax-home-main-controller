@@ -123,8 +123,10 @@ async function fetchStates() {
         return;
     }
 
+    let response;
+    
     try {
-        let response = await fetch("get_sensors", {signal: AbortSignal.timeout(FETCH_TIMEOUT)});
+        response = await fetch("get_sensors", {signal: AbortSignal.timeout(FETCH_TIMEOUT)});
     } catch {
         loadingBanners.show(TEXT_DISCONNECTED_CONNECTING);
         setTimeout(waitUntilConnected, BACK_END_UPDATE_INTERVAL_1S, fetchStates);

@@ -298,17 +298,9 @@ class GroupHasDevice(db.Model):
 class Automation(db.Model):
     __tablename__ = "Automation"
     id = db.Column(db.Integer, primary_key=True)
-    inverted_automation_copy_id = db.Column(db.Integer, nullable=False, default=-1)     #If -1, no inverted automation enabled, else it is
-    is_inverted_automation = db.Column(db.Boolean, nullable=False, default=False)       #If true, this is an inverted automation, else it is
     name = db.Column(db.String(50), unique=True, nullable=False)
     enabled = db.Column(db.Boolean, nullable=False, default=True)
-    action = db.Column(db.String(50), nullable=False)
-    trigger = db.Column(db.Integer, nullable=False)
-    time_window_activated = db.Column(db.Boolean, nullable=False, default=False)
-    activate_during_time_window = db.Column(db.Boolean, nullable=False, default=True)   #0 to disable during window, 1 to enable
-    time_window_start_minutes = db.Column(db.Integer, nullable=False, default=0)
-    time_window_end_minutes = db.Column(db.Integer, nullable=False, default=1439)
-    delay_minutes = db.Column(db.Integer, nullable=False, default=0)                    #Delay when action takes place when closed, in minutes
+    trigger_match = db.Column(db.String(20), nullable=False, default="any")
     concurrency_policy = db.Column(
         db.String(20),
         nullable=False,
@@ -319,33 +311,6 @@ class Automation(db.Model):
         nullable=False,
         default=c.AUTOMATION_ERROR_STOP
     )
-
-class AutomationHasParameter(db.Model):
-    __tablename__ = "AutomationHasParameter"
-    id = db.Column(db.Integer, primary_key=True)
-    automation_id = db.Column(db.Integer, nullable=False)
-    name = db.Column(db.String(50), nullable=False)
-    value = db.Column(db.String(50), nullable=False, default="")
-    
-class AutomationHasTriggerDevice(db.Model):
-    __tablename__ = "AutomationHasTriggerDevice"
-    id = db.Column(db.Integer, primary_key=True)
-    automation_id = db.Column(db.Integer, nullable=False)
-    device_id = db.Column(db.Integer, nullable=False)
-    trigger_state = db.Column(db.Integer, nullable=False)
-
-class AutomationHasTargetDevice(db.Model):
-    __tablename__ = "AutomationHasTargetDevice"
-    id = db.Column(db.Integer, primary_key=True)
-    automation_id = db.Column(db.Integer, nullable=False)
-    device_id = db.Column(db.Integer, nullable=False)
-
-class AutomationHasTriggerTime(db.Model):
-    __tablename__ = "AutomationHasTriggerTime"
-    id = db.Column(db.Integer, primary_key=True)
-    automation_id = db.Column(db.Integer, nullable=False)
-    days = db.Column(db.String(7), nullable=False, default="0000000")
-    time = db.Column(db.String(5), nullable=False, default="00:00")
 
 class AutomationTrigger(db.Model):
     __tablename__ = "AutomationTrigger"

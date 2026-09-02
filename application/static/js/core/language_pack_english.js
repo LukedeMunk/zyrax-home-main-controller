@@ -26,7 +26,6 @@ const TEXT_API_KEYS = "API keys";
 const TEXT_APPLICATION_CONFIGURATION_RESETTED_SUCCESSFULLY = "The application configuration is resetted successfully";
 const TEXT_ARMED = "Armed";
 const TEXT_ASCEND_LED_ADDRESSING = "Give ascending addresses to leds";
-const TEXT_AUTOMATION_IMMEDIATELY = "The automation gets executed immediately after getting triggered";
 const TEXT_BACK_ONLINE = "Back online";
 const TEXT_DISABLED = "Disabled";
 const TEXT_ENABLED = "Enabled";
@@ -59,8 +58,6 @@ const TEXT_DATE = "Date";
 const TEXT_DAYS = "Days";
 const TEXT_DEACTIVATE = "Deactivate";
 const TEXT_DEACTIVATE_TIME_WINDOW = "Deactivate time window";
-const TEXT_DELAY_INVERTED_AUTOMATION = "Delay inverted automation";
-const TEXT_DELAY_THIS_AUTOMATION = "Delay this automation";
 const TEXT_DELETE_AUTOMATION = "Delete automation";
 const TEXT_DELETE_DASHBOARD = "Delete dashboard";
 const TEXT_DELETE_GROUP = "Delete group";
@@ -113,11 +110,6 @@ const TEXT_HOSTNAME = "Hostname";
 const TEXT_ICON = "Icon";
 const TEXT_ICON_NOT_ACTIVE = "Icon not active";
 const TEXT_INVERTED = "Inverted";
-const TEXT_INVERTED_AUTOMATION_ENABLED = "Inverted automation enabled";
-const TEXT_INVERTED_AUTOMATION_POWER_COPY_ACTIVE = "Automation with inverted power active";
-const TEXT_INVERTED_AUTOMATION_POWER_COPY_INACTIVE = "Automation with inverted power inactive";
-const TEXT_INVERTED_AUTOMATION_STATES_COPY_ACTIVE = "Automation with inverted states (power and trigger) active";
-const TEXT_INVERTED_AUTOMATION_STATES_COPY_INACTIVE = "Automation with inverted states (power and trigger) inactive";
 const TEXT_IP = "IP";
 const TEXT_ITEM_ADDED_SUCCESSFULLY = "The item is added successfully";
 const TEXT_PROFILE_ADDED_SUCCESSFULLY = "The profile is added successfully";
@@ -143,7 +135,6 @@ const TEXT_MODE = "Mode";
 const TEXT_MODEL = "Model";
 const TEXT_MONDAY = "Monday";
 const TEXT_TIMER = "Timer";
-const TEXT_AUTOMATION_DELAY = "Automation delay";
 const TEXT_MY_ACCESSORY_NOT_FOUND = "My accessory is not shown here";
 const TEXT_NAME = "Name";
 const TEXT_NEW_DEACTIVATION_DEVICE = "New deactivation device";
@@ -291,7 +282,6 @@ function VAR_TEXT_ADD(name) {return "Add " + name;}
 function VAR_TEXT_UPDATE(name) {return "Update " + name;}
 
 function VAR_TEXT_ACTIVE_FROM(startTime, endTime) {return "Active from " + startTime + " until " + endTime;}
-function VAR_TEXT_AUTOMATION_DELAY_TIME(minutes) {return "The automation gets delayed with " + minutes + " minutes";}
 function VAR_TEXT_CONFIGURE_MODE(modeName) {return  "Configure " + modeName + " mode";}
 function VAR_TEXT_DELAY_BETWEEN(delay) {return "Delay of " + delay + " ms between actions";}
 function VAR_TEXT_FADE_DELAY(delay) {return "Fade delay of " + delay + " ms";}
@@ -436,7 +426,6 @@ const TEXT_ALARM_NOT_TRIGGERED_YET = "Alarm is not triggered yet";
 const TEXT_NO_RF_CODES_YET = "No RF codes received yet. Trigger the RF device you want to add";
 const TEXT_RF_CODES = "RF codes";
 const TEXT_SHOW_ALL_LOGS = "Show all logs";
-const TEXT_ADD_INVERTED_COPY = "Add inverted copy";
 const TEXT_PREVIOUS_MONTH = "Previous month";
 const TEXT_NEXT_MONTH = "Next month";
 const TEXT_NO_LOGS = "No logs yet";
@@ -444,3 +433,151 @@ const TEXT_CONFIGURE_MODE = "Configure mode";
 const TEXT_GRADIENT = "Gradient";
 const TEXT_COLOR_RANGE = "Color range"
 const TEXT_PREVIEW = "Preview";
+
+const TEXT_AUTOMATION_ACTION = "Action";
+const TEXT_AUTOMATION_ACTION_FAILURE = "If an action fails";
+const TEXT_AUTOMATION_ACTION_REQUIRED = "Add at least one action.";
+const TEXT_AUTOMATION_ACTION_TYPE = "Action type";
+const TEXT_AUTOMATION_ACTIONS_DESCRIPTION = "Actions run from top to bottom and can be reordered.";
+const TEXT_AUTOMATION_ACTIONS_TITLE = "What should happen?";
+const TEXT_AUTOMATION_ADD_ACTION = "Add action";
+const TEXT_AUTOMATION_ADD_CONDITION = "Add condition";
+const TEXT_AUTOMATION_ADD_TRIGGER = "Add trigger";
+const TEXT_AUTOMATION_ADVANCED_EXECUTION = "Advanced execution settings";
+const TEXT_AUTOMATION_ALL_GROUP_MEMBERS = "All group members";
+const TEXT_AUTOMATION_ALREADY_RUNNING = "If this automation is already running";
+const TEXT_AUTOMATION_ANY_GROUP_MEMBER = "Any group member";
+const TEXT_AUTOMATION_AT_TIME = "At";
+const TEXT_AUTOMATION_BECOMES = "becomes";
+const TEXT_AUTOMATION_BETWEEN = "Between";
+const TEXT_AUTOMATION_BRIDGE_UNAVAILABLE = "No compatible bridge or saved signal is available yet.";
+const TEXT_AUTOMATION_BUTTON_PRESSED = "Button is pressed";
+const TEXT_AUTOMATION_CHOOSE_MODE = "Choose a mode";
+const TEXT_AUTOMATION_CHOOSE_SOURCE = "Choose a source";
+const TEXT_AUTOMATION_CHOOSE_VALUE = "Choose a value";
+const TEXT_AUTOMATION_COMPLETE_CONDITION = "Complete this condition or remove it.";
+const TEXT_AUTOMATION_COMPLETE_TRIGGER = "Complete this trigger or remove it.";
+const TEXT_AUTOMATION_CONDITION = "Condition";
+const TEXT_AUTOMATION_CONDITION_TYPE = "Condition type";
+const TEXT_AUTOMATION_CONDITIONS = "Conditions";
+const TEXT_AUTOMATION_CONDITIONS_DESCRIPTION = "Every configured condition must be true.";
+const TEXT_AUTOMATION_CONDITIONS_OPTIONAL = "Conditions are optional. Continue without adding one.";
+const TEXT_AUTOMATION_CONDITIONS_TITLE = "Only run when...";
+const TEXT_AUTOMATION_CONTINUE = "Continue with the next action";
+const TEXT_AUTOMATION_CONTINUE_EDITING = "Continue editing";
+const TEXT_AUTOMATION_DEVICE_OR_GROUP = "Device or group";
+const TEXT_AUTOMATION_DEVICE_STATE = "Device or group state";
+const TEXT_AUTOMATION_DISCARD_CHANGES = "Discard changes";
+const TEXT_AUTOMATION_DOUBLE_PRESS = "Double press";
+const TEXT_AUTOMATION_DURATION_MINUTES = "Duration in minutes";
+const TEXT_AUTOMATION_DYNAMIC_GROUP_MEMBERSHIP =
+    "Group membership is evaluated when this automation runs.";
+const TEXT_AUTOMATION_EMPTY = "empty";
+const TEXT_AUTOMATION_ENABLE_IMMEDIATELY = "Enable this automation immediately";
+const TEXT_AUTOMATION_END_TIME = "End time";
+const TEXT_AUTOMATION_EQUALS = "Equals";
+const TEXT_AUTOMATION_EVENT = "Event";
+const TEXT_AUTOMATION_EXECUTABLE_ACTION_REQUIRED =
+    "Add at least one action that changes something.";
+const TEXT_AUTOMATION_FRIDAY_SHORT = "Fri";
+const TEXT_AUTOMATION_GENERAL = "General";
+const TEXT_AUTOMATION_GENERAL_DESCRIPTION =
+    "Use a clear name. Default settings suit most automations.";
+const TEXT_AUTOMATION_GENERAL_TITLE = "Name your automation";
+const TEXT_AUTOMATION_GREATER_THAN = "Greater than";
+const TEXT_AUTOMATION_GROUP_TRIGGER_BEHAVIOUR = "Group trigger behaviour";
+const TEXT_AUTOMATION_HOLD = "Hold";
+const TEXT_AUTOMATION_IGNORE_NEW = "Ignore the new run";
+const TEXT_AUTOMATION_INCOMPATIBLE_ACTION = "The selected target does not support this action.";
+const TEXT_AUTOMATION_INSIDE_WINDOW = "Only inside this time window";
+const TEXT_AUTOMATION_LESS_THAN = "Less than";
+const TEXT_AUTOMATION_MANUAL = "Manual";
+const TEXT_AUTOMATION_MANUAL_DESCRIPTION =
+    "This automation starts from a dashboard or external command.";
+const TEXT_AUTOMATION_MANUALLY_STARTED = "Started manually";
+const TEXT_AUTOMATION_MATCH_ALL = "All triggers within a time window";
+const TEXT_AUTOMATION_MATCH_ANY = "Any trigger (OR)";
+const TEXT_AUTOMATION_MEASUREMENT_CHANGES = "Measurement changes";
+const TEXT_AUTOMATION_MISSING_SOURCE = "Missing source";
+const TEXT_AUTOMATION_MONDAY_SHORT = "Mon";
+const TEXT_AUTOMATION_MOVE_DOWN = "Move action down";
+const TEXT_AUTOMATION_MOVE_UP = "Move action up";
+const TEXT_AUTOMATION_MULTIPLE_TRIGGERS = "When multiple triggers are configured";
+const TEXT_AUTOMATION_NEXT = "Next";
+const TEXT_AUTOMATION_NO_CONDITIONS = "No additional conditions";
+const TEXT_AUTOMATION_NOT_CONFIGURED = "Not configured";
+const TEXT_AUTOMATION_NOT_EQUALS = "Does not equal";
+const TEXT_AUTOMATION_NUMERIC_VALUE = "Numeric sensor value";
+const TEXT_AUTOMATION_ONLY_IF = "Only if";
+const TEXT_AUTOMATION_OPERATOR = "Operator";
+const TEXT_AUTOMATION_OUTSIDE = "Outside";
+const TEXT_AUTOMATION_OUTSIDE_WINDOW = "Only outside this time window";
+const TEXT_AUTOMATION_PARALLEL = "Run in parallel";
+const TEXT_AUTOMATION_PREVIOUS = "Previous";
+const TEXT_AUTOMATION_PROGRESS = "Automation setup progress";
+const TEXT_AUTOMATION_READY_TO_SAVE = "This automation is ready to save.";
+const TEXT_AUTOMATION_RECORD_CAMERA = "Start camera recording";
+const TEXT_AUTOMATION_RELEASE = "Release";
+const TEXT_AUTOMATION_REMOVE = "Remove";
+const TEXT_AUTOMATION_RESTART = "Restart the automation";
+const TEXT_AUTOMATION_REVIEW = "Review";
+const TEXT_AUTOMATION_REVIEW_DESCRIPTION = "Check the result in plain language before saving.";
+const TEXT_AUTOMATION_REVIEW_TITLE = "Review the automation";
+const TEXT_AUTOMATION_SATURDAY_SHORT = "Sat";
+const TEXT_AUTOMATION_SEND_IR = "Send IR signal";
+const TEXT_AUTOMATION_SEND_RF = "Send RF signal";
+const TEXT_AUTOMATION_SHORT_PRESS = "Short press";
+const TEXT_AUTOMATION_SIGNAL = "IR or RF signal";
+const TEXT_AUTOMATION_SIGNAL_RECEIVED = "A saved signal is received";
+const TEXT_AUTOMATION_SOURCE = "Source";
+const TEXT_AUTOMATION_SOURCE_TYPE = "Source type";
+const TEXT_AUTOMATION_START_TIME = "Start time";
+const TEXT_AUTOMATION_STATE_CHANGES = "State changes";
+const TEXT_AUTOMATION_STOP = "Stop the automation";
+const TEXT_AUTOMATION_SUNDAY_SHORT = "Sun";
+const TEXT_AUTOMATION_TARGETS = "Targets";
+const TEXT_AUTOMATION_TARGET_TYPE = "Target type";
+const TEXT_AUTOMATION_THEN = "Then";
+const TEXT_AUTOMATION_THURSDAY_SHORT = "Thu";
+const TEXT_AUTOMATION_TRIGGER = "Trigger";
+const TEXT_AUTOMATION_TRIGGER_REQUIRED = "Add at least one trigger.";
+const TEXT_AUTOMATION_TRIGGER_TYPE = "Trigger type";
+const TEXT_AUTOMATION_TUESDAY_SHORT = "Tue";
+const TEXT_AUTOMATION_UNSAVED_MESSAGE = "Discard the changes or continue editing.";
+const TEXT_AUTOMATION_UNSAVED_TITLE = "Unsaved automation changes";
+const TEXT_AUTOMATION_VALUE = "Value";
+const TEXT_AUTOMATION_WAIT = "Wait";
+const TEXT_AUTOMATION_WAIT_MINIMUM = "The wait duration must be at least one minute.";
+const TEXT_AUTOMATION_WEDNESDAY_SHORT = "Wed";
+const TEXT_AUTOMATION_WHEN = "When";
+const TEXT_AUTOMATION_WHEN_DESCRIPTION = "Choose one or more events that can start the automation.";
+const TEXT_AUTOMATION_WHEN_TITLE = "When should this automation start?";
+const TEXT_AUTOMATION_WINDOW_BEHAVIOUR = "Window behaviour";
+
+function VAR_TEXT_AUTOMATION_ACTION_SUMMARY(index, action, targets) {
+    return index + ". " + action + " — " + targets;
+}
+
+function VAR_TEXT_AUTOMATION_BECOMES(source, state) {
+    return source + " " + TEXT_AUTOMATION_BECOMES + " " + state;
+}
+
+function VAR_TEXT_AUTOMATION_GROUP_OPTION(name, memberCount) {
+    return name + " (" + memberCount + ")";
+}
+
+function VAR_TEXT_AUTOMATION_SOURCE_VALUE(source, value) {
+    return source + " " + value;
+}
+
+function VAR_TEXT_AUTOMATION_TIME(time) {
+    return TEXT_AUTOMATION_AT_TIME + " " + time;
+}
+
+function VAR_TEXT_AUTOMATION_TIME_WINDOW(startTime, endTime) {
+    return TEXT_AUTOMATION_BETWEEN + " " + startTime + "–" + endTime;
+}
+
+function VAR_TEXT_AUTOMATION_WAIT_SUMMARY(index, duration) {
+    return index + ". " + TEXT_AUTOMATION_WAIT + " " + duration + " " + TEXT_MINUTES;
+}

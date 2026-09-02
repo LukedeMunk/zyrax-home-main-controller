@@ -32,35 +32,16 @@ class AutomationEngine:
         self.action_handlers = {}
         self.condition_handlers = {}
 
-        self.register_action_handler(
-            c.AUTOMATION_ACTION_SET_DEVICE_POWER,
-            self._create_power_commands
-        )
-        self.register_action_handler(
-            c.AUTOMATION_ACTION_SET_LEDSTRIP_COLOR,
-            self._create_color_commands
-        )
-        self.register_action_handler(
-            c.AUTOMATION_ACTION_SET_LEDSTRIP_MODE,
-            self._create_mode_commands
-        )
-        self.register_action_handler(
-            c.AUTOMATION_ACTION_COMMAND,
-            self._create_capability_commands
-        )
+        self.register_action_handler(c.AUTOMATION_ACTION_SET_DEVICE_POWER, self._create_power_commands)
+        self.register_action_handler(c.AUTOMATION_ACTION_SET_LEDSTRIP_COLOR, self._create_color_commands)
+        self.register_action_handler(c.AUTOMATION_ACTION_SET_LEDSTRIP_MODE, self._create_mode_commands)
+        self.register_action_handler(c.AUTOMATION_ACTION_COMMAND, self._create_capability_commands)
+        self.register_action_handler("wait", self._create_wait_commands)
 
-        self.register_condition_handler(
-            "time_window",
-            self._check_time_window_condition
-        )
-        self.register_condition_handler(
-            "device_state",
-            self._check_device_state_condition
-        )
-        #self.register_condition_handler(
-        #    "minimum_temperature",
-        #    self._check_minimum_temperature_condition
-        #)
+        self.register_condition_handler("time_window", self._check_time_window_condition)
+        self.register_condition_handler("device_state", self._check_device_state_condition)
+        self.register_condition_handler("numeric", self._check_device_state_condition)
+        #self.register_condition_handler("minimum_temperature", self._check_minimum_temperature_condition)
 
     ############################################################################
     #
@@ -93,7 +74,8 @@ class AutomationEngine:
 
     ############################################################################
     #
-    #   @brief  Evaluates an event against indexed automation triggers.
+    #   @brief  Evaluates an event against indexed automation triggers and
+    #           conditions.
     #   @param  event               Event to evaluate
     #
     ############################################################################
@@ -103,7 +85,8 @@ class AutomationEngine:
 
         automations = db_util.get_automations_for_event(
             event.event_type,
-            event.source_id
+            event.source_id,
+            event.source_type
         )
 
         for automation in automations:
@@ -116,12 +99,10 @@ class AutomationEngine:
             if not self.conditions_match(automation, event.occurred_at):
                 continue
 
-            delay_seconds = int(automation.get("delay_minutes", 0)) * 60
             self.run_service.run_automation(
                 automation,
                 event=event,
-                source="event",
-                delay_seconds=delay_seconds
+                source="event"
             )
 
     ############################################################################
@@ -132,18 +113,18 @@ class AutomationEngine:
     #
     ############################################################################
     def get_time_automations(self, date_time):
-        automations = db_util.get_automations(
-            c.AUTOMATION_TRIGGER_TIMER,
-            True
-        )
+        automations = db_util.get_automations(EventType.TIME)
         current_day = date_time.weekday()
         current_time = date_time.strftime("%H:%M")
 
         return [
             automation for automation in automations
-            if automation["enabled"] and
-            current_day in automation["days"] and
-            automation["time"] == current_time
+            if automation["enabled"] and any(
+                trigger["type"] == EventType.TIME and
+                current_day in trigger["configuration"].get("days", []) and
+                trigger["configuration"].get("time") == current_time
+                for trigger in automation["triggers"]
+            )
         ]
 
     ############################################################################
@@ -186,9 +167,7 @@ class AutomationEngine:
             handler = self.action_handlers.get(action["type"])
 
             if handler is None:
-                raise ValueError(
-                    "Unsupported automation action: " + action["type"]
-                )
+                raise ValueError("Unsupported automation action: " + action["type"])
 
             commands.extend(handler(
                 action.get("configuration", {}),
@@ -221,25 +200,99 @@ class AutomationEngine:
                 continue
 
             configuration = trigger.get("configuration", {})
-            source_ids = configuration.get("source_ids", [])
-
-            if source_ids and int(event.source_id) not in [
-                    int(source_id) for source_id in source_ids]:
+            if trigger.get("source_type") == "device" and \
+                    trigger.get("source_id") is not None and \
+                    int(trigger["source_id"]) != int(event.source_id):
                 continue
+            if trigger.get("source_type") == "group":
+                group = db_util.get_group(trigger["source_id"])
+                if not group or int(event.source_id) not in group["device_ids"]:
+                    continue
 
             expected_state = configuration.get("state")
             if expected_state is not None and int(expected_state) != int(
                     event.payload.get("state", -1)):
                 continue
 
-            press_type = configuration.get("press_type")
-            if press_type is not None and press_type != event.payload.get(
-                    "press_type"):
+            expected_value = configuration.get("value")
+            if expected_value is not None and not self._compare(
+                    event.payload.get("value", event.payload.get("state")),
+                    expected_value,
+                    configuration.get("operator", "equals")):
                 continue
 
+            if trigger.get("source_type") == "group" and \
+                    configuration.get("group_match") == "all_members" and \
+                    expected_state is not None:
+                group = db_util.get_group(trigger["source_id"])
+
+                if not group:
+                    continue
+
+                devices = [db_util.get_device(device_id) for device_id in group["device_ids"]]
+
+                if not devices or not all(
+                        self._compare(device["state"], expected_state, "equals")
+                        for device in devices if device):
+                    
+                    continue
+
+            press_type = configuration.get("press_type")
+            if press_type is not None and press_type != event.payload.get("press_type"):
+                continue
+
+            if automation.get("trigger_match", "any") == "all":
+                return self._all_state_triggers_active(automation)
+            
             return True
 
         return False
+
+    ############################################################################
+    #
+    #   @brief  XXX
+    #
+    ############################################################################
+    def _all_state_triggers_active(self, automation):
+        for trigger in automation.get("triggers", []):
+            if trigger["type"] != EventType.DEVICE_STATE_CHANGED:
+                return False
+            
+            configuration = trigger.get("configuration", {})
+            source_ids = [trigger.get("source_id")]
+
+            if trigger.get("source_type") == "group":
+                group = db_util.get_group(trigger["source_id"])
+
+                if not group:
+                    return False
+                
+                source_ids = group["device_ids"]
+
+            devices = [db_util.get_device(source_id) for source_id in source_ids]
+            devices = [device for device in devices if device]
+
+            if not devices:
+                return False
+            
+            expected = configuration.get("state", configuration.get("value"))
+            matches = [
+                self._compare(
+                    device["state"],
+                    expected,
+                    configuration.get("operator", "equals")
+                )
+                for device in devices
+            ]
+
+            if trigger.get("source_type") == "group" and configuration.get("group_match") == "any_member":
+                if not any(matches):
+                    return False
+                
+            elif not all(matches):
+                return False
+            
+        return True
 
     ############################################################################
     #
@@ -271,13 +324,37 @@ class AutomationEngine:
     #   @return bool                True when the condition matches
     #
     ############################################################################
-    def _check_device_state_condition(self, configuration):
-        device = db_util.get_device(configuration["device_id"])
+    def _check_device_state_condition(self, configuration, occurred_at=None):
+        source_type = configuration.get("source_type", "device")
+        source_id = configuration["source_id"]
+        device_ids = [source_id]
+        if source_type == "group":
+            group = db_util.get_group(source_id)
+            if not group:
+                return False
+            device_ids = group["device_ids"]
+        values = [db_util.get_device(device_id) for device_id in device_ids]
+        values = [device for device in values if device]
+        expected = configuration.get("value")
+        operator = configuration.get("operator", "equals")
+        return bool(values) and all(
+            self._compare(device["state"], expected, operator)
+            for device in values
+        )
 
-        if not device:
-            return False
-
-        return int(device["state"]) == int(configuration["state"])
+    ############################################################################
+    #
+    #   @brief  XXX
+    #
+    ############################################################################
+    def _compare(self, actual, expected, operator):
+        if operator == "not_equals":
+            return str(actual) != str(expected)
+        if operator == "greater_than":
+            return float(actual) > float(expected)
+        if operator == "less_than":
+            return float(actual) < float(expected)
+        return str(actual) == str(expected)
     
     ############################################################################
     #
@@ -360,6 +437,24 @@ class AutomationEngine:
 
     ############################################################################
     #
+    #   @brief  XXX
+    #
+    ############################################################################
+    def _create_wait_commands(self, configuration, context):
+        return [Command(
+            capability=Capability.AUTOMATION_WAIT,
+            target_type="system",
+            target_id="scheduler",
+            parameters={
+                "duration_seconds": int(configuration["duration_minutes"]) * 60
+            },
+            context=context,
+            correlation_id=context.get("correlation_id"),
+            causation_id=context.get("causation_id")
+        )]
+
+    ############################################################################
+    #
     #   @brief  Creates one command for every action target.
     #   @param  capability          Command capability
     #   @param  configuration       Action configuration
@@ -370,8 +465,20 @@ class AutomationEngine:
     ############################################################################
     def _commands_for_targets(self, capability, configuration, parameters, context):
         commands = []
+        target_ids = configuration.get("target_ids", [])
 
-        for target_id in configuration.get("target_device_ids", []):
+        if configuration.get("target_type", "device") == "group":
+            target_ids = []
+
+            for group_id in configuration.get("target_ids", []):
+                group = db_util.get_group(group_id)
+
+                if not group or not group["device_ids"]:
+                    raise ValueError("Automation target group is missing or empty")
+                
+                target_ids.extend(group["device_ids"])
+
+        for target_id in dict.fromkeys(target_ids):
             commands.append(Command(
                 capability=capability,
                 target_type="device",
@@ -392,7 +499,12 @@ class AutomationEngine:
     #
     ############################################################################
     def _parameter_dictionary(self, configuration):
+        parameters = configuration.get("parameters", {})
+        
+        if isinstance(parameters, dict):
+            return parameters
+        
         return {
             parameter["name"]: parameter["value"]
-            for parameter in configuration.get("parameters", [])
+            for parameter in parameters
         }

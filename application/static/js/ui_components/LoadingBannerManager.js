@@ -1,14 +1,10 @@
 /******************************************************************************/
 /*
  * File:    LoadingBannerManager.js
- * Version: 0.9.0
  * Author:  Luke de Munk
  * 
  * Brief:   Loading banner manager class to manage the loading banner stack.
- *          Used to show loading and progress banners.
- * 
- *          More information:
- *          https://github.com/LukedeMunk/zyrax-home-main-controller
+ *          Used to show loading and progress banners. Read-only.
  * 
  * Template version:        0.0.4
  * Template information:    https://github.com/LukedeMunk/templates

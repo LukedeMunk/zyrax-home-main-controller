@@ -1,13 +1,9 @@
 /******************************************************************************/
 /*
  * File:    Overlay.js
- * Version: 0.9.0
  * Author:  Luke de Munk
  * 
- * Brief:   Overlay class to put overlays over pages and elements.
- * 
- *          More information:
- *          https://github.com/LukedeMunk/zyrax-home-main-controller
+ * Brief:   Overlay class to put overlays over pages and elements. Read-only.
  * 
  * Template version:        0.0.4
  * Template information:    https://github.com/LukedeMunk/templates

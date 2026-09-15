@@ -1,14 +1,10 @@
 /******************************************************************************/
 /*
  * File:    ModalForm.js
- * Version: 0.9.0
  * Author:  Luke de Munk
  * 
  * Brief:   Modal form class to generate modal forms. Provides additional
- *          features such as field validation.
- * 
- *          More information:
- *          https://github.com/LukedeMunk/zyrax-home-main-controller
+ *          features such as field validation. Read-only.
  * 
  * Template version:        0.0.4
  * Template information:    https://github.com/LukedeMunk/templates

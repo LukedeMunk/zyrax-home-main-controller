@@ -1,7 +1,6 @@
 /******************************************************************************/
 /*
  * File:    utility_globals.js
- * Version: 0.9.0
  * Author:  Luke de Munk
  * 
  * Brief:   Global code that handles global constants and variables.
@@ -10,19 +9,16 @@
  *          be rolled out without much work. Put all the global objects in
  *          'globals.js' and all the global functions in 'base.js'.
  * 
- *          More information:
- *          https://github.com/LukedeMunk/zyrax-home-main-controller
- * 
  * Template version:        0.0.4
  * Template information:    https://github.com/LukedeMunk/templates
  */
 /******************************************************************************/
 //#region Elements
 /* Deprecated loading-banner references kept for existing page code. */
-let loadingBannerElem = null;
-let loadingBannerMessageFieldElem = null;
-let loadingBannerProgressElem = null;
-let loadingBannerProgressBarElem = null;
+//let loadingBannerElem = null;
+//let loadingBannerMessageFieldElem = null;
+//let loadingBannerProgressElem = null;
+//let loadingBannerProgressBarElem = null;
 //#endregion
 
 //#region Constants

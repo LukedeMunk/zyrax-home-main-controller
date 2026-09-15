@@ -1,14 +1,10 @@
 /******************************************************************************/
 /*
  * File:    PasswordModalForm.js
- * Version: 0.9.0
  * Author:  Luke de Munk
  * 
  * Brief:   Password modal manager class to manage the password modal including
- *          password hints.
- * 
- *          More information:
- *          https://github.com/LukedeMunk/zyrax-home-main-controller
+ *          password hints. Read-only.
  * 
  * Template version:        0.0.4
  * Template information:    https://github.com/LukedeMunk/templates

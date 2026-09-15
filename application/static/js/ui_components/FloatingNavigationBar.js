@@ -1,14 +1,10 @@
 /******************************************************************************/
 /*
  * File:    FloatingNavigationBar.js
- * Version: 0.9.0
  * Author:  Luke de Munk
  * 
  * Brief:   Floating navigation bar class to handle the navigation troughout the
- *          application.
- * 
- *          More information:
- *          https://github.com/LukedeMunk/zyrax-home-main-controller
+ *          application. Read-only.
  * 
  * Template version:        0.0.4
  * Template information:    https://github.com/LukedeMunk/templates

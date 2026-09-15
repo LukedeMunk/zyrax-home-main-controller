@@ -1,13 +1,9 @@
 /******************************************************************************/
 /*
  * File:    PopupManager.js
- * Version: 0.9.0
  * Author:  Luke de Munk
  * 
- * Brief:   Popup manager class to put show popups and confirmations.
- * 
- *          More information:
- *          https://github.com/LukedeMunk/zyrax-home-main-controller
+ * Brief:   Popup manager class to put show popups and confirmations. Read-only.
  * 
  * Template version:        0.0.4
  * Template information:    https://github.com/LukedeMunk/templates

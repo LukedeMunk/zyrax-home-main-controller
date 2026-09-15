@@ -1,7 +1,6 @@
 /******************************************************************************/
 /*
  * File:    base_utilities.js
- * Version: 0.9.0
  * Author:  Luke de Munk
  * 
  * Brief:   Global code that handles global utility functions.
@@ -9,9 +8,6 @@
  *          This code must be seen as 'read-only', so that template updates can
  *          be rolled out without much work. Put all the global objects in
  *          'globals.js' and all the global functions in 'base.js'.
- * 
- *          More information:
- *          https://github.com/LukedeMunk/zyrax-home-main-controller
  * 
  * Template version:        0.0.4
  * Template information:    https://github.com/LukedeMunk/templates

@@ -1,14 +1,10 @@
 /******************************************************************************/
 /*
  * File:    Toolbar.js
- * Version: 0.9.0
  * Author:  Luke de Munk
  * 
  * Brief:   Toolbar class to manage toolbars. Used to show toolbars with various
- *          buttons, including a timed progress button.
- * 
- *          More information:
- *          https://github.com/LukedeMunk/zyrax-home-main-controller
+ *          buttons, including a timed progress button. Read-only.
  * 
  * Template version:        0.0.4
  * Template information:    https://github.com/LukedeMunk/templates

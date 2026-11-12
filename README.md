@@ -52,6 +52,7 @@ ZyraX Home is in early-stage of development, with continuous improvements planne
     - More than 16 fully customizable animations
     - 4 power animations
     - 10 color palettes
+    - Compatible with automations
     
 - **Over-The-Air LED strip updates:**
     - LED strip firmware can be updated remotely
@@ -255,4 +256,4 @@ When contributing to this repository, please read [CONTRIBUTING.md](CONTRIBUTING
 
 ## 12. Authors
 
-* **Luke de Munk** - Project maintainer - [Munk IT](munkservices.com) | [LinkedIn](https://www.linkedin.com/in/luke-de-munk/)
+* **Luke de Munk** - Project maintainer - [Munk IT](https://www.munkservices.com) | [LinkedIn](https://www.linkedin.com/in/luke-de-munk/)

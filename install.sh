@@ -66,6 +66,7 @@ required_files=(
     "$MAIN_SERVICE_FILE"
     "$APPLICATION_SOURCE_PATH/services/nginx_configuration"
     "$APPLICATION_SOURCE_PATH/static/images/favicon.ico"
+    "$APPLICATION_SOURCE_PATH/static/images/apple-touch-icon.png"
     "$REQUIREMENTS_FILE"
     "$APPLICATION_SOURCE_PATH/ConfigurationManager.py"
     #"$APPLICATION_SOURCE_PATH/populate_db.py"
@@ -237,11 +238,11 @@ install -d -o root -g root -m 755 "$TLS_DIRECTORY"
     if [ "$signing_key" != "$TLS_KEY" ] || \
        ! openssl x509 -in "$TLS_CERT" -noout -checkend 2592000 >/dev/null 2>&1 || \
        ! openssl x509 -in "$TLS_CERT" -noout -ext subjectAltName 2>/dev/null |
-           grep -Fq 'DNS:mastercontroller.local, DNS:localhost'; then
-        echo "Issuing a self-signed certificate for mastercontroller.local"
+           grep -Fq 'DNS:mastercontroller.home, DNS:mastercontroller.local, DNS:localhost'; then
+        echo "Issuing a self-signed certificate for mastercontroller.home"
         openssl req -x509 -sha256 -days 365 -key "$signing_key" \
-            -out "$tls_staging/zyrax.crt" -subj "/CN=mastercontroller.local" \
-            -addext "subjectAltName=DNS:mastercontroller.local,DNS:localhost" \
+            -out "$tls_staging/zyrax.crt" -subj "/CN=mastercontroller.home" \
+            -addext "subjectAltName=DNS:mastercontroller.home,DNS:mastercontroller.local,DNS:localhost" \
             -addext "basicConstraints=critical,CA:FALSE" \
             -addext "extendedKeyUsage=serverAuth"
         if [ "$signing_key" != "$TLS_KEY" ]; then
@@ -276,4 +277,4 @@ else
     systemctl start nginx
 fi
 
-echo "Installation complete. Access the app at https://mastercontroller.local/"
+echo "Installation complete. Access the app at https://mastercontroller.home/"

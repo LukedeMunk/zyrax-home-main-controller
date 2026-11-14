@@ -17,6 +17,7 @@ StandardOutput=journal
 StandardError=journal
 Environment="PATH=/etc/ZyraX_Home/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 EnvironmentFile=/etc/ZyraX_Home/keyring.env
+Environment="ZYRAX_BEHIND_NGINX=1"
 Environment="XDG_CONFIG_HOME=/var/lib/ZyraX_Home/data"
 Environment="XDG_CACHE_HOME=/var/lib/ZyraX_Home/data"
 Environment="XDG_DATA_HOME=/var/lib/ZyraX_Home/data"

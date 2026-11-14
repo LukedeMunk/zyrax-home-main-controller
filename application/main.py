@@ -18,6 +18,7 @@ import server_manager as sm
 from apscheduler.schedulers.background import BackgroundScheduler               #For checking RF codes and timed automations
 import database_utility as db_util                                              #Import utility for database functionality
 from routes.template_blueprints import initial_setup
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from threading import Thread                                                    #For threading
 import os                                                                       #For file handling
@@ -102,12 +103,16 @@ def before_http_requests():
 #
 ################################################################################
 if __name__ == "__main__":
+    behind_nginx = os.environ.get("ZYRAX_BEHIND_NGINX") == "1"
     sm.check_directories()
     sm.check_files()
     sm.initialize_flask_application()
     sm.check_microservices()
     sm.check_database()
     sm.register_blueprints()                                                    #Register the HTTP routes
+    if behind_nginx:
+        sm.app.wsgi_app = ProxyFix(sm.app.wsgi_app, x_for=1, x_proto=1)
+        sm.app.config["SESSION_COOKIE_SECURE"] = True
 
     with sm.app.app_context():
         accounts_in_database = len(db_util.get_accounts())
@@ -138,4 +143,9 @@ if __name__ == "__main__":
         if not c.PRODUCTION_MODE:
             logw(c.TEXT_SERVER_STARTED_IN_DEVELOPMENT_MODE)
             
-    sm.app.run(host="0.0.0.0", port=5000, debug=not c.PRODUCTION_MODE, threaded=True)
+    sm.app.run(
+        host="127.0.0.1" if behind_nginx else "0.0.0.0",
+        port=5000,
+        debug=not c.PRODUCTION_MODE and not behind_nginx,
+        threaded=True,
+    )

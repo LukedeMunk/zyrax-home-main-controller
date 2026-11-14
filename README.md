@@ -125,7 +125,7 @@ Use the schematic to connect the RF receiver to the Raspberry Pi, to be able to 
             * Password: Password of that network (To connect to a hidden WiFi network after flashing, use `sudo raspi-config nonint do_wifi_ssid_passphrase "SSID" "PASSWORD" 1`)
         * Enable SSH.
 2. Boot Raspberry Pi and [connect with ssh](https://www.putty.org/).
-    - Use `mastercontroller.local`
+    - Use `mastercontroller.home`
     - Or to find IP:
         * Connect to a monitor with HDMI, login and then: `ifconfig`
         * Install [Advanced IP scanner](https://www.advanced-ip-scanner.com/en/) and do a network scan. Make sure to use the right IP range.
@@ -134,13 +134,15 @@ Use the schematic to connect the RF receiver to the Raspberry Pi, to be able to 
 
 1. Download the latest [release](https://github.com/LukedeMunk/zyrax-home-main-controller/releases).
 2. Run `install.sh`:
-    - `sh install.sh`
+    - `sudo bash install.sh`
     - Unexpected end of file error? -> `sudo dos2unix install.sh`
-3. Navigate to [mastercontroller.local](mastercontroller.local)
+3. Navigate to [https://mastercontroller.home/](https://mastercontroller.home/).
 4. (Optional) To configure the weather API, check [Visual Crossing website](https://github.com/LukedeMunk/zyrax-home-main-controller/releases).
 5. (Optional) To configure the Telegram alarm messages, check the [Telegram](https://core.telegram.org/bots/api) documentation.
 
-> Note: When visiting [mastercontroller.local](mastercontroller.local), a browser security notification will appear because local SSL keys are being used. This warning can be safely ignored.
+Nginx redirects HTTP to `https://mastercontroller.home/`. The installer generates a private key on the Pi and stores it at `/etc/ssl/zyrax/zyrax.key`. It reuses the key on updates and reissues the self-signed certificate when it lacks the configured DNS names or expires within 30 days.
+
+Browsers will warn until they trust the certificate. Copy the public certificate `/etc/ssl/zyrax/zyrax.crt` from the Pi over SSH and trust it for this site in your browser or operating system. Keep the private key on the Pi. After certificate renewal, update the trusted certificate on clients that pinned the previous one. For example, to verify HTTPS with curl using the copied certificate, run `curl --cacert zyrax.crt -I https://mastercontroller.home/`.
 
 > Note: Running into problems? Go to **8. Throubleshooting**.
 

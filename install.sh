@@ -64,6 +64,8 @@ echo "ZyraX Home main controller installer initializing"
 required_files=(
     "$MAIN_FILE"
     "$MAIN_SERVICE_FILE"
+    "$APPLICATION_SOURCE_PATH/services/nginx_configuration"
+    "$APPLICATION_SOURCE_PATH/static/images/favicon.ico"
     "$REQUIREMENTS_FILE"
     "$APPLICATION_SOURCE_PATH/ConfigurationManager.py"
     #"$APPLICATION_SOURCE_PATH/populate_db.py"
@@ -116,6 +118,13 @@ elif ! command -v rsync >/dev/null 2>&1; then
     echo "Run the installer again and select the full installation option." >&2
     exit 69
 fi
+
+for dependency in nginx openssl; do
+    if ! command -v "$dependency" >/dev/null 2>&1; then
+        echo "$dependency is required. Run the installer with the full installation option." >&2
+        exit 69
+    fi
+done
 
 echo "Stopping ZyraX Home services"
 systemctl stop "${SERVICES[@]}" 2>/dev/null || true
@@ -209,54 +218,49 @@ for service in "${SERVICES[@]}"; do
         "/etc/systemd/system/$service"
 done
 
-if [[ "$full_install" =~ ^[Yy]$ ]]; then
-    echo "Creating a self-signed TLS certificate"
-    install -d -o root -g root -m 755 /etc/ssl/zyrax
+echo "Configuring Nginx and local TLS"
+TLS_DIRECTORY="/etc/ssl/zyrax"
+TLS_KEY="$TLS_DIRECTORY/zyrax.key"
+TLS_CERT="$TLS_DIRECTORY/zyrax.crt"
+install -d -o root -g root -m 755 "$TLS_DIRECTORY"
 
-    if [ ! -f /etc/ssl/zyrax/zyrax.key ] || \
-       [ ! -f /etc/ssl/zyrax/zyrax.crt ]; then
-        openssl req -x509 -nodes -days 365 \
-            -newkey rsa:2048 \
-            -keyout /etc/ssl/zyrax/zyrax.key \
-            -out /etc/ssl/zyrax/zyrax.crt \
-            -subj "/C=NL/ST=State/L=City/O=ZyraX Home/OU=IT/CN=localhost"
+(
+    umask 077
+    tls_staging="$(mktemp -d "$TLS_DIRECTORY/.tls-XXXXXX")"
+    trap 'rm -f "$tls_staging/zyrax.key" "$tls_staging/zyrax.crt"; rmdir "$tls_staging"' EXIT
+    signing_key="$TLS_KEY"
+    if [ ! -s "$TLS_KEY" ]; then
+        signing_key="$tls_staging/zyrax.key"
+        openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out "$signing_key"
     fi
 
-    chown root:root /etc/ssl/zyrax/zyrax.key /etc/ssl/zyrax/zyrax.crt
-    chmod 600 /etc/ssl/zyrax/zyrax.key
-    chmod 644 /etc/ssl/zyrax/zyrax.crt
+    if [ "$signing_key" != "$TLS_KEY" ] || \
+       ! openssl x509 -in "$TLS_CERT" -noout -checkend 2592000 >/dev/null 2>&1 || \
+       ! openssl x509 -in "$TLS_CERT" -noout -ext subjectAltName 2>/dev/null |
+           grep -Fq 'DNS:mastercontroller.local, DNS:localhost'; then
+        echo "Issuing a self-signed certificate for mastercontroller.local"
+        openssl req -x509 -sha256 -days 365 -key "$signing_key" \
+            -out "$tls_staging/zyrax.crt" -subj "/CN=mastercontroller.local" \
+            -addext "subjectAltName=DNS:mastercontroller.local,DNS:localhost" \
+            -addext "basicConstraints=critical,CA:FALSE" \
+            -addext "extendedKeyUsage=serverAuth"
+        if [ "$signing_key" != "$TLS_KEY" ]; then
+            mv -f "$signing_key" "$TLS_KEY"
+        fi
+        chmod 644 "$tls_staging/zyrax.crt"
+        mv -f "$tls_staging/zyrax.crt" "$TLS_CERT"
+    fi
+)
 
-    rm -f /etc/nginx/sites-enabled/default
+chown root:root "$TLS_KEY" "$TLS_CERT"
+chmod 600 "$TLS_KEY"
+chmod 644 "$TLS_CERT"
 
-    cat > /etc/nginx/sites-available/zyrax <<'EOF'
-server {
-    listen 443 ssl;
-    server_name localhost;
-
-    ssl_certificate /etc/ssl/zyrax/zyrax.crt;
-    ssl_certificate_key /etc/ssl/zyrax/zyrax.key;
-
-    location / {
-        proxy_pass http://127.0.0.1:5000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-
-    client_max_body_size 50M;
-}
-
-server {
-    listen 80;
-    server_name localhost;
-    return 301 https://$host$request_uri;
-}
-EOF
-
-    ln -sf /etc/nginx/sites-available/zyrax /etc/nginx/sites-enabled/zyrax
-    nginx -t
-fi
+install -o root -g root -m 644 "$INSTALL_PATH/services/nginx_configuration" \
+    /etc/nginx/sites-available/zyrax
+ln -sfn /etc/nginx/sites-available/zyrax /etc/nginx/sites-enabled/zyrax
+rm -f /etc/nginx/sites-enabled/default
+nginx -t
 
 echo "Validating installed Python sources"
 "$VENV_PATH/bin/python3" -m compileall -q "$INSTALL_PATH"
@@ -265,9 +269,11 @@ systemctl daemon-reload
 systemctl enable "${SERVICES[@]}"
 systemctl restart "${SERVICES[@]}"
 
-if command -v nginx >/dev/null 2>&1; then
-    systemctl enable nginx
-    systemctl restart nginx
+systemctl enable nginx
+if systemctl is-active --quiet nginx; then
+    systemctl reload nginx
+else
+    systemctl start nginx
 fi
 
 echo "Installation complete. Access the app at https://mastercontroller.local/"

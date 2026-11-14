@@ -12,7 +12,7 @@
 ################################################################################
 import configuration as c
 import database_utility as db_util
-from logger import logi
+from logger import logi, logw
 
 from automation.domain import Capability, Event, EventType
 
@@ -145,16 +145,18 @@ class RfInputAdapter:
     #
     ############################################################################
     def refresh(self):
-        self.code_lookup = {}
+        code_lookup = {}
         devices = self.device_manager.get_devices_dict(
             type=c.DEVICE_TYPE_RF_DEVICE
         )
 
         for device in devices:
             for code in device.get("rf_codes", []):
-                self.code_lookup.setdefault(
+                code_lookup.setdefault(
                     int(code["rf_code"]), []
-                ).append((device, code))
+                ).append((device["id"], code["type"]))
+
+        self.code_lookup = code_lookup
 
     ############################################################################
     #
@@ -166,6 +168,7 @@ class RfInputAdapter:
     def receive_code(self, rf_code):
         rf_code = int(rf_code)
         matches = self.code_lookup.get(rf_code, [])
+        logi(f"[RF] Received code={rf_code} mappings={len(matches)}")
 
         self.event_dispatcher.publish(Event(
             event_type=EventType.RF_CODE_RECEIVED,
@@ -174,11 +177,16 @@ class RfInputAdapter:
             payload={"rf_code": rf_code, "matched_devices": len(matches)}
         ))
 
-        for device, code in matches:
-            handler = self.code_handlers.get(code["type"])
+        for device_id, code_type in matches:
+            handler = self.code_handlers.get(code_type)
+            if handler is None:
+                logw(f"[RF] Unsupported code type={code_type} code={rf_code} device={device_id}")
+                continue
 
-            if handler is not None:
-                handler(device)
+            device = db_util.get_device(device_id)
+            logi(f"[RF] Matched code={rf_code} device={device_id} "
+                 f"handler={handler.__name__.lstrip('_')} current_state={device['state']}")
+            handler(device)
 
         return len(matches) > 0
 
@@ -190,6 +198,7 @@ class RfInputAdapter:
     ############################################################################
     def _activate(self, device):
         if device["state"]:
+            logi(f"[RF] Device={device['id']} already active")
             return
 
         db_util.add_sensor_triggered(device["id"])
@@ -204,6 +213,7 @@ class RfInputAdapter:
     ############################################################################
     def _deactivate(self, device):
         if not device["state"]:
+            logi(f"[RF] Device={device['id']} already inactive")
             return
 
         self.device_manager.set_rf_device_state(device["id"], False)

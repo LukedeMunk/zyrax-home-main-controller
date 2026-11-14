@@ -561,9 +561,13 @@ class DeviceManager:
             state = not rf_device["state"]
         
         if rf_device["state"] == state:
+            logi(f"[RF] Device={id} state={int(state)} unchanged")
             return
         
-        db_util.update_device(id, {"state" : state})
+        result = db_util.update_device(id, {"state" : state})
+        if result is not True:
+            loge(f"[RF] Device={id} could not save state={int(state)}: {result}")
+            return
 
         #Check alarm and automations
         if state:
@@ -593,8 +597,11 @@ class DeviceManager:
 
         #Update device
         if state != sensor["state"]:
+            result = db_util.update_device(id, {"state" : state})
+            if result is not True:
+                loge(f"[RF] Device={id} could not save motion state={int(state)}: {result}")
+                return
             state_changed = True
-            db_util.update_device(id, {"state" : state})
 
         #If state, after 15 seconds of no signal, state is off
         if state:
@@ -606,6 +613,7 @@ class DeviceManager:
             self.check_alarm(id)
         
         if not state_changed:
+            logi(f"[RF] Device={id} motion state={int(state)} unchanged")
             return
         
         self.check_sensor_automations(id, state)
@@ -751,6 +759,7 @@ class DeviceManager:
     #
     ################################################################################
     def check_sensor_automations(self, id, state):
+        logi(f"[RF] Device={id} state changed to {int(state)}")
         self.event_dispatcher.publish(Event(
             event_type=EventType.DEVICE_STATE_CHANGED,
             source_type="device",

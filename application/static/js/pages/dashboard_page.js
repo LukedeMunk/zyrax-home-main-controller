@@ -1148,16 +1148,16 @@ function updateGroupTileStates(tile) {
         }
     }
 
-    if (document.getElementById("deviceGroupPowerCb" + group.id) != undefined) {
-        document.getElementById("deviceGroupPowerCb" + group.id).checked = group.power;
+    if (document.getElementById("tile" + group.id + "LedstripPowerCb") != undefined) {
+        document.getElementById("tile" + group.id + "LedstripPowerCb").checked = group.power;
     }
 
-    if (document.getElementById("ledstripGroupBrightnessRange" + group.id) != undefined) {
-        document.getElementById("ledstripGroupBrightnessRange" + group.id).value = group.brightness;
+    if (document.getElementById("tile" + group.id + "LedstripRange") != undefined) {
+        document.getElementById("tile" + group.id + "LedstripRange").value = group.brightness;
     }
 
-    if (document.getElementById("deviceGroupIcon" + group.id) != undefined) {
-        document.getElementById("deviceGroupIcon" + group.id).className = group.icon;// + " fa-xl";
+    if (document.getElementById("tile" + group.id + "LedstripIcon") != undefined) {
+        document.getElementById("tile" + group.id + "LedstripIcon").className = group.icon;// + " fa-xl";
     }
 }
 

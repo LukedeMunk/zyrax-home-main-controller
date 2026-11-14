@@ -15,6 +15,7 @@ from datetime import datetime
 
 import configuration as c
 import database_utility as db_util
+from logger import logi, logw
 
 from automation.domain import Capability, Command, EventType
 
@@ -81,6 +82,7 @@ class AutomationEngine:
     ############################################################################
     def handle_event(self, event):
         if self.run_service is None:
+            logw(f"[Automation] Event={event.id} ignored: run service unavailable")
             return
 
         automations = db_util.get_automations_for_event(
@@ -88,17 +90,23 @@ class AutomationEngine:
             event.source_id,
             event.source_type
         )
+        trace = f"[Automation] Event={event.id}"
+        logi(f"{trace} type={event.event_type} source={event.source_type}:{event.source_id} "
+             f"payload={event.payload} enabled_candidates={len(automations)}")
 
         for automation in automations:
             if not automation["enabled"]:
                 continue
 
             if not self._triggers_match(automation, event):
+                logi(f"{trace} automation={automation['id']} skipped: triggers did not match")
                 continue
 
             if not self.conditions_match(automation, event.occurred_at):
+                logi(f"{trace} automation={automation['id']} skipped: conditions did not match")
                 continue
 
+            logi(f"{trace} automation={automation['id']} matched")
             self.run_service.run_automation(
                 automation,
                 event=event,
@@ -212,6 +220,8 @@ class AutomationEngine:
             expected_state = configuration.get("state")
             if expected_state is not None and int(expected_state) != int(
                     event.payload.get("state", -1)):
+                logi(f"[Automation] Event={event.id} automation={automation['id']} "
+                     f"state mismatch expected={expected_state} actual={event.payload.get('state')}")
                 continue
 
             expected_value = configuration.get("value")

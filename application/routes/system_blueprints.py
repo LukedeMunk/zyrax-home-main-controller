@@ -76,7 +76,7 @@ def set_ledstrip_sensor_state():
     ledstrip = dm.get_ledstrip_by_ip(request.remote_addr)
 
     if ledstrip is None:
-        loge("Ledstrip sensor state not changed, ledstirp not found")
+        loge("Ledstrip sensor state not changed, ledstrip not found")
         return generate_json_http_response(c.HTTP_CODE_BAD_REQUEST)
     
     logi("Ledstrip sensor state changed")

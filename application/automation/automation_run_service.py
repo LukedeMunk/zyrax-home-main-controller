@@ -88,11 +88,12 @@ class AutomationRunService:
         
         current_date_time = datetime.now(c.TIME_ZONE)
 
-        logi("run_automation")
+        trace = f"[Automation] automation={automation['id']} source={source} event={event.id if event else None}"
         concurrency_policy = automation.get("concurrency_policy", c.AUTOMATION_CONCURRENCY_RESTART)
         active_run = db_util.get_active_automation_run(automation["id"])
 
         if concurrency_policy == c.AUTOMATION_CONCURRENCY_SINGLE and active_run is not None:
+            logi(f"{trace} skipped: run={active_run['id']} already active")
             return (True, active_run["id"])
 
         if concurrency_policy == c.AUTOMATION_CONCURRENCY_RESTART:
@@ -121,9 +122,11 @@ class AutomationRunService:
         })
 
         if not result[0]:
+            loge(f"{trace} could not create run: {result[1]}")
             return result
 
         run_id = result[1]
+        logi(f"{trace} run={run_id} scheduled_for={scheduled_for.isoformat()}")
 
         if scheduled_for <= current_date_time:
             self.execute_run(run_id)
@@ -153,12 +156,14 @@ class AutomationRunService:
             "correlation_id": run.get("correlation_id"),
             "causation_id": run.get("event_id")
         }
+        trace = f"[Automation] automation={automation['id']} run={run_id}"
 
         try:
             commands = self.automation_engine.create_commands(
                 automation,
                 context
             )
+            logi(f"{trace} executing commands={len(commands)}")
 
             command_errors = []
 
@@ -169,6 +174,8 @@ class AutomationRunService:
                 )
 
                 try:
+                    logi(f"{trace} action={action_run_id} capability={command.capability} "
+                         f"target={command.target_type}:{command.target_id}")
                     if command.capability == Capability.AUTOMATION_WAIT:
                         sleep(command.parameters["duration_seconds"])
                     else:
@@ -178,6 +185,7 @@ class AutomationRunService:
                         c.AUTOMATION_RUN_STATUS_COMPLETED
                     )
                 except Exception as exception:
+                    loge(f"{trace} action={action_run_id} failed: {exception}")
                     db_util.finish_automation_action_run(
                         action_run_id,
                         c.AUTOMATION_RUN_STATUS_FAILED,
@@ -194,13 +202,13 @@ class AutomationRunService:
                 return False
 
             db_util.finish_automation_run(run_id, c.AUTOMATION_RUN_STATUS_COMPLETED)
-            logi(c.VAR_TEXT_AUTOMATION_EXECUTED.format(automation["name"]))
+            logi(f"{trace} completed: " + c.VAR_TEXT_AUTOMATION_EXECUTED.format(automation["name"]))
             return True
 
         except Exception as exception:
             error = str(exception)
             db_util.finish_automation_run(run_id, c.AUTOMATION_RUN_STATUS_FAILED, error)
-            loge("Automation execution failed: " + error)
+            loge(f"{trace} failed: {error}")
             return False
 
     ############################################################################

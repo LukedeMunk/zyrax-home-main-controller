@@ -625,7 +625,7 @@ class ModalForm {
             tileElem.classList.toggle("tile-selected", tile.selected);
         }
 
-        const oldContainerElem = document.getElementById(blockId + "Fieldset");
+        const oldContainerElem = document.getElementById(block.blockId);
         if (oldContainerElem == null) {
             console.warn("Old block not found");
             return;
@@ -686,10 +686,11 @@ class ModalForm {
         }
 
         const newContainerElem = this.#renderTileSelectBlock(block);
+        const tileSelectElem = newContainerElem.querySelector(".tile-select-container");
 
         for (let tile of tiles) {
             tile.style.marginBottom = "10px";
-            newContainerElem.appendChild(tile);
+            tileSelectElem.appendChild(tile);
         }
 
         oldContainerElem.replaceWith(newContainerElem);

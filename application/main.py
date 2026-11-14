@@ -52,13 +52,14 @@ def check_received_rf_codes():
     if received_timestamp == rf_timestamp:
         return
     
-    last_code_timestamp = rf_code_timestamps.get(received_code, 0)
-    if received_timestamp - last_code_timestamp < 250000:
+    rf_timestamp = received_timestamp
+    last_code_timestamp = rf_code_timestamps.get(received_code)
+    if last_code_timestamp is not None and received_timestamp - last_code_timestamp < 250000:
+        logi(f"[RF] Debounced code={received_code} timestamp_us={received_timestamp}")
         return                                                                  #Debounce code for 250ms
 
-    rf_timestamp = received_timestamp                                           #Save timestamp for debouncing
-    rf_code_timestamps[received_code] = rf_timestamp
-    sm.last_received_rf_codes[rf_timestamp] = received_code
+    rf_code_timestamps[received_code] = received_timestamp
+    sm.last_received_rf_codes[received_timestamp] = received_code
     dm.process_rf_signal(received_code)
 
 ################################################################################

@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block body_class %}devices-page{% endblock %}
+{% block page_styles %}
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/styles_device_catalog.css') }}">
+{% endblock %}
+{% block page_title %}{% endblock %}
+{% block content %}
+<script>
+    page = DEVICES_PAGE;
+    const CATALOG_MODELS = {{ DEVICE_MODELS | tojson }};
+    const CATALOG_RF_TYPE = {{ DEVICE_TYPE_RF_DEVICE | tojson }};
+    const CATALOG_IR_TYPE = {{ DEVICE_TYPE_IR_DEVICE | tojson }};
+    const CATALOG_RF_TAP_MODEL = {{ RF_SWITCH_MODEL_ID_TAP | tojson }};
+    const CATALOG_LEDSTRIP_TYPE = {{ DEVICE_TYPE_LEDSTRIP | tojson }};
+</script>
+<script src="../static/js/ui_components/DeviceCatalogView.js" defer></script>
+<script src="../static/js/ui_components/WizardDialog.js" defer></script>
+<script src="../static/js/pages/devices_page.js" defer></script>
+
+<div id="deviceCatalogContainer" class="device-catalog" lang="en">
+    <aside class="catalog-sidebar">
+        <div class="catalog-brand"><i class="fa-solid fa-bolt"></i> ZyraX
+            <small>HOME</small>
+        </div>
+
+        <nav class="catalog-navigation" data-catalog-aria-label="TEXT_CATALOG_DEVICE_MANAGEMENT">
+            <button id="catalogDevicesBtn" type="button">
+                <i class="fa-solid fa-microchip"></i> <span data-catalog-text="TEXT_CATALOG_DEVICES"></span>
+            </button>
+            <button id="catalogBridgesBtn" type="button">
+                <i class="fa-solid fa-network-wired"></i> <span data-catalog-text="TEXT_CATALOG_BRIDGES"></span>
+            </button>
+        </nav>
+        <div class="catalog-home">
+            <strong><span data-catalog-text="TEXT_CATALOG_MY_HOME"></span></strong><br>
+            <small id="catalogHostField"></small>
+        </div>
+    </aside>
+
+    <main class="catalog-main">
+        <header class="catalog-row catalog-heading">
+            <div><h1 id="catalogTitle"><span data-catalog-text="TEXT_CATALOG_DEVICES"></span></h1>
+                <small id="catalogSubtitleField"></small></div>
+            <button id="addCatalogDeviceBtn" class="catalog-primary" type="button">
+                <i class="fa-solid fa-plus"></i> <span data-catalog-text="TEXT_CATALOG_ADD_DEVICE"></span>
+            </button>
+        </header>
+        <div class="catalog-summary">
+            <div><small id="catalogCountTitle"><span data-catalog-text="TEXT_CATALOG_DEVICES"></span></small>
+                <strong id="catalogCountField">–</strong></div>
+            <div><small><span data-catalog-text="TEXT_CATALOG_ROOMS"></span></small><strong id="catalogRoomsField">–</strong></div>
+            <div><small><span data-catalog-text="TEXT_CATALOG_CONTROLLER"></span></small>
+                <strong id="catalogStatusField" role="status" data-catalog-text="TEXT_CATALOG_CONNECTING"></strong></div>
+        </div>
+        <div id="catalogCategoriesContainer" class="catalog-tabs"
+             data-catalog-aria-label="TEXT_CATALOG_CATEGORIES"></div>
+        <div class="catalog-filters">
+            <input id="catalogSearchTxt" type="search" data-catalog-aria-label="TEXT_CATALOG_SEARCH_DEVICES"
+                   data-catalog-placeholder="TEXT_CATALOG_SEARCH_BY_NAME_OR_ROOM">
+            <select id="catalogRoomSelect" data-catalog-aria-label="TEXT_CATALOG_FILTER_BY_ROOM"></select>
+            <select id="catalogConnectionSelect" data-catalog-aria-label="TEXT_CATALOG_FILTER_BY_CONNECTION"></select>
+        </div>
+        <p id="deviceCatalogField" class="catalog-empty" role="status" hidden></p>
+        <div id="catalogCardsContainer" class="catalog-grid"></div>
+    </main>
+</div>
+<dialog id="catalogWizardDialog" class="catalog-dialog" lang="en"
+        aria-labelledby="catalogWizardTitle"></dialog>
+{% endblock %}

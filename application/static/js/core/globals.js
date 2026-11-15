@@ -116,6 +116,39 @@ const ICONS_L = [
     "fa-duotone fa-solid fa-booth-curtain fa-lg"
 ]
 
+const ICONS_M = [
+    "fa-duotone fa-solid fa-door-open",
+    "fa-duotone fa-solid fa-door-closed",
+    "fa-duotone fa-solid fa-window-frame",
+    "fa-duotone fa-solid fa-window-frame-open",
+    "fa-duotone fa-solid fa-camera-cctv",
+    "fa-duotone fa-solid fa-lightbulb",
+    "fa-duotone fa-solid fa-lightbulb-on",
+    "fa-duotone fa-solid fa-person",
+    "fa-duotone fa-solid fa-person-walking",
+    "fa-duotone fa-solid fa-person-rays",
+    "fa-duotone fa-solid fa-layer-group",
+    "fa-duotone fa-solid fa-sensor",
+    "fa-duotone fa-solid fa-film",
+    "fa-duotone fa-solid fa-list",
+    "fa-duotone fa-solid fa-gear",
+    "fa-duotone fa-solid fa-house",
+    "fa-duotone fa-solid fa-fort",
+    "fa-duotone fa-solid fa-hotel",
+    "fa-duotone fa-solid fa-car-building",
+    "fa-duotone fa-solid fa-building",
+    "fa-duotone fa-solid fa-restroom",
+    "fa-duotone fa-solid fa-user-minus",
+    "fa-duotone fa-solid fa-clock",
+    "fa-duotone fa-solid fa-computer-speaker",
+    "fa-duotone fa-solid fa-projector",
+    "fa-duotone fa-solid fa-sitemap",
+    "fa-duotone fa-solid fa-radar",
+    "fa-duotone fa-solid fa-books",
+    "fa-duotone fa-solid fa-warehouse",
+    "fa-duotone fa-solid fa-booth-curtain"
+]
+
 const AUTOMATION_ICONS = [
     {action: "set_device_power", icon: "fa-duotone fa-solid fa-power-off fa-lg"},
     {action: "set_ledstrip_color", icon: "fa-duotone fa-solid fa-palette fa-lg"},
@@ -229,6 +262,14 @@ const NAVIGATION_BAR_CONFIGURATION = {
     id: "navBar",
     location: "bottom",
     buttons: [
+        {
+            id: "devicesNavBtn",
+            type: NAVIGATION_BUTTON_PAGE,
+            pages: [DEVICES_PAGE],
+            text: TEXT_DEVICES,
+            link: "./devices",
+            icon: "fa-duotone fa-solid fa-microchip"
+        },
         {
             id: "automationsNavBtn",
             title: "",

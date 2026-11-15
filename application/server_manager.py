@@ -159,12 +159,41 @@ class Device(db.Model):
     __tablename__ = "Device"
     id = db.Column(db.Integer, primary_key=True)
     integration_id = db.Column(db.Integer, db.ForeignKey("Integration.id", ondelete="SET NULL"))
-    location_id = db.Column(db.Integer, nullable=False, default=-1)
+    location_id = db.Column(db.Integer, db.ForeignKey("Location.id", ondelete="SET NULL"))
+    parent_device_id = db.Column(
+        db.Integer, db.ForeignKey("Device.id", ondelete="RESTRICT"), index=True
+    )
+    role = db.Column(db.String(10), nullable=False, default="device")
+    __table_args__ = (
+        db.CheckConstraint("role IN ('device', 'bridge')"),
+        db.CheckConstraint("role = 'device' OR parent_device_id IS NULL"),
+        db.CheckConstraint("id <> parent_device_id"),
+        db.CheckConstraint(
+            f"type <> {c.DEVICE_TYPE_RF_DEVICE} OR parent_device_id IS NULL"
+        ),
+    )
     name = db.Column(db.String(50), unique=True, nullable=False)
     icon = db.Column(db.String(50), nullable=False, default="fa-duotone fa-solid fa-microchip")
     type = db.Column(db.Integer, nullable=False)
     model_id = db.Column(db.Integer, nullable=False)##
     category = db.Column(db.Integer, nullable=False)##
+
+class BridgeHost(db.Model):
+    __tablename__ = "BridgeHost"
+    device_id = db.Column(db.Integer, db.ForeignKey("Device.id", ondelete="CASCADE"), primary_key=True)
+    hostname = db.Column(db.String(253), nullable=False, unique=True)
+
+
+class BridgeCode(db.Model):
+    __tablename__ = "BridgeCode"
+    bridge_id = db.Column(db.Integer, db.ForeignKey("BridgeHost.device_id", ondelete="CASCADE"), primary_key=True)
+    device_id = db.Column(db.Integer, db.ForeignKey("Device.id", ondelete="CASCADE"), primary_key=True)
+    code_id = db.Column(db.String(20), primary_key=True)
+    name = db.Column(db.String(50), nullable=False)
+    medium = db.Column(db.String(2), nullable=False)
+    frame = db.Column(db.JSON, nullable=False)
+    code_type = db.Column(db.Integer)
+
 
 class Entity(db.Model):
     __tablename__ = "Entity"
@@ -473,6 +502,7 @@ def register_blueprints():
     from routes.dashboard_blueprints import dashboard_bp
     from routes.data_blueprints import data_bp
     from routes.device_blueprints import device_bp
+    from routes.bridge_blueprints import bridge_bp
     from routes.group_blueprints import group_bp
     from routes.ledstrip_blueprints import ledstrip_bp
     from routes.logs_blueprints import logs_bp
@@ -488,6 +518,7 @@ def register_blueprints():
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(data_bp)
     app.register_blueprint(device_bp)
+    app.register_blueprint(bridge_bp)
     app.register_blueprint(group_bp)
     app.register_blueprint(ledstrip_bp)
     app.register_blueprint(logs_bp)
@@ -505,6 +536,10 @@ def _create_database():
     db.create_all()
 
     generate_ledstrip_mode_parameters()
+    db.session.add_all([
+        Integration(name="ZyraX LAN devices", type="existing_devices"),
+        Integration(name="ZyraX RF input", type="rf_input")
+    ])
     
     color_mode = Mode(name="Color")
     fade_mode = Mode(name="Fade")
@@ -583,6 +618,23 @@ def check_database():
             _create_database()    
             
     _check_database_state()
+    with app.app_context():
+        BridgeHost.__table__.create(db.engine, checkfirst=True)
+        BridgeCode.__table__.create(db.engine, checkfirst=True)
+        if "parent_device_id" in {
+            column["name"] for column in inspect(db.engine).get_columns("Device")
+        }:
+            converted = Device.query.filter_by(role="hub").update({
+                Device.role: "bridge",
+                Device.type: c.DEVICE_TYPE_BRIDGE,
+                Device.category: c.DEVICE_CATEGORY_BRIDGE
+            })
+            count = Device.query.filter(
+                Device.type == c.DEVICE_TYPE_RF_DEVICE,
+                Device.parent_device_id.is_not(None)
+            ).update({Device.parent_device_id: None})
+            if count or converted:
+                db.session.commit()
 
 ################################################################################
 #

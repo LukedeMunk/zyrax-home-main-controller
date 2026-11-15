@@ -35,6 +35,9 @@ class Ledstrip:
         self.brightness = init_dict["brightness"]
         self.mode = init_dict["mode"]
         self.power_animation = init_dict["power_animation"]
+        self.reported_power = None
+        self.reported_brightness = None
+        self.reported_mode = None
         self.model_id = init_dict["model_id"]
         self.has_sensor = init_dict["has_sensor"]
         self.sensor_inverted = init_dict["sensor_inverted"]
@@ -158,7 +161,7 @@ class Ledstrip:
         
     ################################################################################
     #
-    #   @brief  Downloads the states from the ledstrip.
+    #   @brief  Refreshes reported state without changing desired settings.
     #   @return bool                    True if successful
     #
     ################################################################################
@@ -171,17 +174,9 @@ class Ledstrip:
         
         state_dict = {}
 
-        if int(result[1]["power"]) != self.power:
-            self.power = int(result[1]["power"])
-            state_dict["power"] = self.power
-
-        if int(result[1]["brightness"]) != self.brightness:
-            self.brightness = int(result[1]["brightness"])
-            state_dict["brightness"] = self.brightness
-
-        if int(result[1]["mode"]) != self.mode:
-            self.mode = int(result[1]["mode"])
-            state_dict["mode"] = self.mode
+        self.reported_power = int(result[1]["power"])
+        self.reported_brightness = int(result[1]["brightness"])
+        self.reported_mode = int(result[1]["mode"])
 
         if int(result[1]["sd_card_inserted"]) != self.sd_card_inserted:
             self.sd_card_inserted = int(result[1]["sd_card_inserted"])
@@ -333,6 +328,7 @@ class Ledstrip:
     #
     #   @brief  Updates the power.
     #   @param  power                   On(1)/Off(0)
+    #   @param  by_sensor_automation    Whether a sensor automation set power
     #   @return bool                    True if successful
     #
     ################################################################################
@@ -444,7 +440,9 @@ class Ledstrip:
         parameters["mode"] = int(mode_id)
 
         if start_mode:
-            db_util.update_device(self.id, {"mode": mode_id})
+            if not db_util.update_device(self.id, {"mode": mode_id})[0]:
+                return False
+            self.mode = int(mode_id)
             parameters["start_mode"] = 1
 
         result = self.send_post_command(c.CMD_CONFIG_MODE, parameters)

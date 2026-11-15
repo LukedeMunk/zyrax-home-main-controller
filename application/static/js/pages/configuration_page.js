@@ -196,7 +196,7 @@ $(document).ready(function() {
 */
 /******************************************************************************/
 function generateDeviceDetailTiles() {
-    devicesContainerElem.innerHTML = "";
+    //devicesContainerElem.innerHTML = "";
 
     let index = 0;
     for (let category of DEVICE_CATEGORIES) {
@@ -227,7 +227,7 @@ function generateDeviceDetailTiles() {
 
         for (let device of devices) {
             if (device.category == index) {
-                devicesContainerElem.appendChild(containerElem);        //First device, create column
+                //devicesContainerElem.appendChild(containerElem);        //First device, create column
                 break;
             }
         }
@@ -236,7 +236,9 @@ function generateDeviceDetailTiles() {
     }
 
     for (let device of devices) {
-        generateDeviceTile(device);
+        if (!device.role || device.role === "device") {
+            generateDeviceTile(device);
+        }
     }
     
     const containerElem = document.createElement("div");
@@ -250,7 +252,7 @@ function generateDeviceDetailTiles() {
     titleElem.textContent = TEXT_GROUPS;
     containerElem.appendChild(titleElem);
 
-    devicesContainerElem.appendChild(containerElem);
+    //devicesContainerElem.appendChild(containerElem);
     
     for (let group of groups) {
         generateGroupTile(group);

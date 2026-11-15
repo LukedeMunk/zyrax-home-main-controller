@@ -30,7 +30,7 @@ from urllib.parse import quote                                                  
 #   @param  device_id           Device ID
 #
 ################################################################################
-def add_default_mode_parameters(device_id):
+def add_default_mode_parameters(device_id, commit=True):
     for mode in c.LEDSTRIP_MODES:
         for parameter in mode["parameters"]:
             db_parameter = ModeHasModeParameter(
@@ -43,7 +43,8 @@ def add_default_mode_parameters(device_id):
 
             db.session.add(db_parameter)
 
-    db.session.commit()
+    if commit:
+        db.session.commit()
     
 ################################################################################
 #

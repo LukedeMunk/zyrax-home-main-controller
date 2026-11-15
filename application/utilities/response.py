@@ -11,7 +11,7 @@
 #
 ################################################################################
 import configuration as c                                                       #Import application configuration variables
-from flask import render_template                                               #To render a Flask HTML template
+from flask import Response, render_template
 import json                                                                     #For generating JSON response strings
 
 
@@ -20,15 +20,19 @@ import json                                                                     
 #   @brief  Generates a JSON response string based on HTTP code and message.
 #   @param  http_code           The HTTP response code
 #   @param  message             Optional response message
-#   @return                     JSON response string
+#   @param  use_http_status     Send the code as the HTTP status as well
+#   @return str | Response      Serialized JSON or a Flask JSON response
 #
 ################################################################################
-def generate_json_http_response(http_code, message=""):
+def generate_json_http_response(http_code, message="", use_http_status=False):
     response = {
         "status_code": http_code,
         "message": message
     }
-    return json.dumps(response)
+    payload = json.dumps(response)
+    if use_http_status:
+        return Response(payload, status=http_code, mimetype="application/json")
+    return payload
 
 ################################################################################
 #

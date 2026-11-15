@@ -42,6 +42,7 @@ const SEGMENT_TYPE_INACTIVE = 0;
 const SEGMENT_TYPE_LED = 1;
 
 const PAGES = [AUTOMATIONS_PAGE,
+                DEVICES_PAGE,
                 DASHBOARD_PAGE,
                 CONFIGURATION_PAGE,
                 LEDSTRIP_PAGE,
@@ -666,7 +667,7 @@ function loadIconOptions(buttonElementId, fieldElementId, modalId) {
     }
 
     let iconOptions = []
-    for (let icon of ICONS_XL) {
+    for (let icon of ICONS_M) {
         iconOptions.push({
             icon: icon,
             onclickFunction: () => pickIcon(icon, modalObject, buttonElementId, fieldElementId)

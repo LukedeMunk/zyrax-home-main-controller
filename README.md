@@ -214,7 +214,12 @@ Below is a roadmap for the ZyraX Home main controller, highlighting the key vers
 | **Version**   | **Expected release**  | **Key features**                      |
 |-------------  |---------------------- |------------------------------------   |
 | v0.9.0 Beta   | 11-2025               | First public test release                                                 |
-| v1.0.0        | 01-2026               | Improved security                                                         |
+| v0.10.0 Beta  | 12-2026               | Tap-to-run dashboard shortcut and automation, multiple actions            |
+|               |                       | Improved device pairing using bluetooth                                   |
+|               |                       | Improved device and automation architecture                               |
+|               |                       | Added support for IR devices                                              |
+|               |                       | [IR, RF & Zigbee bridge]() support                                        |
+| v1.0.0        | 2027                  | Improved security                                                         |
 |               |                       | Improved LED strip addressing configuration UI                            |
 |               |                       | Improved LED strip addressing, real-time LED feedback                     |
 |               |                       | Real-time LED feedback. Capable of showing real-time LED states in the UI |
@@ -222,27 +227,23 @@ Below is a roadmap for the ZyraX Home main controller, highlighting the key vers
 |               |                       | Improved OTA LED strip update functionality                               |
 |               |                       | Improved alarm functionality & security                                   |
 |               |                       | Device location and location based automation targets                     |
-|               |                       | Tap-to-run dashboard shortcut and automation, multiple actions            |
 |               |                       | Scenarios: create color scenarios for LED strip groups                    |
 |               |                       | Sender verification (by hash) for HTTPS commands                          |
 |               |                       | Real-time LED strips synchronization                                      |
-|               |                       | Configurable number of buttons for RF remotes                             |
-| v1.1.0        | 2026                  | Alarm functionality & security improvements                               |
+| v1.1.0        | 2027                  | Alarm functionality & security improvements                               |
 |               |                       | RF power outlet support                                                   |
-|               |                       | [RF & Zigbee bridge]() support                                            |
 |               |                       | [Athom GU10 bulb](https://www.athom.tech/blank-1/wled-gu10-rgbcw) support |
 |               |                       | [iOS app]() integration                                                   |
 |               |                       | Alarm notifications over MQTT (only with iOS app)                         |
 |               |                       | Auto arm/disarm alarm by geofencing (only with iOS app)                   |
-|               |                       | Automatic bluetooth LED strip configuration                               |
-| v1.2.0        | 2026                  | Data insights (sensor data, actuator data)                                |
+| v1.2.0        | 2027                  | Data insights (sensor data, actuator data)                                |
 |               |                       | Advanced automation programming. No-code block based programming          |
 |               |                       | Added modes to LED strip scenarios                                        |
-| v1.3.0        | 2026                  | [IP camera]() support                                                     |
+| v1.3.0        | 2027                  | [IP camera]() support                                                     |
 |               |                       | Custom LED strip mode creation                                            |
-| v1.4.0        | 2026                  | Smart scenarios based on machine learning                                 |
-| v1.5.0        | 2026                  | AI chatbot for controlling the system                                     |
-| v1.6.0        | 2026                  | AI voice control integration                                              |
+| v1.4.0        | 2027                  | Smart scenarios based on machine learning                                 |
+| v1.5.0        | 2027                  | AI chatbot for controlling the system                                     |
+| v1.6.0        | 2027                  | AI voice control integration                                              |
 | v1.7.0        | 2027                  | [ElectriControl]() support                                                |
 |               |                       | Improved data insights                                                    |
 |               |                       | Added data insights for energy consumption                                |

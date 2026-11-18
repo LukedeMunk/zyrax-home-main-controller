@@ -10,7 +10,6 @@
     let logs = JSON.parse('{{ logs | tojson | safe }}');
 
     const LEDSTRIP_SENSOR_MODELS = JSON.parse('{{ LEDSTRIP_SENSOR_MODELS | tojson | safe }}');
-    const DEVICE_TYPES = JSON.parse('{{ DEVICE_TYPES | tojson | safe }}');
     const DEVICE_CATEGORIES = JSON.parse('{{ DEVICE_CATEGORIES | tojson | safe }}');
     const DEVICE_MODELS = JSON.parse('{{ DEVICE_MODELS | tojson | safe }}');
     
@@ -57,17 +56,6 @@
     <div id="manualDevicePairContainer" style="display: none;">
     </div>
 </dialog>
-
-<div class="container-form">
-    <div class="base-container">
-        <div style="display: flex; gap: 10px; align-items: baseline; justify-content: center;">
-            <h2 style="margin-top: 0px;">Configure devices</h2>
-            <i class="fa-duotone fa-solid fa-plus clickable" onclick="loadDeviceModal();"></i>
-        </div>
-
-        <div id="devicesContainer" style="display: flex; justify-content: space-evenly; flex-wrap: wrap; gap: 10px;"></div>
-    </div>
-</div>
 
 <div class="container-form">
     <div class="base-container">

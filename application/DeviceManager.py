@@ -25,6 +25,9 @@ import network_scanner
 from TelegramServiceClient import TelegramServiceClient
 from automation import (AdapterRegistry, AutomationEngine,
                         AutomationRunService, Event, EventDispatcher, EventType)
+from automation.adapter_registry import AdapterRoutingError
+from automation.domain import Capability, Command
+from Bridge import BridgeCommandAdapter
 from automation.device_adapters import DeviceCommandAdapter, RfInputAdapter
 
 class DeviceManager:
@@ -61,7 +64,7 @@ class DeviceManager:
             base_url=c.TELEGRAM_SERVICE_URL,
             api_key=c.dynamic_config.microservice_key
         )
-        self.adapter_registry = AdapterRegistry()
+        self.adapter_registry = AdapterRegistry(self._resolve_command_adapter)
         self.event_dispatcher = EventDispatcher()
         self.automation_engine = AutomationEngine(self.adapter_registry)
         self.automation_run_service = AutomationRunService(
@@ -80,6 +83,7 @@ class DeviceManager:
             self.device_command_adapter
         )
         self.adapter_registry.register("rf_input", self.rf_input_adapter)
+        self.adapter_registry.register("bridge", BridgeCommandAdapter())
 
     ################################################################################
     #
@@ -118,14 +122,13 @@ class DeviceManager:
     #   @brief  Sets the power of the specified device.
     #   @param  id                  Device ID
     #   @param  power               On (1) / Off (0)
+    #   @param  by_sensor_automation Whether a sensor automation requested the change
+    #   @return bool                True if the adapter sent the command successfully
     #
     ################################################################################
     def set_device_power(self, id, power, by_sensor_automation=False):
-        device = db_util.get_device(id)
-        db_util.update_device(id, {"power" : power})
-
-        if device["type"] == c.DEVICE_TYPE_LEDSTRIP:
-            self._get_ledstrip(id).set_power(power, by_sensor_automation)
+        context = {"by_sensor": by_sensor_automation, "skip_unchanged": False}
+        return self._execute_device_command(id, Capability.POWER_SET, {"power": power}, context)
 
     ################################################################################
     #
@@ -138,17 +141,13 @@ class DeviceManager:
     ################################################################################
     def get_devices_dict(self, update_states=False, type=None):
         devices = db_util.get_devices(type)
-
-        if not update_states or (type is not None and type != c.DEVICE_TYPE_LEDSTRIP):
-            return devices
-        
-        for device in devices:
-            if device["type"] == c.DEVICE_TYPE_LEDSTRIP:
-                thread_update_states = Thread(target=self._download_ledstrip_states, args=(device["id"],))
-                thread_update_states.start()
-        
+        if update_states:
+            for device in devices:
+                command = Command(Capability.STATE_REFRESH, "device", device["id"])
+                if self.adapter_registry.has_capability(command.capability, command):
+                    Thread(target=self._refresh_device, args=(command,)).start()
         return devices
-    
+
     ################################################################################
     #
     #   @brief  Returns the specified device.
@@ -159,14 +158,11 @@ class DeviceManager:
     #
     ################################################################################
     def get_device_dict(self, update_states=False, id=None):
-        if not update_states:
-            device = db_util.get_device(id)
-            return device
-        
-        self._get_ledstrip(id, update_states)
-        
-        device = db_util.get_device(id)
-        return device
+        if update_states:
+            command = Command(Capability.STATE_REFRESH, "device", id)
+            if self.adapter_registry.has_capability(command.capability, command):
+                self._refresh_device(command)
+        return db_util.get_device(id)
 
     ################################################################################
     #
@@ -175,8 +171,10 @@ class DeviceManager:
     #
     ################################################################################
     def delete_device(self, id):
-        db_util.delete_device(id)
-        self.load_devices()
+        result = db_util.delete_device(id)
+        if result[0]:
+            self.load_devices()
+        return result
 
     ################################################################################
     #
@@ -186,8 +184,10 @@ class DeviceManager:
     #
     ################################################################################
     def update_device(self, id, config_dict):
-        db_util.update_device(id, config_dict)
-        self.load_devices()
+        result = db_util.update_device(id, config_dict)
+        if result[0]:
+            self.load_devices()
+        return result
     
     ################################################################################
     #
@@ -333,12 +333,16 @@ class DeviceManager:
     ################################################################################
     def _synchronize_ledstrip_thread(self, id):
         ledstrip_db = db_util.get_device(id=id)
-        ledstrip = self._get_ledstrip(id, True)
+        ledstrip = self._get_ledstrip(id)
+        if ledstrip is None or not self._refresh_device(Command(Capability.STATE_REFRESH, "device", id)):
+            return
 
         if not ledstrip.connection_status:
             return
         
-        ledstrip_config = self._get_ledstrip(id).download_configuration()[1]
+        success, ledstrip_config = ledstrip.download_configuration()
+        if not success:
+            return
 
         if ledstrip_db["id"] != ledstrip_config["id"]:
             ledstrip.set_id(ledstrip.id)
@@ -359,7 +363,7 @@ class DeviceManager:
             ledstrip.update_led_addressing()
 
         if ledstrip_db["power_animation"] != ledstrip_config["power_animation"]:
-            ledstrip.set_power_animation(ledstrip.power_animation)
+            ledstrip.set_power_animation(ledstrip_db["power_animation"])
 
         if ledstrip_db["firmware_version"] != ledstrip_config["firmware_version"]:
             db_util.update_device(id, {"firmware_version": ledstrip_config["firmware_version"]})
@@ -389,12 +393,12 @@ class DeviceManager:
                 time.sleep(0.1)
                 continue
 
-        if ledstrip_db["mode"] != ledstrip.mode:
-            ledstrip.set_mode(ledstrip.mode)
-        if ledstrip_db["brightness"] != ledstrip.brightness:
-            ledstrip.set_brightness(ledstrip.brightness)
-        if ledstrip_db["power"] != ledstrip.power:
-            ledstrip.set_power(ledstrip.power)
+        if ledstrip_db["mode"] != ledstrip.reported_mode:
+            ledstrip.set_mode(ledstrip_db["mode"])
+        if ledstrip_db["brightness"] != ledstrip.reported_brightness:
+            ledstrip.set_brightness(ledstrip_db["brightness"])
+        if ledstrip_db["power"] != ledstrip.reported_power:
+            ledstrip.set_power(ledstrip_db["power"], ledstrip.power_setted_by_sensor)
         if ledstrip_db["sensor_state"] != ledstrip.sensor_state:
             db_util.update_device(id, {"sensor_state": ledstrip.sensor_state})
 
@@ -405,13 +409,12 @@ class DeviceManager:
     #   @brief  Sets the brightness of the specified ledstrip.
     #   @param  id                  Device ID
     #   @param  brightness          Brightness to set (0-255)
+    #   @return bool                True if the adapter sent the command successfully
     #
     ################################################################################
     def set_ledstrip_brightness(self, id, brightness):
-        db_util.update_device(id, {"brightness" : brightness})
+        return self._execute_device_command(id, Capability.BRIGHTNESS_SET, {"brightness": brightness})
 
-        self._get_ledstrip(id).set_brightness(brightness)
-        
     ################################################################################
     #
     #   @brief  Returns the color of the specified ledstrip.
@@ -428,48 +431,46 @@ class DeviceManager:
     #   @brief  Sends the drawn LEDs in the UI to the specified ledstrip.
     #   @param  id                  Device ID
     #   @param  leds                List of colors for the ledstrip
+    #   @return bool                True if the adapter sent the preview
     #
     ################################################################################
     def realtime_ledstrip_coloring(self, id, leds):
-        self._get_ledstrip(id).realtime_ledstrip_coloring(leds)
+        return self._execute_device_command(id, Capability.PIXELS_PREVIEW, {"leds": leds})
 
     ################################################################################
     #
     #   @brief  Sets the color of the specified ledstrip.
     #   @param  id                  Device ID
     #   @param  color               Color to set (HEX string)
+    #   @return bool                True if the adapter sent the command successfully
     #
     ################################################################################
     def set_ledstrip_color(self, id, color):
-        color_parameter = [{
-            "id": c.PARAMETER_ID_COLOR1,
-            "value1" : color
-        }]
-
-        db_util.configure_ledstrip_mode(c.LEDSTRIP_MODE_ID_COLOR, id, color_parameter)
-        self._get_ledstrip(id).send_mode_configuration(c.LEDSTRIP_MODE_ID_COLOR)
+        return self._execute_device_command(id, Capability.COLOR_SET, {"color": color})
 
     ################################################################################
     #
     #   @brief  Sets the mode of the specified ledstrip.
     #   @param  id                  Device ID
     #   @param  mode                Mode to set
+    #   @return bool                True if the adapter sent the command successfully
     #
     ################################################################################
     def set_ledstrip_mode(self, id, mode):
-        db_util.update_device(id, {"mode" : mode})
-        self._get_ledstrip(id).set_mode(mode)
-    
+        return self._execute_device_command(id, Capability.MODE_SET, {"mode": mode})
+
     ################################################################################
     #
     #   @brief  Sets the power animation of the specified ledstrip.
     #   @param  id                  Device ID
     #   @param  power_animation     Power animation to set
+    #   @return bool                True if the adapter sent the command successfully
     #
     ################################################################################
     def set_ledstrip_power_animation(self, id, power_animation):
-        db_util.update_device(id, {"power_animation" : power_animation})
-        self._get_ledstrip(id).set_power_animation(power_animation)
+        return self._execute_device_command(
+            id, Capability.POWER_ANIMATION_SET, {"power_animation": power_animation}
+        )
 
     ################################################################################
     #
@@ -477,11 +478,13 @@ class DeviceManager:
     #   @param  mode_id             Mode to configure
     #   @param  device_id           Device ID
     #   @param  config_list         Dictionary list of configuration parameters
+    #   @return bool                True if the adapter sent the mode configuration
     #
     ################################################################################
     def configure_ledstrip_mode(self, mode_id, device_id, config_list):
-        db_util.configure_ledstrip_mode(mode_id, device_id, config_list)
-        self._get_ledstrip(device_id).send_mode_configuration(mode_id)
+        return self._execute_device_command(
+            device_id, Capability.MODE_CONFIGURE, {"mode": mode_id, "configuration": config_list}
+        )
 
     ################################################################################
     #
@@ -492,13 +495,10 @@ class DeviceManager:
     #
     ################################################################################
     def configure_ledstrip_group_mode(self, mode_id, group_id, config_list):
-        group = db_util.get_group(id=group_id)
-
-        for device_id in group["device_ids"]:
-            device = db_util.get_device(device_id)
-            if device["type"] == c.DEVICE_TYPE_LEDSTRIP:
-                db_util.configure_ledstrip_mode(mode_id, device_id, config_list)
-                self._get_ledstrip(device_id).send_mode_configuration(mode_id)
+        self._execute_group_command(
+            db_util.get_group(id=group_id), Capability.MODE_CONFIGURE,
+            {"mode": mode_id, "configuration": config_list}
+        )
 
     ################################################################################
     #
@@ -536,8 +536,8 @@ class DeviceManager:
     #   @param  rf_code             RF code to process
     #
     ################################################################################
-    def process_rf_signal(self, rf_code):
-        return self.rf_input_adapter.receive_code(rf_code)
+    def process_rf_signal(self, rf_code, source_id=None):
+        return self.rf_input_adapter.receive_code(rf_code, source_id)
 #endregion
 
 #region Sensor functionality
@@ -565,7 +565,7 @@ class DeviceManager:
             return
         
         result = db_util.update_device(id, {"state" : state})
-        if result is not True:
+        if not result[0]:
             loge(f"[RF] Device={id} could not save state={int(state)}: {result}")
             return
 
@@ -598,7 +598,7 @@ class DeviceManager:
         #Update device
         if state != sensor["state"]:
             result = db_util.update_device(id, {"state" : state})
-            if result is not True:
+            if not result[0]:
                 loge(f"[RF] Device={id} could not save motion state={int(state)}: {result}")
                 return
             state_changed = True
@@ -630,13 +630,9 @@ class DeviceManager:
     def set_device_group_power(self, id, power):
         group = db_util.get_group(id=id)
 
-        if c.DEVICE_TYPE_RF_DEVICE in group["types"] or c.DEVICE_TYPE_IP_CAMERA in group["types"]:
-            logw("RF devices and cameras cannot be turned off")
-        
-        for device_id in group["device_ids"]:
-            device = db_util.get_device(device_id)
-            if device["type"] != c.DEVICE_TYPE_RF_DEVICE and device["type"] != c.DEVICE_TYPE_IP_CAMERA:
-                self.set_device_power(device_id, power)
+        self._execute_group_command(
+            group, Capability.POWER_SET, {"power": power}, {"skip_unchanged": False}
+        )
 
         if power == 1:
             logi("Group [" + group["name"] + "] turned on")
@@ -660,10 +656,8 @@ class DeviceManager:
             
         group = db_util.get_group(id=id)
         
-        for device_id in group["device_ids"]:
-            device = db_util.get_device(device_id)
-            if device["type"] == c.DEVICE_TYPE_LEDSTRIP:
-                self.set_ledstrip_brightness(device_id, brightness)
+        self._execute_group_command(group, Capability.BRIGHTNESS_SET, {"brightness": brightness})
+
 
     ################################################################################
     #
@@ -675,10 +669,8 @@ class DeviceManager:
     def set_ledstrip_group_color(self, id, color):
         group = db_util.get_group(id=id)
 
-        for device_id in group["device_ids"]:
-            device = db_util.get_device(device_id)
-            if device["type"] == c.DEVICE_TYPE_LEDSTRIP:
-                self.set_ledstrip_color(device_id, color)
+        self._execute_group_command(group, Capability.COLOR_SET, {"color": color})
+
 
     ################################################################################
     #
@@ -690,10 +682,8 @@ class DeviceManager:
     def set_ledstrip_group_mode(self, id, mode):
         group = db_util.get_group(id=id)
 
-        for device_id in group["device_ids"]:
-            device = db_util.get_device(device_id)
-            if device["type"] == c.DEVICE_TYPE_LEDSTRIP:
-                self.set_ledstrip_mode(device_id, mode)
+        self._execute_group_command(group, Capability.MODE_SET, {"mode": mode})
+
 
     ################################################################################
     #
@@ -705,10 +695,8 @@ class DeviceManager:
     def set_ledstrip_group_power_animation(self, id, power_animation):
         group = db_util.get_group(id=id)
         
-        for device_id in group["device_ids"]:
-            device = db_util.get_device(device_id)
-            if device["type"] == c.DEVICE_TYPE_LEDSTRIP:
-                self.set_ledstrip_power_animation(device_id, power_animation)
+        self._execute_group_command(group, Capability.POWER_ANIMATION_SET, {"power_animation": power_animation})
+
 #endregion
 
 #region Automation functionality
@@ -817,45 +805,121 @@ class DeviceManager:
 #endregion
 
 #region Ledstrip database functionality
-    ################################################################################
+    ############################################################################
     #
-    #   @brief  Downloads the states of the specified ledstrip.
-    #   @param  id                  Device ID
+    #   @brief  Resolves a device or entity command to its integration adapter.
+    #   @param  command             Command identifying the target and capability
+    #   @return str | None          Adapter key
     #
-    ################################################################################
-    def _download_ledstrip_states(self, id):
-        self._get_ledstrip(id, True)
-    
+    ############################################################################
+    def _resolve_command_adapter(self, command):
+        try:
+            target_id = int(command.target_id)
+        except (TypeError, ValueError) as error:
+            raise AdapterRoutingError(f"Invalid target ID: {command.target_id}") from error
+
+        target = db_util.get_command_target(command.target_type, target_id)
+        if target is None:
+            raise AdapterRoutingError(f"Target not found: {command.target_type}:{target_id}")
+        if not target["is_enabled"]:
+            raise AdapterRoutingError(f"Integration is disabled for {command.target_type}:{target_id}")
+
+        adapter_name = target["integration_type"]
+        capabilities = target["capabilities"]
+        if target["is_configured_bridge"] and command.target_type == "device":
+            adapter_name = "bridge"
+            capabilities.update((Capability.RF_SEND, Capability.IR_SEND))
+        medium = {Capability.RF_SEND: "rf", Capability.IR_SEND: "ir"}.get(command.capability)
+        if medium in target["bridge_transmit_media"]:
+            adapter_name = "bridge"
+            capabilities.add(command.capability)
+        if command.capability == Capability.POWER_SET and target["has_bridge_power"]:
+            adapter_name = "bridge"
+            capabilities.add(command.capability)
+        # Existing LED controller records predate the complete capability list.
+        is_builtin_ledstrip = (
+            target["device_type"] == c.DEVICE_TYPE_LEDSTRIP and
+            adapter_name in (None, "existing_devices")
+        )
+        if is_builtin_ledstrip:
+            adapter_name = "existing_devices"
+            if command.target_type == "device" or target["is_main_entity"]:
+                capabilities.update(Capability.LEDSTRIP)
+
+        if command.capability not in capabilities:
+            raise AdapterRoutingError(
+                f"{command.target_type}:{target_id} does not support {command.capability}"
+            )
+        return adapter_name
+
+    ############################################################################
+    #
+    #   @brief  Dispatches a command from a public device control method.
+    #   @param  device_id           Device ID
+    #   @param  capability          Requested operation
+    #   @param  parameters          Command values
+    #   @param  context             Optional execution context
+    #   @return                     Adapter result
+    #
+    ############################################################################
+    def _execute_device_command(self, device_id, capability, parameters, context=None):
+        return self.adapter_registry.execute(
+            Command(capability, "device", device_id, parameters, context or {})
+        )
+
+    ############################################################################
+    #
+    #   @brief  Dispatches a command to supported group members.
+    #   @param  group               Device group
+    #   @param  capability          Requested operation
+    #   @param  parameters          Command values
+    #   @param  context             Optional execution context
+    #
+    ############################################################################
+    def _execute_group_command(self, group, capability, parameters, context=None):
+        for device_id in group["device_ids"]:
+            command = Command(capability, "device", device_id, parameters, context or {})
+            if self.adapter_registry.has_capability(capability, command):
+                self.adapter_registry.execute(command)
+
+    ############################################################################
+    #
+    #   @brief  Refreshes device status, tolerating targets removed during polling.
+    #   @param  command             Status refresh command
+    #   @return bool                True when the adapter refreshed the device
+    #
+    ############################################################################
+    def _refresh_device(self, command):
+        try:
+            return self.adapter_registry.execute(command)
+        except AdapterRoutingError as error:
+            logw(str(error))
+            return False
+
     ################################################################################
     #
     #   @brief  Returns the specified ledstrip object.
     #   @param  id                  Device ID
-    #   @param  update_states       If True, the states get downloaded
     #   @return Ledstrip            Ledstrip object, or None
     #
     ################################################################################
-    def _get_ledstrip(self, id, update_states=False):
+    def _get_ledstrip(self, id):
         for ledstrip in self.ledstrips:
             if ledstrip.id == id:
-                if update_states:
-                    ledstrip.download_states()
-                    
                 return ledstrip
             
         return None
     
     ################################################################################
     #
-    #   @brief  Returns the ledstrips in a list of dictionaries.
-    #   @param  id          ID of the ledstrip to return
-    #   @return ledstrips   Dicts of ledstrips
+    #   @brief  Returns the specified ledstrip and optionally refreshes its status.
+    #   @param  id                  ID of the ledstrip to return
+    #   @param  update_states       Whether to refresh the status before reading
+    #   @return dict                Ledstrip data
     #
     ################################################################################
     def get_ledstrip_dict(self, id, update_states=False):
-        if update_states:
-            self._get_ledstrip(id=id).download_states()
-            
-        return db_util.get_device(id=id)
+        return self.get_device_dict(update_states=update_states, id=id)
     
     ################################################################################
     #
@@ -963,7 +1027,6 @@ class DeviceManager:
     ################################################################################
     def get_ledstrip_modes(self):
         return db_util.get_ledstrip_modes()
-    
 #endregion
 
 #region Sensor database functionality
@@ -975,7 +1038,10 @@ class DeviceManager:
     ################################################################################
     def add_rf_device(self, config_dict):
         config_dict["type"] = c.DEVICE_TYPE_RF_DEVICE
-        return db_util.add_device(config_dict)
+        result = db_util.add_device(config_dict)
+        if result[0]:
+            self.rf_input_adapter.refresh()
+        return result
 #endregion
 
 #region Group database functionality

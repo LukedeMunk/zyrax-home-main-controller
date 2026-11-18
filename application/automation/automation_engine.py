@@ -250,6 +250,9 @@ class AutomationEngine:
             press_type = configuration.get("press_type")
             if press_type is not None and press_type != event.payload.get("press_type"):
                 continue
+            button_id = configuration.get("button_id")
+            if button_id is not None and str(button_id) != str(event.payload.get("button_id")):
+                continue
 
             if automation.get("trigger_match", "any") == "all":
                 return self._all_state_triggers_active(automation)

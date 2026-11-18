@@ -132,7 +132,6 @@ def configuration_page():
                             groups=dm.get_groups(),
                             ota_files=dm.get_ledstrip_ota_versions(),
                             LEDSTRIP_SENSOR_MODELS=c.LEDSTRIP_SENSOR_MODELS,
-                            DEVICE_TYPES=c.DEVICE_TYPES,
                             DEVICE_CATEGORIES=c.DEVICE_CATEGORIES,
                             DEVICE_MODELS=c.DEVICE_MODELS,
                             logs=get_logs(),
@@ -182,6 +181,30 @@ def realtime_led_coloring_page():
 
 ################################################################################
 #
+#   @brief  Loads the device catalog.
+#   @return str                Rendered devices page
+#
+################################################################################
+@template_bp.route("/devices", methods=["GET"])
+@minimum_role_required()
+def devices_page():
+    return render_template(
+        "devices.html", title=c.TEXT_DEVICE_CATALOG_TITLE,
+        CURRENT_APPLICATION_VERSION=c.CURRENT_APPLICATION_VERSION,
+        RF_RECEIVER_PRESENT=c.RF_RECEIVER_PRESENT,
+        RF_TRANSMITTER_PRESENT=c.RF_TRANSMITTER_PRESENT,
+        alarm_activated=db_util.get_alarm()["activated"],
+        user_profiles=db_util.get_profiles(session["account_id"]),
+        DEVICE_MODELS=c.DEVICE_MODELS,
+        DEVICE_TYPE_RF_DEVICE=c.DEVICE_TYPE_RF_DEVICE,
+        DEVICE_TYPE_IR_DEVICE=c.DEVICE_TYPE_IR_DEVICE,
+        RF_SWITCH_MODEL_ID_TAP=c.RF_SWITCH_MODEL_ID_TAP,
+        DEVICE_TYPE_LEDSTRIP=c.DEVICE_TYPE_LEDSTRIP
+    )
+
+
+################################################################################
+#
 #   @brief  Loads the automations page.
 #
 ################################################################################
@@ -197,10 +220,9 @@ def automations_page():
                             automations=dm.get_automations(),
                             modes=dm.get_ledstrip_modes(),
                             actions=c.AUTOMATION_ACTIONS,
-                            DEVICE_TYPES=c.DEVICE_TYPES,
                             DEVICE_CATEGORIES=c.DEVICE_CATEGORIES,
                             DEVICE_MODELS=c.DEVICE_MODELS,
-                            devices=dm.get_devices_dict(),
+                            devices=db_util.add_device_options(dm.get_devices_dict()),
                             groups=dm.get_groups())
 
 ################################################################################

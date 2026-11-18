@@ -61,7 +61,7 @@ def check_received_rf_codes():
 
     rf_code_timestamps[received_code] = received_timestamp
     sm.last_received_rf_codes[received_timestamp] = received_code
-    dm.process_rf_signal(received_code)
+    dm.process_rf_signal(received_code, source_id="rpi")
 
 ################################################################################
 #

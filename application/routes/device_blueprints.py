@@ -9,20 +9,37 @@
 #           https://github.com/LukedeMunk/zyrax-home-main-controller
 #
 ################################################################################
-from flask import Blueprint, request, session                                   #Import flask blueprints and requests
+from flask import Blueprint, request
+
+
+import database_utility as db_util
+from server_manager import app, db, BridgeHost, Device, Location
 import configuration as c                                                       #Import application configuration variables
 from DeviceManager import DeviceManager                                         #Import device manager
+from automation.adapter_registry import AdapterRoutingError
 
-from logger import logi, logw, loge                                             #Import logging functions
 from utilities.authentication import minimum_role_required
 from utilities.response import generate_json_http_response
 
 dm = DeviceManager()
 device_bp = Blueprint("device_blueprints", __name__)
 
+
+################################################################################
+#
+#   @brief  Returns a UI error when a device command cannot be routed.
+#   @param  error               Target or capability routing failure
+#   @return str                 JSON error in the existing UI format
+#
+################################################################################
+@device_bp.errorhandler(AdapterRoutingError)
+def handle_device_routing_error(error):
+    return generate_json_http_response(c.HTTP_CODE_BAD_REQUEST, str(error))
+
 ################################################################################
 #
 #   @brief  Updates the power of the specified device.
+#   @return str                JSON response confirming the update
 #
 ################################################################################
 @device_bp.route("/set_device_power", methods=["POST"])
@@ -36,7 +53,8 @@ def set_device_power():
 
 ################################################################################
 #
-#   @brief  Updates the power of the specifed group.
+#   @brief  Updates the power of the specified group.
+#   @return str                JSON response confirming the update
 #
 ################################################################################
 @device_bp.route("/set_group_power", methods=["POST"])
@@ -48,3 +66,86 @@ def set_group_power():
     dm.set_device_group_power(id, power)
 
     return generate_json_http_response(c.HTTP_CODE_OK)
+################################################################################
+#
+#   @brief  Lists registered devices and their capabilities.
+#   @return Response           Catalog entries with capabilities and room
+#
+################################################################################
+@device_bp.route("/api/devices", methods=["GET"])
+@minimum_role_required()
+def list_devices():
+    with app.app_context():
+        devices = db_util.add_device_options(dm.get_devices_dict())
+        locations = {location.id: location.name for location in Location.query.all()}
+        for device in devices:
+            device["location"] = locations.get(device["location_id"])
+            if device["role"] == "bridge":
+                host = db.session.get(BridgeHost, device["id"])
+                device["hostname"] = host.hostname if host else None
+        return generate_json_http_response(c.HTTP_CODE_OK, devices, use_http_status=True)
+
+
+################################################################################
+#
+#   @brief  Registers, edits or removes a device in the device catalog.
+#   @param  device_id           Existing device ID for edits or deletion
+#   @return Response           Result with the corresponding HTTP status
+#
+################################################################################
+@device_bp.route("/api/devices", methods=["POST"])
+@device_bp.route("/api/devices/<int:device_id>", methods=["PATCH", "DELETE"])
+@minimum_role_required()
+def manage_device(device_id=None):
+    with app.app_context():
+        device = db.session.get(Device, device_id) if device_id else None
+        if device_id is not None and device is None:
+            return generate_json_http_response(
+                c.HTTP_CODE_NOT_FOUND, c.TEXT_DEVICE_NOT_FOUND, use_http_status=True
+            )
+
+        if request.method == "DELETE":
+            success, message = dm.delete_device(device_id)
+            if not success:
+                return generate_json_http_response(
+                    c.HTTP_CODE_CONFLICT, message, use_http_status=True
+                )
+            return "", c.HTTP_CODE_NO_CONTENT
+
+        payload = request.get_json(silent=True)
+        if not isinstance(payload, dict):
+            return generate_json_http_response(
+                c.HTTP_CODE_BAD_REQUEST, c.TEXT_DEVICE_JSON_REQUIRED, use_http_status=True
+            )
+
+        try:
+            config = db_util.validate_device(payload, device)
+        except ValueError as error:
+            return generate_json_http_response(
+                c.HTTP_CODE_BAD_REQUEST, str(error), use_http_status=True
+            )
+
+        if device is not None:
+            success, message = dm.update_device(device_id, config)
+        elif config["type"] == c.DEVICE_TYPE_LEDSTRIP:
+            success, message = dm.add_ledstrip(config)
+        elif config["type"] == c.DEVICE_TYPE_RF_DEVICE:
+            success, message = dm.add_rf_device(config)
+        else:
+            success, message = db_util.add_device(config)
+            if success:
+                dm.load_devices()
+
+        if not success:
+            if message == "UI_TEXT_DATABASE_INTEGRITY_ERROR":
+                message = c.TEXT_DEVICE_DUPLICATE
+            return generate_json_http_response(
+                c.HTTP_CODE_CONFLICT, message, use_http_status=True
+            )
+        if device is not None:
+            return generate_json_http_response(
+                c.HTTP_CODE_OK, {"id": device_id}, use_http_status=True
+            )
+        return generate_json_http_response(
+            c.HTTP_CODE_CREATED, {"id": message}, use_http_status=True
+        )

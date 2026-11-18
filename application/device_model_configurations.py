@@ -21,6 +21,10 @@ DEVICE_TYPE_LEDSTRIP = 0
 DEVICE_TYPE_RF_DEVICE = 1
 DEVICE_TYPE_IP_CAMERA = 2
 DEVICE_TYPE_RF_BRIDGE = 3
+DEVICE_TYPE_BRIDGE = 5
+DEVICE_TYPE_IR_DEVICE = 10
+
+DEVICE_CATEGORY_BRIDGE = 8
 
 RF_DEVICE_TYPE_DOOR_SENSOR = 0
 RF_DEVICE_TYPE_MOTION_SENSOR = 1
@@ -61,6 +65,9 @@ RF_SENSOR_MODEL_ID_MOTION_WITH_BATTERY = 201
 RF_SWITCH_MODEL_ID_TOGGLE = 300
 RF_SWITCH_MODEL_ID_TAP = 301
 RF_REMOTE_MODEL_ID = 400
+IR_REMOTE_MODEL_ID = 500
+RF_POWER_OUTLET_MODEL_ID = 600
+RF_POWER_OUTLET_MODEL_ID_TAP = 601
 
 LEDSTRIP_MODELS = [
     {
@@ -228,18 +235,22 @@ REMOTE_MODELS = [
         "icons":[
             ICON_ICON
         ],
-        "buttons":[
-            #{
-            #    "name": 0,
-            #    "rf_code": 0
-            #}
-        ]
+        "buttons":[]
+    },
+    {
+        "model_id":IR_REMOTE_MODEL_ID,
+        "type":DEVICE_TYPE_IR_DEVICE,
+        "name":TEXT_DEVICE_IR_REMOTE_CONTROL,
+        "icons":[
+            ICON_ICON
+        ],
+        "buttons":[]
     },
 ]
 
 POWER_OUTLET_MODELS = [
     {
-        "model_id":9,
+        "model_id":RF_POWER_OUTLET_MODEL_ID,
         "type":DEVICE_TYPE_RF_DEVICE,
         "name":"RF Toggle Power Outlet",
         "rf_code_types":[
@@ -262,7 +273,7 @@ POWER_OUTLET_MODELS = [
         ]
     },
     {
-        "model_id":10,
+        "model_id":RF_POWER_OUTLET_MODEL_ID_TAP,
         "type":DEVICE_TYPE_RF_DEVICE,
         "name":TEXT_RF_TAP_POWER_OUTLET,
         "rf_code_types":[
@@ -291,17 +302,6 @@ CAMERA_MODELS = [
     },    
 ]
 
-#DEVICE_TYPE_RF_SENSOR
-#DEVICE_TYPE_RF_REMOTE_SWITCH = 2
-#DEVICE_TYPE_RF_POWER_OUTLET = 3
-
-
-DEVICE_TYPES = [{"name": TEXT_LEDSTRIPS, "type" : DEVICE_TYPE_LEDSTRIP},
-                {"name": TEXT_RF_DEVICES, "type" : DEVICE_TYPE_RF_DEVICE},
-                {"name": TEXT_CAMERAS, "type" : DEVICE_TYPE_IP_CAMERA},]
-                #{"name": "RF Sensors", "type" : DEVICE_TYPE_RF_SENSOR},
-                #{"name": "RF Remotes", "type" : DEVICE_TYPE_RF_REMOTE_SWITCH},
-                #{"name": "RF Power Outlets", "type" : DEVICE_TYPE_RF_POWER_OUTLET}]
 
 DEVICE_CATEGORY_LEDSTRIP = 0
 DEVICE_CATEGORY_DOOR_SENSOR = 1
@@ -370,6 +370,8 @@ for category in DEVICE_CATEGORIES:
             "icon": category["icon"],
             "states": model.get("states", []),
             "rf_code_types": model.get("rf_code_types", None),
+            "ir_code_types": model.get("ir_code_types"),
+            "buttons": model.get("buttons"),
             "type": model.get("type", None)
         }
 DEVICE_MODELS = list(map(lambda x: x[1], DEVICE_MODELS.items()))

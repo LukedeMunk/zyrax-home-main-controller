@@ -17,12 +17,13 @@
         <meta charset="utf-8"/>
 
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=0">
+        {% block page_styles %}{% endblock %}
     </head>
 
     <!-- Custom elements -->
     <!-- End of custom elements -->
 
-    <body>
+    <body class="{% block body_class %}{% endblock %}">
         <script>
             /* Custom base variables */
             const CURRENT_APPLICATION_VERSION = "{{ CURRENT_APPLICATION_VERSION }}";
@@ -35,6 +36,7 @@
             const ACCOUNT_PAGE = "ACCOUNT_PAGE";
             const LOGIN_PAGE = "LOGIN_PAGE";
             const AUTOMATIONS_PAGE = "AUTOMATIONS_PAGE";
+            const DEVICES_PAGE = "DEVICES_PAGE";
             const DASHBOARD_PAGE = "DASHBOARD_PAGE";
             const CONFIGURATION_PAGE = "CONFIGURATION_PAGE";
             const LEDSTRIP_PAGE = "LEDSTRIP_PAGE";
@@ -92,7 +94,7 @@
         <script src="../static/js/Color.js"></script>
         
         <div class="">
-            <h2>{{ title }}</h2>
+            {% block page_title %}<h2>{{ title }}</h2>{% endblock %}
             {% block content %}
 
             {% endblock %}

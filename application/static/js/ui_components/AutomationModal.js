@@ -169,6 +169,7 @@ class AutomationDraftAdapter {
                 result.event = AUTOMATION_EVENT_STATE;
             }
 
+            result.button_id = config.button_id ?? "";
             result.state = config.press_type ?? config.value ?? config.state ?? "";
         }
         return result;
@@ -218,6 +219,10 @@ class AutomationDraftAdapter {
             duration_minutes: config.duration_minutes ?? 5
         });
 
+        if (item.type === "command" && ["rf.send", "ir.send"].includes(config.capability)) {
+            result.type = "send_button";
+            result.parameters.capability = config.capability;
+        }
         return result;
     }
     
@@ -271,7 +276,10 @@ class AutomationDraftAdapter {
 
         const configuration = {operator: item.operator, group_match: item.group_match};
 
-        if (item.event == "button") configuration.press_type = item.state;
+        if (item.event == "button") {
+            if (item.button_id) configuration.button_id = item.button_id;
+            else configuration.press_type = item.state;
+        }
         else if (item.event == "numeric") configuration.value = Number(item.state);
         else configuration.state = Number(item.state);
         
@@ -317,7 +325,18 @@ class AutomationDraftAdapter {
     */
     /******************************************************************************/
     static normalizeAction(item) {
-        if (item.type == "wait") {
+        if (item.type === "send_button") {
+            return {
+                type: "command",
+                configuration: {
+                    capability: item.parameters.capability,
+                    target_type: "device",
+                    target_ids: item.target_ids.map(Number),
+                    parameters: {code_id: item.parameters.code_id}
+                }
+            };
+        }
+        if (item.type === "wait") {
             return {
                 type: item.type,
                 configuration: {duration_minutes: Number(item.duration_minutes)}
@@ -533,7 +552,24 @@ class AutomationModal {
         }
         delete this.errors[event.target.dataset.errorKey];
 
-        if (rerender) this.renderWizard();
+        if (rerender) {
+            const active = event.target;
+            const body = this.wizardElement.querySelector(".automation-wizard-body");
+            const scrollTop = body?.scrollTop ?? 0;
+            this.renderWizard();
+            const updatedBody = this.wizardElement.querySelector(".automation-wizard-body");
+            updatedBody.scrollTop = scrollTop;
+            if (active.matches(".automation-choice-tile input")) {
+                const replacement = Array.from(updatedBody.querySelectorAll(
+                    ".automation-choice-tile input"
+                )).find(input => input.dataset.field === field &&
+                    input.dataset.id === active.dataset.id &&
+                    input.dataset.collection === active.dataset.collection &&
+                    input.value === active.value &&
+                    input.dataset.value === active.dataset.value);
+                replacement?.focus({preventScroll: true});
+            }
+        }
     }
 
     /******************************************************************************/
@@ -548,6 +584,11 @@ class AutomationModal {
     updateItem(item, field, value, input) {
         if (["days", "target_ids"].includes(field)) {
             const option = Number(input.dataset.value);
+            if (field === "target_ids" && item.type === "send_button") {
+                item.target_ids = value ? [option] : [];
+                item.parameters = {};
+                return;
+            }
             if (value && !item[field].map(Number).includes(option)) item[field].push(option);
             if (!value) item[field] = item[field].filter((entry) => Number(entry) != option);
             return;
@@ -555,6 +596,11 @@ class AutomationModal {
 
         if (field.startsWith("parameter_")) {
             item.parameters[field.replace("parameter_", "")] = value;
+            if (item.type === "send_button" && field === "parameter_code_id") {
+                const code = this.getDevices().find(device => device.id == item.target_ids[0])
+                    ?.bridge_codes?.find(entry => entry.id === value);
+                item.parameters.capability = code?.medium + ".send";
+            }
             return;
         }
 
@@ -571,9 +617,17 @@ class AutomationModal {
         }
 
         if (field == "source_type") item.source_id = "";
+        if (this.draft.triggers.includes(item) && ["source_id", "source_type", "kind"].includes(field)) {
+            const device = this.getDevices().find(entry => entry.id == item.source_id);
+            item.event = item.source_type === "device" && device?.category === DEVICE_CATEGORY_REMOTE ?
+                "button" : "state";
+            item.button_id = "";
+            item.state = "";
+        }
         if (field == "target_type") item.target_ids = [];
         if (field == "type" && this.draft.actions.includes(item)) {
             item.target_ids = [];
+            if (value === "send_button") item.target_type = "device";
             item.parameters = value == "set_device_power" ? {power: 0} : {};
         }
     }
@@ -614,6 +668,9 @@ class AutomationModal {
     */
     /******************************************************************************/
     previous() {
+        if (this.currentStep > 0 && this.draft.id != AUTOMATION_NEW_ID) {
+            return this.goToStep(this.currentStep - 1);
+        }
         if (this.currentStep > 0) this.currentStep--;
 
         this.renderWizard();
@@ -626,8 +683,9 @@ class AutomationModal {
     */
     /******************************************************************************/
     goToStep(step) {
-        if (step > this.highestStep + 1) return;
-        if (step > this.currentStep && !this.validateStep(this.currentStep)) {
+        const editing = this.draft.id != AUTOMATION_NEW_ID;
+        if (step === this.currentStep || (!editing && step > this.highestStep + 1)) return;
+        if ((editing || step > this.currentStep) && !this.validateStep(this.currentStep)) {
             return this.showValidation();
         }
 
@@ -714,8 +772,12 @@ class AutomationModal {
         for (const item of this.draft.triggers) {
             const invalidTime = item.kind == "time" && (!item.time || !item.days.length);
             const invalidSource = item.kind == "device" &&
-                (!item.source_id || item.state === "" || !this.sourceExists(item.source_type,
+                (!item.source_id || (!item.button_id && item.state === "") || !this.sourceExists(item.source_type,
                     item.source_id));
+            const missingButton = item.button_id && !this.buttonOptions(item.source_id).some(
+                ([id]) => id === item.button_id
+            );
+            if (missingButton) this.errors["trigger-" + item.id] = TEXT_AUTOMATION_BUTTON_MISSING;
             if (invalidTime || invalidSource || item.kind == "signal") {
                 this.errors["trigger-" + item.id] = item.kind == "signal" ?
                     TEXT_AUTOMATION_BRIDGE_UNAVAILABLE : TEXT_AUTOMATION_COMPLETE_TRIGGER;
@@ -843,6 +905,7 @@ class AutomationModal {
             TEXT_AUTOMATION_CONDITIONS, TEXT_AUTOMATION_ACTIONS_TITLE,
             TEXT_AUTOMATION_REVIEW
         ];
+        const icons = ["sliders", "bolt", "filter", "play", "clipboard-check"];
 
         const navigation = this.element("nav", "automation-progress");
         navigation.setAttribute("aria-label", TEXT_AUTOMATION_PROGRESS);
@@ -851,12 +914,15 @@ class AutomationModal {
             const button = this.button(label, "step");
             button.className = "automation-progress-step";
             button.dataset.step = index;
-            button.disabled = index > this.highestStep + 1;
+            button.disabled = this.draft.id == AUTOMATION_NEW_ID && index > this.highestStep + 1;
 
             if (index == this.currentStep) button.classList.add("current");
             if (index < this.currentStep) button.classList.add("completed");
 
-            button.replaceChildren(this.element("span", "", index + 1), this.element("p", "", label));
+            button.setAttribute("aria-label", label);
+            if (index === this.currentStep) button.setAttribute("aria-current", "step");
+            button.replaceChildren(catalogIcon("fa-solid fa-" + icons[index]),
+                this.element("p", "", label));
             navigation.appendChild(button);
         });
 
@@ -889,8 +955,7 @@ class AutomationModal {
 
         section.append(
             this.input(TEXT_NAME, "name", this.draft.name, "text", null, "name"),
-            this.error("name"),
-            this.checkbox(TEXT_AUTOMATION_ENABLE_IMMEDIATELY, "enabled", this.draft.enabled)
+            this.error("name")
         );
 
         return section;
@@ -941,11 +1006,11 @@ class AutomationModal {
         const fragment = document.createDocumentFragment();
 
         fragment.appendChild(
-                this.select(
+                this.choiceTiles(
                     TEXT_AUTOMATION_TRIGGER_TYPE,
                     "kind",
                     item.kind,
-                    [["device", TEXT_AUTOMATION_DEVICE_OR_GROUP], ["time", TEXT_TIME], ["signal", TEXT_AUTOMATION_SIGNAL], ["manual", TEXT_AUTOMATION_MANUAL]],
+                    [["device", TEXT_AUTOMATION_DEVICE_OR_GROUP], ["time", TEXT_TIME], ["manual", TEXT_AUTOMATION_MANUAL]],
                     "triggers",
                     item.id
                 )
@@ -972,16 +1037,16 @@ class AutomationModal {
                     "triggers",
                     item.id
                 ),
-                this.select(
+                this.choiceTiles(
                     TEXT_AUTOMATION_SOURCE,
                     "source_id",
                     item.source_id,
                     this.sourceOptions(item.source_type),
                     "triggers",
-                    item.id,
-                    TEXT_AUTOMATION_CHOOSE_SOURCE
+                    item.id
                 ),
-                this.select(
+                this.fixedTriggerEvent(item) ? this.element("p", "",
+                    TEXT_AUTOMATION_EVENT + ": " + this.optionText(this.eventOptions(), item.event)) : this.select(
                     TEXT_AUTOMATION_EVENT,
                     "event",
                     item.event,
@@ -1009,7 +1074,15 @@ class AutomationModal {
                     this.input(TEXT_AUTOMATION_VALUE, "state", item.state, "number", "triggers", null, item.id)
                 );
             } else {
-                grid.appendChild(this.select(TEXT_AUTOMATION_VALUE, "state", item.state, this.stateOptions(item), "triggers", item.id, TEXT_AUTOMATION_CHOOSE_VALUE));
+                const isButton = this.fixedTriggerEvent(item) === "button";
+                const options = isButton ? this.buttonOptions(item.source_id) : this.stateOptions(item);
+                if (isButton && (!options.length || item.button_id && !options.some(
+                    ([id]) => id === item.button_id))) {
+                    grid.appendChild(this.notice(TEXT_AUTOMATION_BUTTON_MISSING, NOTICE_TYPE_WARNING));
+                }
+                grid.appendChild(this.choiceTiles(TEXT_AUTOMATION_VALUE,
+                    isButton ? "button_id" : "state", isButton ? item.button_id : item.state,
+                    options, "triggers", item.id));
             }
 
             fragment.appendChild(grid);
@@ -1279,7 +1352,7 @@ class AutomationModal {
     renderActionFields(action) {
         const fragment = document.createDocumentFragment();
 
-        const actionTypeField = this.select(
+        const actionTypeField = this.choiceTiles(
             TEXT_AUTOMATION_ACTION_TYPE,
             "type",
             action.type,
@@ -1376,6 +1449,11 @@ class AutomationModal {
     */
     /******************************************************************************/
     renderActionParameterField(action) {
+        if (action.type === "send_button") {
+            const buttons = this.buttonOptions(action.target_ids[0], true);
+            return this.choiceTiles(TEXT_AUTOMATION_VALUE, "parameter_code_id",
+                action.parameters.code_id, buttons, "actions", action.id);
+        }
         if (action.type == AUTOMATION_ACTION_SET_DEVICE_POWER) {
             return this.renderPowerActionField(action);
         }
@@ -1550,6 +1628,9 @@ class AutomationModal {
         toolbar.appendChild(primaryButton);
 
         if (this.draft.id != AUTOMATION_NEW_ID) {
+            if (primaryButtonAction !== AUTOMATION_UI_ACTION_SAVE) {
+                toolbar.appendChild(this.button(TEXT_SAVE, AUTOMATION_UI_ACTION_SAVE));
+            }
             const deleteButton = this.button(TEXT_DELETE, AUTOMATION_UI_ACTION_DELETE);
             toolbar.appendChild(deleteButton);
         }
@@ -1821,18 +1902,21 @@ class AutomationModal {
     */
     /******************************************************************************/
     targetField(item) {
-        const fieldset = this.element("fieldset", "automation-target-field");
+        const fieldset = this.element("fieldset", "automation-target-field automation-choice-field");
         fieldset.appendChild(this.element("legend", "", TEXT_AUTOMATION_TARGETS));
-        const container = this.element("div");
+        const container = this.element("div", "catalog-grid");
 
-        this.sourceOptions(item.target_type, true).forEach((option) => {
-            const label = this.element("label", "automation-target-option");
+        this.sourceOptions(item.target_type, true).filter(([id]) => this.actionCompatible(
+            {...item, target_ids: [id]}, false
+        )).forEach((option) => {
+            const label = this.element("label", "automation-target-option automation-choice-tile");
             const input = this.element("input");
             input.type = "checkbox";
             input.checked = item.target_ids.map(Number).includes(Number(option[0]));
             this.fieldData(input, "target_ids", "actions", item.id);
             input.dataset.value = option[0];
-            label.append(input, this.element("span", "", option[1]));
+            this.decorateChoiceTile(label, input, option[1], "target_ids",
+                option[0], item.target_type);
             container.appendChild(label);
         });
 
@@ -2082,9 +2166,8 @@ class AutomationModal {
                 )
             ]);
         }
-        return this.getDevices().filter((device) => !target || [DEVICE_CATEGORY_LEDSTRIP,
-            DEVICE_CATEGORY_POWER_OUTLET, DEVICE_CATEGORY_IP_CAMERA].includes(device.category))
-            .map((device) => [device.id, device.name]);
+        return this.getDevices().filter(device => device.role !== "bridge")
+            .map(device => [device.id, device.name]);
     }
 
     /******************************************************************************/
@@ -2135,7 +2218,8 @@ class AutomationModal {
         const device = this.getDevices().find((entry) => entry.id == item.source_id);
         const model = DEVICE_MODELS.find((entry) => entry.model_id == device?.model_id);
 
-        return model?.states?.map((state) => [state.state, state.name]) ?? [[1, TEXT_ON], [0, TEXT_OFF]];
+        return model?.states?.length ? model.states.map(state => [state.state, state.name]) :
+            [[1, TEXT_ON], [0, TEXT_OFF]];
     }
 
     /******************************************************************************/
@@ -2149,8 +2233,7 @@ class AutomationModal {
 
         options.push(
             ["wait", TEXT_AUTOMATION_WAIT],
-            ["send_ir", TEXT_AUTOMATION_SEND_IR],
-            ["send_rf", TEXT_AUTOMATION_SEND_RF],
+            ["send_button", TEXT_AUTOMATION_SEND_BUTTON],
             ["camera_record", TEXT_AUTOMATION_RECORD_CAMERA]
         );
 
@@ -2186,7 +2269,7 @@ class AutomationModal {
 
             return VAR_TEXT_AUTOMATION_BECOMES(
                 this.sourceName(item.source_type, item.source_id),
-                item.state
+                item.button_id ? this.optionText(this.buttonOptions(item.source_id), item.button_id) : item.state
             );
         });
     }
@@ -2249,7 +2332,7 @@ class AutomationModal {
     /******************************************************************************/
     sourceExists(type, id) {
         const source = type == "group" ? this.getGroups() : this.getDevices();
-        return id !== "" && source.some((item) => item.id == id);
+        return id !== "" && source.some((item) => item.id == id && item.role !== "bridge");
     }
 
     /******************************************************************************/
@@ -2259,31 +2342,121 @@ class AutomationModal {
         @return                     Whether the action is compatible
     */
     /******************************************************************************/
-    actionCompatible(action) {
-        if (action.type == "wait" || !action.target_ids.length) return true;
-
-        const definition = this.getActions().find((item) => item.function == action.type);
-
-        if (!definition) return false;
-
-        const types = [];
-
-        if (action.target_type == "device") {
-            for (const id of action.target_ids) {
-                const type = this.getDevices().find((item) => item.id == id)?.type;
-                if (type != undefined) types.push(type);
-            }
-        } else {
-            for (const id of action.target_ids) {
-                const group = this.getGroups().find((item) => item.id == id);
-                if (!group?.device_ids?.length) return false;
-                types.push(...(group.types ?? []));
-            }
+    actionCompatible(action, validateButton = true) {
+        if (action.type === "wait" || !action.target_ids.length) return true;
+        if (action.type === "send_button") {
+            if (action.target_type !== "device" || action.target_ids.length !== 1) return false;
+            const options = this.buttonOptions(action.target_ids[0], true);
+            return validateButton ? options.some(([id]) => id === action.parameters.code_id) :
+                options.length > 0;
         }
-
-        return types.length > 0 && types.every((type) => {
-            return definition.device_types.includes(type);
+        const capability = {
+            set_device_power: "power.set", set_ledstrip_color: "color.set",
+            set_ledstrip_mode: "mode.set"
+        }[action.type];
+        const definition = this.getActions().find(item => item.function === action.type);
+        const ids = action.target_type === "device" ? action.target_ids :
+            action.target_ids.flatMap(id => this.getGroups().find(group => group.id == id)?.device_ids ?? []);
+        return ids.length > 0 && ids.every(id => {
+            const device = this.getDevices().find(item => item.id == id);
+            return device && device.role !== "bridge" &&
+                (device.capabilities?.includes(capability) || definition?.device_types?.includes(device.type));
         });
+    }
+
+    /**************************************************************************/
+    /*!
+        @brief    Returns the event implied by a supported source category.
+        @param    item                Trigger draft
+        @returns                      Event name or undefined
+    */
+    /**************************************************************************/
+    fixedTriggerEvent(item) {
+        const device = this.getDevices().find(entry => entry.id == item.source_id);
+        if (item.source_type !== "device" || !device) return;
+        if (device.category === DEVICE_CATEGORY_REMOTE) return "button";
+        if ([DEVICE_CATEGORY_LEDSTRIP, DEVICE_CATEGORY_DOOR_SENSOR,
+            DEVICE_CATEGORY_MOTION_SENSOR, DEVICE_CATEGORY_SWITCH,
+            DEVICE_CATEGORY_POWER_OUTLET].includes(device.category)) return "state";
+    }
+
+    /**************************************************************************/
+    /*!
+        @brief    Lists learned buttons suitable for trigger or transmission.
+        @param    deviceId            Owner of the buttons
+        @param    transmit            Whether the button must be sendable
+        @returns                      Stable button IDs and visible names
+    */
+    /**************************************************************************/
+    buttonOptions(deviceId, transmit = false) {
+        const device = this.getDevices().find(entry => entry.id == deviceId);
+        return (device?.bridge_codes ?? []).filter(code => transmit ? code.can_transmit :
+            code.medium === "ir" || !code.can_transmit).map(code => [code.id, code.name]);
+    }
+
+    /**************************************************************************/
+    /*!
+        @brief    Renders a single-choice input as keyboard-accessible tiles.
+        @param    title               Visible group name
+        @param    field               Draft field name
+        @param    selected            Current value
+        @param    options             Value and label pairs
+        @param    collection          Draft rule collection
+        @param    id                  Draft rule ID
+        @returns                      Group of radio tiles
+    */
+    /**************************************************************************/
+    choiceTiles(title, field, selected, options, collection, id) {
+        const fieldset = this.element("fieldset", "automation-choice-field");
+        fieldset.appendChild(this.element("legend", "", title));
+        const grid = this.element("div", "catalog-grid");
+        for (const [value, text] of options) {
+            const label = this.element("label", "automation-choice-tile");
+            const input = this.element("input");
+            input.type = "radio";
+            input.name = this.fieldId(collection, field, id);
+            input.value = value;
+            input.checked = String(value) === String(selected);
+            this.fieldData(input, field, collection, id);
+            const sourceType = field === "source_id" ?
+                this.draft[collection].find(item => item.id === id)?.source_type : undefined;
+            this.decorateChoiceTile(label, input, text, field, value, sourceType);
+            grid.appendChild(label);
+        }
+        fieldset.appendChild(grid);
+        return fieldset;
+    }
+
+    /**************************************************************************/
+    /*!
+        @brief    Adds a catalog icon and a selection mark to a form tile.
+        @param    label               Tile label element
+        @param    input               Native radio or checkbox
+        @param    text                Visible label
+        @param    field               Draft field name
+        @param    value               Tile value
+        @param    referenceType       Optional device or group reference
+    */
+    /**************************************************************************/
+    decorateChoiceTile(label, input, text, field, value, referenceType) {
+        const actionIcons = {
+            device: "microchip", time: "clock", manual: "hand-pointer",
+            wait: "hourglass-half", set_device_power: "power-off",
+            set_ledstrip_color: "palette", set_ledstrip_mode: "wand-magic-sparkles",
+            send_button: "tower-broadcast", camera_record: "video"
+        };
+        let icon = "fa-solid fa-" + (actionIcons[value] ?? "circle-dot");
+        if (referenceType === "group") {
+            icon = "fa-solid fa-layer-group";
+        } else if (referenceType === "device") {
+            const device = this.getDevices().find(item => item.id == value);
+            icon = device?.icon || "fa-solid fa-microchip";
+        } else if (field === "parameter_code_id") {
+            icon = "fa-solid fa-hand-pointer";
+        }
+        const check = this.element("i", "fa-solid fa-check automation-choice-check");
+        check.setAttribute("aria-hidden", "true");
+        label.append(input, catalogIcon(icon), this.element("span", "", text), check);
     }
 
     /******************************************************************************/

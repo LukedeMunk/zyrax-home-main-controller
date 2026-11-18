@@ -12,19 +12,25 @@
 ################################################################################
 
 
+class AdapterRoutingError(ValueError):
+    """A command does not have a matching target adapter."""
+
+
 class AdapterRegistry:
     ############################################################################
     #
     #   @brief  Initializes the adapter registry.
+    #   @param  resolve_target      Resolves a command to its integration key
     #
     ############################################################################
-    def __init__(self):
+    def __init__(self, resolve_target=None):
         self.adapters = {}
         self.capability_adapters = {}
+        self.resolve_target = resolve_target
 
     ############################################################################
     #
-    #   @brief  Registers an adapter and all capabilities exposed by it.
+    #   @brief  Registers an adapter and its supported capabilities.
     #   @param  name                Unique adapter name
     #   @param  adapter             Adapter instance
     #
@@ -33,42 +39,63 @@ class AdapterRegistry:
         if name in self.adapters:
             raise ValueError("Adapter already registered: " + name)
 
-        for capability in adapter.get_capabilities():
-            if capability in self.capability_adapters:
-                raise ValueError(
-                    "Capability already registered: " + capability
-                )
-
-            self.capability_adapters[capability] = name
+        for capability in set(adapter.get_capabilities()):
+            self.capability_adapters.setdefault(capability, set()).add(name)
 
         self.adapters[name] = adapter
 
     ############################################################################
     #
-    #   @brief  Executes a command using the capable adapter.
+    #   @brief  Resolves the adapter for a command target and capability.
+    #   @param  command             Command to route
+    #   @return                     Adapter that can execute the command
+    #
+    ############################################################################
+    def _get_adapter(self, command):
+        candidates = self.capability_adapters.get(command.capability, set())
+        if self.resolve_target is not None and command.target_type in ("device", "entity"):
+            adapter_name = self.resolve_target(command)
+            if adapter_name not in candidates:
+                raise AdapterRoutingError(
+                    f"No adapter for {command.capability} on "
+                    f"{command.target_type}:{command.target_id} (integration: {adapter_name})"
+                )
+        elif len(candidates) == 1:
+            adapter_name = next(iter(candidates))
+        else:
+            raise AdapterRoutingError(
+                f"Expected one adapter for {command.capability}, found {len(candidates)}"
+            )
+        return self.adapters[adapter_name]
+
+    ############################################################################
+    #
+    #   @brief  Executes a command using its target adapter.
     #   @param  command             Command to execute
     #   @return                     Adapter result
     #
     ############################################################################
     def execute(self, command):
-        adapter_name = self.capability_adapters.get(command.capability)
-
-        if adapter_name is None:
-            raise ValueError(
-                "No adapter for capability: " + command.capability
-            )
-
-        return self.adapters[adapter_name].execute(command)
+        return self._get_adapter(command).execute(command)
 
     ############################################################################
     #
-    #   @brief  Returns whether the capability is available.
-    #   @param  capability          Capability to look for
+    #   @brief  Checks whether a capability is registered or routable to a target.
+    #   @param  capability          Capability to look up
+    #   @param  command             Optional command identifying the target
     #   @return bool                True when supported
     #
     ############################################################################
-    def has_capability(self, capability):
-        return capability in self.capability_adapters
+    def has_capability(self, capability, command=None):
+        if command is None:
+            return capability in self.capability_adapters
+        if command.capability != capability:
+            return False
+        try:
+            self._get_adapter(command)
+        except AdapterRoutingError:
+            return False
+        return True
 
 
 class EventDispatcher:

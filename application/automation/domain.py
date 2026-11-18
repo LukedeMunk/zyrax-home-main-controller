@@ -20,10 +20,20 @@ class Capability:
     POWER_SET = "power.set"
     COLOR_SET = "color.set"
     MODE_SET = "mode.set"
+    MODE_CONFIGURE = "mode.configure"
+    PIXELS_PREVIEW = "pixels.preview"
+    BRIGHTNESS_SET = "brightness.set"
+    POWER_ANIMATION_SET = "power_animation.set"
+    STATE_REFRESH = "state.refresh"
     RF_RECEIVE = "rf.receive"
     RF_SEND = "rf.send"
     IR_SEND = "ir.send"
     ZIGBEE_COMMAND = "zigbee.command"
+
+    LEDSTRIP = (
+        POWER_SET, COLOR_SET, MODE_SET, MODE_CONFIGURE, BRIGHTNESS_SET,
+        POWER_ANIMATION_SET, PIXELS_PREVIEW, STATE_REFRESH
+    )
 
 
 class EventType:

@@ -16,9 +16,22 @@ from DeviceManager import DeviceManager                                         
 from logger import logi, logw, loge                                             #Import logging functions
 from utilities.authentication import minimum_role_required
 from utilities.response import generate_json_http_response
+from automation.adapter_registry import AdapterRoutingError
 
 dm = DeviceManager()
 ledstrip_bp = Blueprint("ledstrip_blueprints", __name__)
+
+
+################################################################################
+#
+#   @brief  Returns a UI error when a LED command cannot be routed.
+#   @param  error               Target or capability routing failure
+#   @return str                 JSON error in the existing UI format
+#
+################################################################################
+@ledstrip_bp.errorhandler(AdapterRoutingError)
+def handle_ledstrip_routing_error(error):
+    return generate_json_http_response(c.HTTP_CODE_BAD_REQUEST, str(error))
 
 #region Administrative ledstrip functionality
 ################################################################################

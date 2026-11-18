@@ -13,6 +13,7 @@
 from datetime import datetime, timedelta
 import json
 import unittest
+from unittest.mock import patch
 
 import configuration as c
 import database_utility as db_util
@@ -20,6 +21,8 @@ import server_manager as sm
 from automation import (AdapterRegistry, AutomationEngine,
                         AutomationRunService, Event, EventDispatcher, EventType)
 from automation.domain import Capability
+from automation.device_adapters import RfInputAdapter
+from DeviceManager import DeviceManager
 
 
 class RecordingPowerAdapter:
@@ -160,6 +163,43 @@ class AutomationArchitectureTests(unittest.TestCase):
         self.assertEqual(len(self.adapter.commands), 1)
         self.assertEqual(sm.DomainEvent.query.count(), 1)
 
+    def test_rf_open_and_close_trigger_automations_without_cache_refresh(self):
+        success, device_id = db_util.add_device({
+            "name": "Door",
+            "icon": "door",
+            "type": c.DEVICE_TYPE_RF_DEVICE,
+            "model_id": c.RF_SENSOR_MODEL_ID_DOOR_WINDOW,
+            "rf_codes": [
+                {"name": "Opened", "rf_code": 1234},
+                {"name": "Closed", "rf_code": 5678}
+            ]
+        })
+        self.assertTrue(success)
+
+        for state in (1, 0):
+            configuration = self._automation_configuration()
+            configuration["name"] = f"Door state {state}"
+            configuration["triggers"] = [{
+                "type": EventType.DEVICE_STATE_CHANGED,
+                "source_type": "device",
+                "source_id": device_id,
+                "configuration": {"state": state}
+            }]
+            self.assertTrue(db_util.add_automation(configuration)[0])
+
+        manager = DeviceManager()
+        adapter = RfInputAdapter(manager, self.event_dispatcher)
+        adapter.refresh()
+        with patch.object(manager, "event_dispatcher", self.event_dispatcher), \
+                patch.object(manager, "check_alarm"):
+            for count, (code, state) in enumerate(((1234, 1), (5678, 0), (1234, 1)), 1):
+                self.assertTrue(adapter.receive_code(code))
+                self.assertEqual(db_util.get_device(device_id)["state"], state)
+                self.assertEqual(len(self.adapter.commands), count)
+
+            self.assertTrue(adapter.receive_code(1234))
+            self.assertEqual(len(self.adapter.commands), 3)
+
     ############################################################################
     #
     #   @brief  Tests that delayed runs survive service recreation.
@@ -201,8 +241,9 @@ class AutomationArchitectureTests(unittest.TestCase):
             {
                 "type": c.AUTOMATION_ACTION_SET_DEVICE_POWER,
                 "configuration": {
-                    "target_device_ids": [1],
-                    "parameters": [{"name": "power", "value": 1}]
+                    "target_type": "device",
+                    "target_ids": [1],
+                    "parameters": {"power": 1}
                 }
             },
             {
@@ -222,6 +263,51 @@ class AutomationArchitectureTests(unittest.TestCase):
         self.assertEqual(len(self.adapter.commands), 2)
         self.assertEqual(self.adapter.commands[0].target_id, 1)
         self.assertEqual(self.adapter.commands[1].target_id, 2)
+
+    def test_normalized_definition_round_trips(self):
+        configuration = self._automation_configuration()
+        configuration["trigger_match"] = "all"
+        configuration["conditions"] = [{
+            "type": "time_window",
+            "configuration": {
+                "start_minutes": 480,
+                "end_minutes": 1080,
+                "active_in_window": True
+            }
+        }]
+        success, automation_id = db_util.add_automation(configuration)
+        self.assertTrue(success)
+
+        automation = db_util.get_automation(id=automation_id)
+        self.assertEqual(automation["trigger_match"], "all")
+        self.assertEqual(automation["triggers"][0]["type"],
+                         configuration["triggers"][0]["type"])
+        self.assertEqual(automation["conditions"][0]["configuration"],
+                         configuration["conditions"][0]["configuration"])
+        self.assertEqual(automation["actions"][0]["configuration"],
+                         configuration["actions"][0]["configuration"])
+
+    def test_group_target_is_resolved_when_the_run_starts(self):
+        device = sm.Device(
+            name="Group member", icon="light", type=c.DEVICE_TYPE_LEDSTRIP,
+            model_id=c.LEDSTRIP_MODEL_ID_WS2801, category=c.DEVICE_CATEGORY_LEDSTRIP
+        )
+        group = sm.Group(name="Test group", type=0)
+        sm.db.session.add_all([device, group])
+        sm.db.session.flush()
+        device_id = device.id
+        sm.db.session.add(sm.GroupHasDevice(group_id=group.id, device_id=device_id))
+        sm.db.session.commit()
+        configuration = self._automation_configuration()
+        configuration["actions"][0]["configuration"].update({
+            "target_type": "group",
+            "target_ids": [group.id]
+        })
+        success, automation_id = db_util.add_automation(configuration)
+        self.assertTrue(success)
+
+        self.run_service.run_by_id(automation_id)
+        self.assertEqual(self.adapter.commands[0].target_id, device_id)
 
     ############################################################################
     #
@@ -322,9 +408,14 @@ class AutomationArchitectureTests(unittest.TestCase):
             microsecond=0
         )
         configuration = self._automation_configuration()
-        configuration["trigger"] = c.AUTOMATION_TRIGGER_TIMER
-        configuration["days"] = [current_date_time.weekday()]
-        configuration["time"] = current_date_time.strftime("%H:%M")
+        configuration["triggers"] = [{
+            "type": EventType.TIME,
+            "source_type": "system",
+            "configuration": {
+                "days": [current_date_time.weekday()],
+                "time": current_date_time.strftime("%H:%M")
+            }
+        }]
         success, automation_id = db_util.add_automation(configuration)
         self.assertTrue(success)
 
@@ -365,7 +456,7 @@ class AutomationArchitectureTests(unittest.TestCase):
 
     ############################################################################
     #
-    #   @brief  Adds a compatible existing-format automation.
+    #   @brief  Adds a normalized automation.
     #   @param  trigger_device_id   Optional event source device
     #   @return int                 Automation ID
     #
@@ -374,7 +465,10 @@ class AutomationArchitectureTests(unittest.TestCase):
         configuration = self._automation_configuration()
 
         if trigger_device_id is not None:
-            configuration["trigger_device_ids"] = [trigger_device_id]
+            configuration["triggers"][0]["type"] = EventType.DEVICE_STATE_CHANGED
+            configuration["triggers"][0]["source_type"] = "device"
+            configuration["triggers"][0]["source_id"] = trigger_device_id
+            configuration["triggers"][0]["configuration"] = {"state": 1}
 
         success, automation_id = db_util.add_automation(configuration)
         self.assertTrue(success)
@@ -382,21 +476,32 @@ class AutomationArchitectureTests(unittest.TestCase):
 
     ############################################################################
     #
-    #   @brief  Returns a compatible existing-format automation configuration.
+    #   @brief  Returns a normalized automation configuration.
     #   @return dict                Automation configuration
     #
     ############################################################################
     def _automation_configuration(self):
         return {
             "name": "Test automation",
-            "action": c.AUTOMATION_ACTION_SET_DEVICE_POWER,
-            "trigger": c.AUTOMATION_TRIGGER_SWITCH,
-            "trigger_device_ids": [],
-            "trigger_state": 1,
-            "target_device_ids": [1],
-            "parameters": [{"name": "power", "value": 1}],
-            "delay_minutes": 0,
-            "inverted_automation_copy_id": -1
+            "enabled": True,
+            "trigger_match": "any",
+            "triggers": [{
+                "type": EventType.MANUAL_AUTOMATION_RUN,
+                "source_type": "account",
+                "source_id": None,
+                "configuration": {}
+            }],
+            "conditions": [],
+            "actions": [{
+                "type": c.AUTOMATION_ACTION_SET_DEVICE_POWER,
+                "configuration": {
+                    "target_type": "device",
+                    "target_ids": [1],
+                    "parameters": {"power": 1}
+                }
+            }],
+            "concurrency_policy": c.AUTOMATION_CONCURRENCY_RESTART,
+            "error_policy": c.AUTOMATION_ERROR_STOP
         }
 
 

@@ -1,0 +1,100 @@
+/******************************************************************************/
+/*
+ * File:    PopupManager.css
+ * Author:  Luke de Munk
+ * Version: 0.1.0
+ *
+ * Brief:   Styles actionable popup messages and their semantic variants.
+ * 
+ *          Read-only
+ *
+ *          More information: https://github.com/LukedeMunk/templates
+ *          Part of Templates library.
+ */
+/******************************************************************************/
+.popup-container {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    display: block;
+    width: min(500px, calc(100vw - 32px));
+    max-height: calc(100vh - 32px);
+    padding: clamp(24px, 5vw, 38px);
+    overflow-y: auto;
+    background: var(--surface-gradient);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-large);
+    box-shadow: var(--shadow-large);
+    opacity: 0;
+    transform: translate(-50%, calc(-50% + 12px)) scale(0.985);
+    pointer-events: none;
+    text-align: center;
+    transition: opacity var(--transition-base), transform var(--transition-base);
+    z-index: var(--z-dialog);
+}
+
+.popup-container.show {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+    pointer-events: auto;
+}
+
+.popup-icon,
+.popup-icon.fa-solid {
+    display: inline-flex;
+    width: 52px;
+    height: 52px;
+    margin: 0 auto 12px;
+    align-items: center;
+    justify-content: center;
+    background: var(--accent-soft);
+    color: var(--icon-blue);
+    border-radius: 50%;
+    font-size: 24px;
+    line-height: 1;
+    text-align: center;
+}
+
+.popup-icon.fa-check-circle {
+    background: var(--success-background);
+    color: var(--success-text);
+}
+
+.popup-icon.fa-triangle-exclamation {
+    background: var(--warning-background);
+    color: var(--warning-text);
+}
+
+.popup-icon.fa-circle-xmark {
+    background: var(--error-background);
+    color: var(--error-text);
+}
+
+.popup-title {
+    margin: 8px 0;
+    color: var(--text);
+    font-size: var(--font-size-h2);
+    font-weight: 750;
+}
+
+.popup-message {
+    max-width: 42ch;
+    margin: 0 auto 22px;
+    color: var(--secondary-text);
+    font-size: var(--font-size-p);
+    line-height: 1.55;
+}
+
+.popup-button-container {
+    display: flex;
+    width: 100%;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.popup-button-container > * {
+    flex: 1 1 140px;
+    max-width: 210px;
+    margin: 0;
+}

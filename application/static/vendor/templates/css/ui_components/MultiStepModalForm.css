@@ -1,0 +1,103 @@
+/******************************************************************************/
+/*
+ * File:    MultiStepModalForm.css
+ * Author:  Luke de Munk
+ * Version: 0.1.0
+ *
+ * Brief:   Styles for the multi-step modal form UI component. This component
+ *          uses shared modal and toolbar styles from global.css.
+ * 
+ *          Read-only
+ *
+ *          More information: https://github.com/LukedeMunk/templates
+ *          Part of Templates library.
+ */
+/******************************************************************************/
+
+.modal-stepper {
+    display: flex;
+    overflow-x: auto;
+    width: 100%;
+    margin: 8px 0 20px;
+    padding: 4px;
+    gap: 8px;
+    list-style: none;
+    scrollbar-width: thin;
+}
+
+.modal-stepper-item {
+    display: flex;
+    min-width: min(150px, 42vw);
+    flex: 1 0 0;
+}
+
+.modal-stepper-content,
+.modal-stepper-button {
+    display: grid;
+    width: 100%;
+    min-height: 68px;
+    padding: 10px;
+    grid-template-columns: auto 1fr;
+    gap: 2px 8px;
+    align-items: center;
+    background: var(--background2);
+    color: var(--secondary-text);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-medium);
+    text-align: left;
+}
+
+.modal-stepper-button {
+    cursor: pointer;
+}
+
+.modal-stepper-button:hover,
+.modal-stepper-button:focus-visible {
+    background: var(--active-item);
+    border-color: var(--accent);
+    outline: none;
+}
+
+.modal-stepper-marker {
+    display: grid;
+    width: 28px;
+    height: 28px;
+    grid-row: 1 / span 2;
+    place-items: center;
+    background: var(--background3);
+    color: var(--secondary-text);
+    border: 1px solid var(--border2);
+    border-radius: 50%;
+    font-weight: 700;
+}
+
+.modal-stepper-label {
+    color: var(--text);
+    font-weight: 650;
+}
+
+.modal-stepper-state {
+    font-size: var(--font-size-small);
+}
+
+.modal-stepper-item.current .modal-stepper-content {
+    background: var(--active-item);
+    border-color: var(--accent);
+}
+
+.modal-stepper-item.current .modal-stepper-marker,
+.modal-stepper-item.complete .modal-stepper-marker {
+    background: var(--accent-strong);
+    color: var(--accent-contrast);
+    border-color: var(--accent-strong);
+}
+
+.modal-stepper-item.upcoming {
+    opacity: 0.7;
+}
+
+@media screen and (max-width: 699px) {
+    .modal-stepper-item {
+        min-width: min(130px, 62vw);
+    }
+}

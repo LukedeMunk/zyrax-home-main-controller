@@ -1,0 +1,384 @@
+/******************************************************************************/
+/*
+ * File:    StandardTable.css
+ * Author:  Luke de Munk
+ * Version: 0.1.0
+ *
+ * Brief:   Styles sortable, filterable, and scrollable data tables.
+ * 
+ *          Read-only
+ *
+ *          More information: https://github.com/LukedeMunk/templates
+ *          Part of Templates library.
+ */
+/******************************************************************************/
+table {
+    width: 100%;
+    min-width: 100%;
+    margin: 0 auto 20px;
+    overflow: hidden;
+    background: var(--background2);
+    color: var(--text);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-medium);
+    border-collapse: separate;
+    border-spacing: 0;
+    box-shadow: var(--shadow-small);
+    table-layout: fixed;
+    text-align: left;
+    cursor: default;
+}
+
+thead {
+    background: var(--background4);
+}
+
+th,
+td {
+    margin: 0;
+    padding: 12px 14px;
+    font-size: var(--font-size-p);
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+}
+
+th {
+    color: var(--secondary-text);
+    font-size: var(--font-size-small);
+    font-weight: 750;
+    letter-spacing: 0.035em;
+    text-transform: uppercase;
+}
+
+.table-heading-content {
+    position: relative;
+    display: inline-flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.standard-table {
+    position: relative;
+    overflow: visible;
+}
+
+.table-sort-button,
+.table-filter-button,
+.table-action-button {
+    display: inline-grid;
+    width: 28px;
+    min-width: 28px;
+    height: 28px;
+    min-height: 28px;
+    margin: 0;
+    padding: 0;
+    place-items: center;
+    background: transparent;
+    color: var(--link-text);
+    border: 0;
+    border-radius: 50%;
+    box-shadow: none;
+}
+
+.table-sort-button:hover:not(:disabled),
+.table-filter-button:hover:not(:disabled),
+.table-action-button:hover:not(:disabled) {
+    background: var(--hover-item);
+    color: var(--link-text-hover);
+    border-radius: 50%;
+    box-shadow: none;
+    transform: none;
+}
+
+.table-sort-button:active:not(:disabled),
+.table-filter-button:active:not(:disabled),
+.table-action-button:active:not(:disabled) {
+    box-shadow: none;
+    transform: scale(0.92);
+}
+
+.table-sort-button:disabled,
+.table-filter-button:disabled,
+.table-action-button:disabled {
+    color: var(--icon-disabled);
+}
+
+.table-action-button + .table-action-button {
+    margin-left: 5px;
+}
+
+td {
+    border-top: 1px solid var(--border3);
+}
+
+tbody tr {
+    background: transparent;
+    transition:
+        background var(--transition-fast),
+        opacity var(--transition-fast),
+        transform var(--transition-fast);
+}
+
+tbody tr:nth-child(even) {
+    background: var(--row-background);
+}
+
+tbody tr:hover {
+    background: var(--hover-item);
+}
+
+tbody tr.selected,
+tbody tr[aria-selected="true"] {
+    background: var(--active-item);
+    box-shadow: inset 3px 0 var(--accent);
+}
+
+.scrollable-table-container-table {
+    width: 100%;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+}
+
+.scrollable-td {
+    padding: 0;
+    border: 0;
+}
+
+.scrollable-table-header {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    border-radius: var(--radius-medium) var(--radius-medium) 0 0;
+    table-layout: auto;
+}
+
+.scrollable-table {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    table-layout: auto;
+}
+
+.scrollable-table-container {
+    width: 100%;
+    height: min(400px, 60vh);
+    overflow: auto;
+    background: var(--background2);
+    border: 1px solid var(--border2);
+    border-top: 0;
+    border-radius: 0 0 var(--radius-medium) var(--radius-medium);
+}
+
+.table-filter-container {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 50%;
+    min-width: 210px;
+    max-height: min(320px, 60vh);
+    padding: 7px;
+    overflow-y: auto;
+    background: var(--surface-gradient);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-medium);
+    box-shadow: var(--shadow-large);
+    opacity: 0;
+    transform: translate(-50%, 6px) scale(0.98);
+    pointer-events: none;
+    transition: opacity var(--transition-base), transform var(--transition-base);
+    z-index: var(--z-modal);
+}
+
+.table-filter-container.show {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+    pointer-events: auto;
+}
+
+.table-filter-container.hide {
+    opacity: 0;
+    transform: translate(-50%, 12px) scale(0.98);
+    pointer-events: none;
+}
+
+.table-filter-control {
+    position: relative;
+    display: inline-flex;
+}
+
+.table-filter-button.active {
+    background: var(--active-item);
+    color: var(--accent);
+}
+
+.table-filter-container input[type="checkbox"] {
+    margin: 0;
+}
+
+.table-filter-item-container {
+    display: flex;
+    min-height: 38px;
+    margin: 0;
+    padding: 7px 8px;
+    gap: 9px;
+    align-items: center;
+    color: var(--text);
+    border-radius: var(--radius-small);
+    font-size: var(--font-size-p);
+    font-weight: 400;
+    letter-spacing: normal;
+    text-transform: none;
+    cursor: pointer;
+    transition: background var(--transition-fast);
+}
+
+.table-filter-item-container:hover {
+    background: var(--hover-item);
+}
+
+.table-filter-item-container i {
+    color: var(--accent);
+    font-size: 14px;
+}
+
+.table-filter-item-container p {
+    margin: 0;
+}
+
+table tr.dragging {
+    background: var(--active-item);
+    box-shadow: var(--shadow-medium);
+    opacity: 0.58;
+    transform: scale(0.985);
+    z-index: 10;
+}
+
+table tr.drag-over {
+    position: relative;
+    background: var(--active-item);
+}
+
+table tr.drag-over::after {
+    content: "";
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background: var(--accent);
+    border-radius: var(--radius-pill);
+}
+
+table tr[draggable="true"] {
+    cursor: grab;
+}
+
+table tr[draggable="true"]:active {
+    cursor: grabbing;
+}
+
+.disabled-icon {
+    color: var(--icon-disabled) !important;
+    opacity: 0.65;
+    cursor: not-allowed !important;
+}
+
+.disabled-icon:hover {
+    color: var(--icon-disabled) !important;
+}
+
+.disabled-checkbox {
+    opacity: 0.5;
+    cursor: not-allowed !important;
+}
+
+.table-input {
+    width: 100%;
+    min-width: 70px;
+    margin: 0;
+}
+
+.filter-icon {
+    min-width: 18px;
+    text-align: center;
+}
+
+.cell-flex {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.standard-table > table {
+    margin-bottom: 0;
+    overflow: visible;
+}
+
+.standard-table:has(> .table-pagination) > table {
+    border-radius: var(--radius-medium) var(--radius-medium) 0 0;
+}
+
+.standard-table .table-pagination {
+    position: static;
+    display: flex;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 10px;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+    overflow: visible;
+    background: var(--background2);
+    border: 1px solid var(--border2);
+    border-top: 0;
+    border-radius: 0 0 var(--radius-medium) var(--radius-medium);
+    box-shadow: var(--shadow-small);
+    font-size: var(--font-size-p);
+    transform: none;
+    z-index: auto;
+}
+
+.standard-table .table-pagination-button {
+    width: 34px;
+    height: 34px;
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    color: var(--secondary-text);
+    border: 0;
+    box-shadow: none;
+}
+
+.standard-table .table-pagination-button:hover:not(:disabled),
+.standard-table .table-pagination-button:focus-visible {
+    background: var(--hover-item);
+    color: var(--accent);
+}
+
+.standard-table .table-pagination-status {
+    min-width: 110px;
+    color: var(--secondary-text);
+    text-align: center;
+}
+
+@media (max-width: 700px) {
+    th,
+    td {
+        padding: 10px;
+        font-size: var(--font-size-small);
+    }
+
+    .scrollable-table-container-table,
+    .scrollable-table-container {
+        max-width: 100%;
+    }
+}

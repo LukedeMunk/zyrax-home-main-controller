@@ -1,26 +1,12 @@
 {% extends "base.html" %}
 
+{% block component_styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='vendor/templates/css/ui_components/MouseContextMenu.css') }}">
+{% endblock %}
+
 {% block content %}
 
-<script>
-    page = DASHBOARD_PAGE;
-
-    let alarm = JSON.parse('{{ alarm | tojson | safe }}');
-    let devices = JSON.parse('{{ devices | tojson | safe }}');
-    let groups = JSON.parse('{{ groups | tojson | safe }}');
-    let automations = JSON.parse('{{ automations | tojson | safe }}');
-    let dashboardConfigurations = JSON.parse('{{ dashboard_configurations | tojson | safe }}');
-    let tileTypes = JSON.parse('{{ tile_types | tojson | safe }}');
-    let weather = JSON.parse('{{ weather | tojson | safe }}');
-    let weatherLocation = "{{ weather_location }}";
-    let weatherAvailable = true;
-    if (weather == null) {
-        weatherAvailable = false;
-    }
-</script>
-
-<script src="../static/js/ui_components/DashboardGrid.js" defer></script>
-<script src="../static/js/pages/dashboard_page.js" defer></script>
+<script id="pageData" type="application/json">{{ dict(alarm=alarm, devices=devices, groups=groups, automations=automations, dashboards=dashboard_configurations, weather=weather, location=weather_location, receiver=RF_RECEIVER_PRESENT) | tojson }}</script>
 
 <style>
     body {
@@ -28,11 +14,14 @@
         width: 100%;
     }
 </style>
-<link rel="stylesheet" href="../static/css/styles_tiles.css">
-<link rel="stylesheet" media="screen and (max-width: 699px)" href="../static/css/styles_tiles_mobile.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/styles_tiles.css') }}">
+<link rel="stylesheet" media="screen and (max-width: 699px)" href="{{ url_for('static', filename='css/styles_tiles_mobile.css') }}">
 
 <dialog id="weatherLocationModal" class="modal">
-    <i class="fa-solid fa-xmark close-modal-button clickable" target-modal="weatherLocationModal"></i>
+    <button type="button" class="close-modal-button" aria-label="Close">
+        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+    </button>
+
     <h3 id="weatherLocationModalTitle" style="margin-top: 0px;">Update weather location</h3>
     <p id="errorMessageWeatherLocationField" class="message error" style="margin: 0px;"></p>
 
@@ -43,8 +32,63 @@
         </div>
     </div>
 
-    <button id="submitWeatherLocationBtn" onclick="updateWeatherLocation();">Submit</button>
+    <button id="submitWeatherLocationBtn" data-action="updateWeatherLocation">Submit</button>
 </dialog>
+
+<div data-dashboard-navigation></div>
+<div data-context-menu></div>
+
+<div data-dashboard-dialogs>
+    <dialog id="dashboardEditor" class="modal" aria-labelledby="dashboardEditorTitle">
+        <button type="button" class="close-modal-button" data-close aria-label="Close">
+            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        </button>
+        <h2 id="dashboardEditorTitle"></h2>
+        <form>
+            <p data-label="manage"></p>
+            <button type="button" data-icon aria-label="Edit dashboard icon"><i aria-hidden="true"></i></button>
+            <label class="input-field-container modal-form-field">
+                <span class="input-field-title" data-label="name"></span>
+                <input class="input-field" type="text">
+            </label>
+            <p class="message error" role="alert"></p>
+            <div class="modal-form-actions">
+                <button type="submit" data-label="submit"></button>
+                <button type="button" class="toolbar-button delete" data-delete data-label="remove"></button>
+            </div>
+        </form>
+        <div data-dashboard-confirmation></div>
+    </dialog>
+
+    <dialog id="dashboardIcons" class="modal" aria-labelledby="dashboardIconsTitle">
+        <button type="button" class="close-modal-button" data-close aria-label="Close">
+            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        </button>
+        <h2 id="dashboardIconsTitle" data-label="icon"></h2>
+        <div class="icon-grid" data-icons></div>
+    </dialog>
+
+    <dialog id="dashboardTiles" class="modal" aria-labelledby="dashboardTilesTitle">
+        <button type="button" class="close-modal-button" data-close aria-label="Close">
+            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        </button>
+
+        <h2 id="dashboardTilesTitle" data-label="tile"></h2>
+        <p data-label="choose"></p>
+
+        <label class="input-field-container modal-form-field">
+            <span class="input-field-title" data-label="type"></span>
+            <select class="input-field" data-type></select>
+        </label>
+
+        <label class="input-field-container modal-form-field" hidden>
+            <span class="input-field-title" data-label="target"></span>
+            <select class="input-field" data-target></select>
+        </label>
+
+        <div class="flex-grid" data-previews></div>
+    </dialog>
+</div>
 
 <section class="dashboard-workspace" aria-label="{{ title }}">
     <div id="dashboardConfigurationPanel" class="dashboard-configuration-panel" hidden>
@@ -52,24 +96,29 @@
             <h3 id="dashboardConfigurationTitle"></h3>
             <p id="dashboardConfigurationDescription"></p>
         </div>
+
         <div class="dashboard-configuration-actions">
-            <button id="addTileBtn" onclick="loadAddTileModal();">
+            <button id="addTileBtn" data-action="loadAddTileModal">
                 <i class="fa-duotone fa-solid fa-plus"></i>
                 <span id="addTileBtnText"></span>
             </button>
-            <button id="renameDashboardBtn" onclick="loadDashboardConfigurationModal(selectedDashboardId);">
+
+            <button id="renameDashboardBtn" data-action="loadDashboardConfigurationModal">
                 <i class="fa-duotone fa-solid fa-pen"></i>
                 <span id="renameDashboardBtnText"></span>
             </button>
-            <button id="addDashboardBtn" onclick="loadDashboardConfigurationModal();">
+
+            <button id="addDashboardBtn">
                 <i class="fa-duotone fa-solid fa-plus"></i>
                 <span id="addDashboardBtnText"></span>
             </button>
-            <button id="resetDashboardBtn" onclick="resetDashboardConfiguration();">
+
+            <button id="resetDashboardBtn" data-action="resetDashboardConfiguration">
                 <i class="fa-duotone fa-solid fa-arrows-rotate-reverse"></i>
                 <span id="resetDashboardBtnText"></span>
             </button>
-            <button id="deleteDashboardBtn" class="danger-button" onclick="deleteDashboardConfiguration(selectedDashboardId);">
+            
+            <button id="deleteDashboardBtn" class="toolbar-button delete" data-action="deleteDashboardConfiguration">
                 <i class="fa-duotone fa-solid fa-trash"></i>
                 <span id="deleteDashboardBtnText"></span>
             </button>
@@ -79,11 +128,13 @@
     <div id="dashboardEmptyState" class="dashboard-empty-state" hidden>
         <i class="fa-duotone fa-solid fa-grid-2 fa-2x"></i>
         <p id="dashboardEmptyStateText"></p>
-        <button id="createFirstDashboardBtn" onclick="loadDashboardConfigurationModal();"></button>
+        <button id="createFirstDashboardBtn"></button>
     </div>
 
     <div id="dashboardGrid" class="flex-grid dashboard-grid"></div>
 </section>
+{% endblock %}
 
-
+{% block page_scripts %}
+<script type="module" src="{{ url_for('static', filename='js/pages/dashboard_page.js') }}"></script>
 {% endblock %}

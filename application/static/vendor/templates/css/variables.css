@@ -1,0 +1,329 @@
+/******************************************************************************/
+/*
+ * File:    variables.css
+ * Author:  Luke de Munk
+ * Version: 0.1.0
+ *
+ * Brief:   Colors and variables for themed web pages.
+ * 
+ *          Read-only
+ */
+/******************************************************************************/
+:root {
+    --z-base: 0;
+    --z-elements: 100;
+    --z-overlay: 200;
+    --z-modal: 300;
+    --z-dialog: 400;
+    --z-banner: 500;
+
+    --font-family: "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --font-size-h1-mobile: 1.75rem;
+    --font-size-h2-mobile: 1.375rem;
+    --font-size-h3-mobile: 1.125rem;
+    --font-size-h4-mobile: 1rem;
+    --font-size-p-mobile: 0.875rem;
+    --font-size-small-mobile: 0.75rem;
+    --font-size-extra-small-mobile: 0.6875rem;
+    --font-size-h1: clamp(2rem, 4vw, 2.75rem);
+    --font-size-h2: clamp(1.5rem, 3vw, 2rem);
+    --font-size-h3: 1.25rem;
+    --font-size-h4: 1rem;
+    --font-size-p: 0.9375rem;
+    --font-size-small: 0.8125rem;
+    --font-size-extra-small: 0.75rem;
+
+    --radius-small: 8px;
+    --radius-medium: 12px;
+    --radius-large: 18px;
+    --radius-pill: 999px;
+    --control-height: 42px;
+    --transition-fast: 140ms ease;
+    --transition-base: 220ms ease;
+    --focus-ring-width: 3px;
+    --progress: 0%;
+}
+
+/* Dark theme (default) */
+:root,
+:root.dark {
+    --background1: #091126;
+    --background2: #101b33;
+    --background3: #172642;
+    --background4: #1f3253;
+    --background5: #2a4166;
+    --background6: #39547c;
+    --surface-raised: #263b61;
+    --surface-gradient: linear-gradient(145deg, #192a49 0%, #101a31 100%);
+    --page-glow-primary: rgba(75, 111, 213, 0.22);
+    --page-glow-secondary: rgba(48, 91, 170, 0.17);
+    --page-glow-tertiary: rgba(71, 76, 179, 0.12);
+    --page-gradient:
+        radial-gradient(circle at 10% 7%, var(--page-glow-primary) 0, transparent 30rem),
+        radial-gradient(circle at 92% 38%, var(--page-glow-secondary) 0, transparent 34rem),
+        radial-gradient(circle at 30% 88%, var(--page-glow-tertiary) 0, transparent 38rem),
+        var(--background1);
+    --row-background: rgba(255, 255, 255, 0.035);
+    --overlay: rgba(3, 7, 18, 0.72);
+    --border1: #4b638d;
+    --border2: #3b5077;
+    --border3: #293c5f;
+    --accent: #7693f0;
+    --accent-strong: #5573df;
+    --accent-soft: rgba(85, 115, 223, 0.18);
+    --accent-contrast: #ffffff;
+    --button-background-1: #4d69cf;
+    --button-background-1-hover: #516ed5;
+    --button-gradient: linear-gradient(135deg, #4f6dd5 0%, #3d57b8 100%);
+    --button-gradient-hover: linear-gradient(135deg, #516ed5 0%, #435fc4 100%);
+    --delete-button-background-1: #be4050;
+    --delete-button-background-1-hover: #d34d5d;
+    --delete-button-gradient: linear-gradient(135deg, #d34d5d 0%, #a92f43 100%);
+    --active-item: rgba(85, 115, 223, 0.22);
+    --hover-item: rgba(255, 255, 255, 0.075);
+    --text: #f3f6fc;
+    --secondary-text: #aebad0;
+    --muted-text: #8491aa;
+    --link-text: #a5b4fc;
+    --link-text-hover: #c7d2fe;
+    --link-text-visited: #c4b5fd;
+    --icon: #e8edf7;
+    --icon-disabled: #6f7c95;
+    --dot-loading-icon: no-repeat radial-gradient(farthest-side, #c7d2fe 94%, #0000);
+    --circle-loading-icon: #0000 calc(100% - 5px), #c7d2fe calc(100% - 4px) 96%, #0000;
+    --success-background: rgba(16, 185, 129, 0.14);
+    --success-text: #6ee7b7;
+    --success-border: #258a6b;
+    --warning-background: rgba(245, 158, 11, 0.14);
+    --warning-text: #fcd34d;
+    --warning-border: #a96c0c;
+    --error-background: rgba(244, 63, 94, 0.14);
+    --error-text: #fda4af;
+    --error-border: #be4050;
+    --row-red: #9f3448;
+    --row-orange: #9a6518;
+    --row-green: #16795c;
+    --icon-red: #fb7185;
+    --icon-orange: #fbbf24;
+    --icon-green: #34d399;
+    --icon-blue: #60a5fa;
+    --range-track: #465775;
+    --block-blue: var(--accent-soft);
+    --warning_border: var(--warning-border);
+    --focus-ring: rgba(85, 115, 223, 0.44);
+    --shadow-small: 0 1px 2px rgba(0, 0, 0, 0.24), 0 5px 14px rgba(0, 0, 0, 0.12);
+    --shadow-medium: 0 8px 24px rgba(0, 0, 0, 0.22), 0 2px 6px rgba(0, 0, 0, 0.18);
+    --shadow-large: 0 18px 48px rgba(0, 0, 0, 0.34), 0 4px 12px rgba(0, 0, 0, 0.18);
+}
+
+/* Light theme */
+:root.light {
+    --background1: #f3f6fb;
+    --background2: #ffffff;
+    --background3: #f8fafc;
+    --background4: #eef2f7;
+    --background5: #dfe6ef;
+    --background6: #c9d4e2;
+    --surface-raised: #ffffff;
+    --surface-gradient: linear-gradient(145deg, #ffffff 0%, #f5f7fb 100%);
+    --page-glow-primary: rgba(126, 156, 242, 0.24);
+    --page-glow-secondary: rgba(142, 183, 255, 0.18);
+    --page-glow-tertiary: rgba(165, 145, 242, 0.12);
+    --page-gradient:
+        radial-gradient(circle at 10% 7%, var(--page-glow-primary) 0, transparent 30rem),
+        radial-gradient(circle at 92% 38%, var(--page-glow-secondary) 0, transparent 34rem),
+        radial-gradient(circle at 30% 88%, var(--page-glow-tertiary) 0, transparent 38rem),
+        var(--background1);
+    --row-background: rgba(15, 23, 42, 0.035);
+    --overlay: rgba(15, 23, 42, 0.56);
+    --border1: #b7c3d4;
+    --border2: #cbd5e1;
+    --border3: #dce3ec;
+    --accent: #7693f0;
+    --accent-strong: #5573df;
+    --accent-soft: rgba(79, 70, 229, 0.11);
+    --accent-contrast: #edf2ff;
+    --button-background-1: #4d69cf;
+    --button-background-1-hover: #516ed5;
+    --button-gradient: linear-gradient(135deg, #4f6dd5 0%, #3d57b8 100%);
+    --button-gradient-hover: linear-gradient(135deg, #516ed5 0%, #435fc4 100%);
+    --delete-button-background-1: #dc354f;
+    --delete-button-background-1-hover: #bd2941;
+    --delete-button-gradient: linear-gradient(135deg, #e54860 0%, #bd2941 100%);
+    --active-item: rgba(79, 70, 229, 0.12);
+    --hover-item: rgba(15, 23, 42, 0.055);
+    --text: #172033;
+    --secondary-text: #58677d;
+    --muted-text: #75839a;
+    --link-text: #8393e3;
+    --link-text-hover: #312e81;
+    --link-text-visited: #6d28d9;
+    --icon: #27354b;
+    --icon-disabled: #98a4b6;
+    --dot-loading-icon: no-repeat radial-gradient(farthest-side, #4f46e5 94%, #0000);
+    --circle-loading-icon: #0000 calc(100% - 5px), #4f46e5 calc(100% - 4px) 96%, #0000;
+    --success-background: #e8f8f1;
+    --success-text: #146b51;
+    --success-border: #52a98b;
+    --warning-background: #fff6dc;
+    --warning-text: #815508;
+    --warning-border: #c98a18;
+    --error-background: #fff0f2;
+    --error-text: #a3233b;
+    --error-border: #dc5368;
+    --row-red: #e87383;
+    --row-orange: #e0a33a;
+    --row-green: #42a980;
+    --icon-red: #d92d4a;
+    --icon-orange: #b96f00;
+    --icon-green: #168564;
+    --icon-blue: #2563eb;
+    --range-track: #c3cede;
+    --block-blue: var(--accent-soft);
+    --warning_border: var(--warning-border);
+    --focus-ring: rgba(79, 70, 229, 0.26);
+    --shadow-small: 0 1px 2px rgba(15, 23, 42, 0.07), 0 5px 14px rgba(15, 23, 42, 0.055);
+    --shadow-medium: 0 10px 28px rgba(15, 23, 42, 0.10), 0 2px 7px rgba(15, 23, 42, 0.06);
+    --shadow-large: 0 20px 50px rgba(15, 23, 42, 0.16), 0 5px 14px rgba(15, 23, 42, 0.07);
+}
+
+/* Green themes keep the same design system with an emerald accent. */
+:root.dark-green {
+    --background1: #071612;
+    --background2: #0d201a;
+    --background3: #142c24;
+    --background4: #1d3a30;
+    --background5: #294a3e;
+    --background6: #3a5d50;
+    --surface-raised: #214237;
+    --surface-gradient: linear-gradient(145deg, #142c24 0%, #0c211a 100%);
+    --page-glow-primary: rgba(18, 113, 80, 0.22);
+    --page-glow-secondary: rgba(22, 89, 98, 0.15);
+    --page-glow-tertiary: rgba(45, 114, 73, 0.12);
+    --page-gradient:
+        radial-gradient(circle at 10% 7%, var(--page-glow-primary) 0, transparent 30rem),
+        radial-gradient(circle at 92% 38%, var(--page-glow-secondary) 0, transparent 34rem),
+        radial-gradient(circle at 30% 88%, var(--page-glow-tertiary) 0, transparent 38rem),
+        var(--background1);
+    --row-background: rgba(255, 255, 255, 0.04);
+    --overlay: rgba(2, 14, 10, 0.74);
+    --border1: #507465;
+    --border2: #3d6254;
+    --border3: #294b3f;
+    --accent: #34d399;
+    --accent-strong: #10b981;
+    --accent-soft: rgba(52, 211, 153, 0.15);
+    --accent-contrast: #04291e;
+    --button-background-1: #10a878;
+    --button-background-1-hover: #19bd89;
+    --button-gradient: linear-gradient(135deg, #24c991 0%, #07845e 100%);
+    --button-gradient-hover: linear-gradient(135deg, #39dca4 0%, #0b9b6e 100%);
+    --delete-button-background-1: #bd4050;
+    --delete-button-background-1-hover: #d24c5d;
+    --delete-button-gradient: linear-gradient(135deg, #d24c5d 0%, #a42e42 100%);
+    --active-item: rgba(52, 211, 153, 0.17);
+    --hover-item: rgba(255, 255, 255, 0.075);
+    --text: #ecfdf5;
+    --secondary-text: #a8c9bc;
+    --muted-text: #7da493;
+    --link-text: #6ee7b7;
+    --link-text-hover: #a7f3d0;
+    --link-text-visited: #99f6e4;
+    --icon: #e1f5ec;
+    --icon-disabled: #66877a;
+    --dot-loading-icon: no-repeat radial-gradient(farthest-side, #6ee7b7 94%, #0000);
+    --circle-loading-icon: #0000 calc(100% - 5px), #6ee7b7 calc(100% - 4px) 96%, #0000;
+    --success-background: rgba(16, 185, 129, 0.15);
+    --success-text: #6ee7b7;
+    --success-border: #268b69;
+    --warning-background: rgba(245, 158, 11, 0.14);
+    --warning-text: #fcd34d;
+    --warning-border: #a56a0c;
+    --error-background: rgba(244, 63, 94, 0.15);
+    --error-text: #fda4af;
+    --error-border: #bd4050;
+    --row-red: #9d3447;
+    --row-orange: #96651c;
+    --row-green: #127453;
+    --icon-red: #fb7185;
+    --icon-orange: #fbbf24;
+    --icon-green: #34d399;
+    --icon-blue: #60a5fa;
+    --range-track: #426859;
+    --block-blue: var(--accent-soft);
+    --warning_border: var(--warning-border);
+    --focus-ring: rgba(52, 211, 153, 0.36);
+    --shadow-small: 0 1px 2px rgba(0, 0, 0, 0.25), 0 5px 14px rgba(0, 0, 0, 0.12);
+    --shadow-medium: 0 8px 24px rgba(0, 0, 0, 0.24), 0 2px 6px rgba(0, 0, 0, 0.18);
+    --shadow-large: 0 18px 48px rgba(0, 0, 0, 0.36), 0 4px 12px rgba(0, 0, 0, 0.18);
+}
+
+:root.light-green {
+    --background1: #f0f8f4;
+    --background2: #ffffff;
+    --background3: #f6fbf8;
+    --background4: #e8f2ed;
+    --background5: #d5e5dd;
+    --background6: #bcd4c9;
+    --surface-raised: #ffffff;
+    --surface-gradient: linear-gradient(145deg, #ffffff 0%, #f2f9f5 100%);
+    --page-glow-primary: rgba(90, 190, 143, 0.20);
+    --page-glow-secondary: rgba(91, 164, 183, 0.14);
+    --page-glow-tertiary: rgba(120, 189, 129, 0.12);
+    --page-gradient:
+        radial-gradient(circle at 10% 7%, var(--page-glow-primary) 0, transparent 30rem),
+        radial-gradient(circle at 92% 38%, var(--page-glow-secondary) 0, transparent 34rem),
+        radial-gradient(circle at 30% 88%, var(--page-glow-tertiary) 0, transparent 38rem),
+        var(--background1);
+    --row-background: rgba(6, 78, 59, 0.035);
+    --overlay: rgba(6, 38, 29, 0.54);
+    --border1: #a9c4b7;
+    --border2: #c1d5cb;
+    --border3: #d6e5dd;
+    --accent: #07875f;
+    --accent-strong: #066b4c;
+    --accent-soft: rgba(7, 135, 95, 0.11);
+    --accent-contrast: #ffffff;
+    --button-background-1: #07875f;
+    --button-background-1-hover: #066b4c;
+    --button-gradient: linear-gradient(135deg, #0aa674 0%, #066b4c 100%);
+    --button-gradient-hover: linear-gradient(135deg, #078f65 0%, #05563e 100%);
+    --delete-button-background-1: #dc354f;
+    --delete-button-background-1-hover: #bd2941;
+    --delete-button-gradient: linear-gradient(135deg, #e54860 0%, #bd2941 100%);
+    --active-item: rgba(7, 135, 95, 0.12);
+    --hover-item: rgba(6, 78, 59, 0.06);
+    --text: #142820;
+    --secondary-text: #4f6b60;
+    --muted-text: #718b80;
+    --link-text: #067454;
+    --link-text-hover: #044c38;
+    --link-text-visited: #0f766e;
+    --icon: #243d33;
+    --icon-disabled: #91a99e;
+    --dot-loading-icon: no-repeat radial-gradient(farthest-side, #07875f 94%, #0000);
+    --circle-loading-icon: #0000 calc(100% - 5px), #07875f calc(100% - 4px) 96%, #0000;
+    --success-background: #e5f8ef;
+    --success-text: #12694f;
+    --success-border: #4da887;
+    --warning-background: #fff6dc;
+    --warning-text: #815508;
+    --warning-border: #c98a18;
+    --error-background: #fff0f2;
+    --error-text: #a3233b;
+    --error-border: #dc5368;
+    --row-red: #e87383;
+    --row-orange: #dfa13a;
+    --row-green: #3ca67c;
+    --icon-red: #d92d4a;
+    --icon-orange: #b96f00;
+    --icon-green: #087a59;
+    --icon-blue: #2563eb;
+    --range-track: #b6cfc3;
+    --block-blue: var(--accent-soft);
+    --warning_border: var(--warning-border);
+    --focus-ring: rgba(7, 135, 95, 0.25);
+    --shadow-small: 0 1px 2px rgba(6, 78, 59, 0.07), 0 5px 14px rgba(6, 78, 59, 0.055);
+    --shadow-medium: 0 10px 28px rgba(6, 78, 59, 0.10), 0 2px 7px rgba(6, 78, 59, 0.06);
+    --shadow-large: 0 20px 50px rgba(6, 78, 59, 0.16), 0 5px 14px rgba(6, 78, 59, 0.07);
+}

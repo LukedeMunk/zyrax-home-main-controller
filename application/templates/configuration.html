@@ -1,61 +1,16 @@
 {% extends "base.html" %}
 
+{% block component_styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='vendor/templates/css/ui_components/Overlay.css') }}">
+{% endblock %}
+
 {% block content %}
-<script>
-    page = CONFIGURATION_PAGE;
+<script id="pageData" type="application/json">{{ dict(logs=logs, weatherServiceEnabled=weather_service_enabled, telegramServiceEnabled=telegram_service_enabled, weatherApiKey=weather_api_key, telegramBotToken=telegram_bot_token, rpiRfEnabled=rpi_rf_receiver_enabled) | tojson }}</script>
 
-    let devices = JSON.parse('{{ devices | tojson | safe }}');
-    let unconfiguredDevices = JSON.parse('{{ unconfigured_devices | tojson | safe }}');
-    let groups = JSON.parse('{{ groups | tojson | safe }}');
-    let logs = JSON.parse('{{ logs | tojson | safe }}');
+<link rel="stylesheet" href="{{ url_for('static', filename='css/styles_tiles.css') }}">
 
-    const LEDSTRIP_SENSOR_MODELS = JSON.parse('{{ LEDSTRIP_SENSOR_MODELS | tojson | safe }}');
-    const DEVICE_CATEGORIES = JSON.parse('{{ DEVICE_CATEGORIES | tojson | safe }}');
-    const DEVICE_MODELS = JSON.parse('{{ DEVICE_MODELS | tojson | safe }}');
-    
-    const SUPPORTED_UI_LANGUAGES = JSON.parse('{{ SUPPORTED_UI_LANGUAGES | tojson | safe }}');
-
-    let weatherServiceEnabled = "{{ weather_service_enabled }}" == "True";
-    let weatherApiKey = "{{ weather_api_key }}";
-    let telegramServiceEnabled = "{{ telegram_service_enabled }}" == "True";
-    let telegramBotToken = "{{ telegram_bot_token }}";
-    let rpiRfEnabled = "{{ rpi_rf_receiver_enabled }}" == "True";
-
-    /* List of update files */
-    let otaVersionsReady = JSON.parse('{{ ota_files | tojson | safe }}');
-</script>
-
-<script src="../static/js/pages/configuration_page.js" defer></script>
-<link rel="stylesheet" href="../static/css/styles_tiles.css">
-
-<dialog id="iconModal" class="modal" style="width: 30%; box-shadow: var(--shadow-large);">
-    <i class="fa-solid fa-xmark close-modal-button clickable" target-modal="iconModal"></i>
-    <h3 id="iconModalTitle" style="margin-top: 0px;">Pick icon</h3>
-    
-    <div id="iconPickerContainer" class="icon-grid"></div>
-</dialog>
-
-<dialog id="deviceModal" class="modal">
-    <i class="fa-solid fa-xmark close-modal-button clickable" target-modal="deviceModal"></i>
-    <h3 id="deviceModalTitle" style="margin-top: 0px;">Add device</h3>
-
-    <div style="display: flex; flex-direction: row;">
-        <div id="deviceCategoryContainer" style="display: flex; flex-direction: column;"></div>
-
-        <div style="display: flex; flex-direction: column;">
-            <div id="deviceModelContainer" class="flex-grid" style="justify-content: center; gap: 0px;"></div>
-
-            <div id="searchingDevicesContainer" class="centered-flex" style="gap: 5px;">
-                <div id="" class="dot-loader"></div>
-                <p id="searchingDevicesTitle">Looking for devices</p>
-            </div>
-            <div id="automaticDevicePairContainer" class="flex-grid" style="justify-content: center; margin-bottom: 15px; display: none;"></div>
-        </div>
-    </div>
-    
-    <div id="manualDevicePairContainer" style="display: none;">
-    </div>
-</dialog>
+<div data-ref="firmware-progress"></div>
+<div data-ref="firmware-overlay"></div>
 
 <div class="container-form">
     <div class="base-container">
@@ -97,7 +52,7 @@
 
             <div class="flex" style="text-align: center; flex-direction: column; gap: 0px;">
                 <div class="full-width">
-                    <input id="otaPackageFileUpload" type="file" multiple accept=".bin" onchange="addOtaPackage();" style="display: none;">
+                    <input id="otaPackageFileUpload" type="file" multiple accept=".bin" data-action="addOtaPackage" style="display: none;">
                     <label class="button label-button minimal-height-button" for="otaPackageFileUpload" style="margin: 10px auto; width: 220px;">
                         <div style="margin: 10px;">
                             <i class="fa-solid fa-upload margin-r-5px"></i>
@@ -122,13 +77,13 @@
 
                     <div class="switch-input-container">
                         <label class="switch" style="margin: 15px;">
-                            <input id="weatherServiceEnabledCb" type="checkbox" onclick="toggleWeatherServiceEnabled();">
+                            <input id="weatherServiceEnabledCb" type="checkbox" data-action="toggleWeatherServiceEnabled">
                             <span class="slider round"></span>
                         </label>
 
                         <div class="input-field-container" style="margin: 10px;">
                             <p id="weatherApiKeyTitle" class="input-field-title gradient-background">API key</p>
-                            <input id="weatherApiKeyTxt" class="input-field disabled" type="text" placeholder="API key" onchange="submitWeatherModuleConfiguration();" disabled>
+                            <input id="weatherApiKeyTxt" class="input-field disabled" type="text" placeholder="API key" data-action="submitWeatherModuleConfiguration" disabled>
                         </div>
                     </div>
                 </fieldset>
@@ -138,13 +93,13 @@
 
                     <div class="switch-input-container">
                         <label class="switch" style="margin: 15px;">
-                            <input id="telegramServiceEnabledCb" type="checkbox" onclick="toggleTelegramServiceEnabled();">
+                            <input id="telegramServiceEnabledCb" type="checkbox" data-action="toggleTelegramServiceEnabled">
                             <span class="slider round"></span>
                         </label>
 
                         <div class="input-field-container" style="margin: 10px;">
                             <p id="telegramBotTokenTitle" class="input-field-title gradient-background">Bot Token</p>
-                            <input id="telegramBotTokenTxt" class="input-field disabled" type="text" placeholder="Telegram Bot Token" onchange="submitTelegramModuleConfiguration();" disabled>
+                            <input id="telegramBotTokenTxt" class="input-field disabled" type="text" placeholder="Telegram Bot Token" data-action="submitTelegramModuleConfiguration" disabled>
                         </div>
                     </div>
                 </fieldset>
@@ -153,7 +108,7 @@
                     <legend id="rpiRfModuleTitle">Raspberry Pi RF receiver enabled</legend>
                     <div class="centered-flex" style="margin: 10px 0px;">
                         <label class="switch" style="margin: 15px;">
-                            <input id="rpiRfModuleEnabledCb" type="checkbox" onclick="submitRpiRfModuleEnabled();">
+                            <input id="rpiRfModuleEnabledCb" type="checkbox" data-action="submitRpiRfModuleEnabled">
                             <span class="slider round"></span>
                         </label>
                     </div>
@@ -163,5 +118,9 @@
     </div>
 </div>
 
-<button id="resetToFactoryConfigurationBtn" onclick="resetToFactoryConfiguration();">Reset to factory settings</button>
+<button id="resetToFactoryConfigurationBtn" data-action="resetToFactoryConfiguration">Reset to factory settings</button>
+{% endblock %}
+
+{% block page_scripts %}
+<script type="module" src="{{ url_for('static', filename='js/pages/configuration_page.js') }}"></script>
 {% endblock %}

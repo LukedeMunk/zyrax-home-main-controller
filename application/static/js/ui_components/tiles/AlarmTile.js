@@ -1,105 +1,36 @@
-/******************************************************************************/
+/****************************************************************************/
 /*
- * File:    DeviceTile.js
- * Version: 0.9.0
+ * File:    AlarmTile.js
  * Author:  Luke de Munk
- * 
- * Brief:   Toolbar class to manage toolbars. Used to show toolbars with various
- *          buttons, including a timed progress button.
- * 
+ * Version: 0.10.0
+ *
+ * Brief:   AlarmTile dashboard component.
+ *
  *          More information:
  *          https://github.com/LukedeMunk/zyrax-home-main-controller
- * 
- * Template version:        0.0.4
- * Template information:    https://github.com/LukedeMunk/templates
  */
-/******************************************************************************/
+/****************************************************************************/
 
-//#region Example configuration /*X*/ = required
-//const EXAMPLE_DEVICE_TILE_CONFIGURATION = {
-//    /*X*/id: "tile0",
-//    /*X*/size: TILE_SIZE_1X1,
-//    /*X*/title: "title",
-//    warningIcon: {icon: "fa-duotone fa-solid fa-circle-exclamation", title: TEXT_NO_RF_RECEIVER_PRESENT},
-//
-//    tileId: undefined,
-//    previewTile: false,
-//
-//    className: undefined,
-//    backgroundColor: "var(--background3)",
-//    boxShadow: "var(--shadow-small)",
-//    cursor: "pointer",
-//
-//    onclickFunction: () => loadAddTileModal(),
-//
-//    items: [
-//        {
-//            /* X */ type: TILE_ITEM_CONTAINER,
-//
-//            id: undefined,
-//            className: undefined,
-//
-//            style: {
-//                display: "flex",
-//                gap: "10px",
-//                alignItems: "baseline",
-//                gridColumn: "span 2"
-//            },
-//
-//            items: [
-//                {
-//                    /* X */ type: TILE_ITEM_TEXT,
-//
-//                    id: undefined,
-//                    className: undefined,
-//                    text: "Tile title",
-//                    title: undefined,
-//                    style: undefined
-//                },
-//                {
-//                    /* Alleen tonen indien nodig, zoals een RF-waarschuwing */
-//                    type: TILE_ITEM_ICON,
-//
-//                    id: undefined,
-//                    className:
-//                        "fa-duotone fa-solid fa-circle-exclamation",
-//                    title: TEXT_NO_RF_RECEIVER_PRESENT,
-//                    visible: false,
-//                    style: undefined
-//                }
-//            ]
-//        },
-//        {
-//            /* X */ type: TILE_ITEM_CONTAINER,
-//
-//            id: undefined,
-//            className: undefined,
-//            style: undefined,
-//
-//            items: [
-//                {
-//                    /* X */ type: TILE_ITEM_ICON,
-//
-//                    id: "deviceIcon0",
-//                    className: "fa-duotone fa-solid fa-lightbulb",
-//                    title: undefined,
-//                    style: undefined
-//                }
-//            ]
-//        }
-//    ]
-//};
+import {
+    TILE_SIZE_1X1, TILE_SIZE_1X2, TILE_SIZE_2X2, TILE_SIZE_4X4
+} from "../../domain/dashboard_tiles.js";
+import { Tile } from "./Tile.js";
 
-//#endregion
-
-class AlarmTile extends Tile {
-    constructor(configuration) {
-        super(configuration);
+export class AlarmTile extends Tile {
+    /****************************************************************************/
+    /*!
+     * @brief   Initializes the component with its root and configuration.
+     * @param   root                    Root element owned by the component.
+     * @param   configuration           Initial component configuration.
+     */
+    /****************************************************************************/
+    constructor(root, configuration) {
+        super(root, configuration);
 
         this.subtitle1 = configuration.subtitle1;
         this.subtitle2 = configuration.subtitle2;
-        this.subtitleColor = "var(--text-green)";
-        
+        this.subtitleColor = "var(--success-text)";
+
         this.icon = configuration.icon;
         this.iconElementId = this.id + "AlarmIcon";
 
@@ -116,11 +47,11 @@ class AlarmTile extends Tile {
         this.subtitle2Id = this.id + "AlarmSubtitle2";
     }
 
-    /**************************************************************************/
+    /****************************************************************************/
     /*!
-        @brief  XX
-    */
-    /**************************************************************************/
+     * @brief   XX
+     */
+    /****************************************************************************/
     render() {
         this.tileElem = super._renderTileElement();
 
@@ -137,11 +68,11 @@ class AlarmTile extends Tile {
         return this.tileElem;
     }
 
-    /**************************************************************************/
+    /****************************************************************************/
     /*!
-        @brief  Renders a 1x1 tile.
-    */
-    /**************************************************************************/
+     * @brief   Renders a 1x1 tile.
+     */
+    /****************************************************************************/
     #render1x1() {
         const icons = [this.icon];
 
@@ -149,52 +80,57 @@ class AlarmTile extends Tile {
         this.tileElem.appendChild(this._renderIconsElement(icons));
     }
 
-    /**************************************************************************/
+    /****************************************************************************/
     /*!
-        @brief  XX
-    */
-    /**************************************************************************/
+     * @brief   XX
+     */
+    /****************************************************************************/
     #render1x2() {
         const icons = [this.icon];
 
         this.tileElem.appendChild(this.#renderTitleElement());
         this.tileElem.appendChild(this._renderIconsElement(icons));
-        this.tileElem.appendChild(this._renderSwitch(this.checkboxElementId, this.powerFunction, this.checkboxValue));
-
+        this.tileElem.appendChild(this._renderSwitch(
+            this.checkboxElementId, this.powerFunction, this.checkboxValue
+        ));
     }
 
-    /**************************************************************************/
+    /****************************************************************************/
     /*!
-        @brief  XX
-    */
-    /**************************************************************************/
+     * @brief   XX
+     */
+    /****************************************************************************/
     #render4x2() {
         const icons = [this.icon];
 
         this.tileElem.appendChild(this.#renderTitleElement());
         this.tileElem.appendChild(this._renderIconsElement(icons));
-        this.tileElem.appendChild(this._renderSwitch(this.checkboxElementId, this.powerFunction, this.checkboxValue));
+        this.tileElem.appendChild(this._renderSwitch(
+            this.checkboxElementId, this.powerFunction, this.checkboxValue
+        ));
     }
 
-    /**************************************************************************/
+    /****************************************************************************/
     /*!
-        @brief  XX
-    */
-    /**************************************************************************/
+     * @brief   XX
+     */
+    /****************************************************************************/
     #render4x4() {
         const icons = [this.icon];
 
         this.tileElem.appendChild(this.#renderTitleElement());
         this.tileElem.appendChild(this._renderIconsElement(icons));
-        this.tileElem.appendChild(this._renderSwitch(this.checkboxElementId, this.powerFunction, this.checkboxValue));
+        this.tileElem.appendChild(this._renderSwitch(
+            this.checkboxElementId, this.powerFunction, this.checkboxValue
+        ));
     }
 
-    /**************************************************************************/
+    /****************************************************************************/
     /*!
-        @brief  XX
-    */
-    /**************************************************************************/
-    #renderTitleElement(fullWidth=true) {
+     * @brief   XX
+     */
+    /****************************************************************************/
+    #renderTitleElement(fullWidth = true) {
         const titleContainer = super._renderTitleElement(fullWidth);
 
         if (this.subtitle1) {
@@ -224,18 +160,18 @@ class AlarmTile extends Tile {
         return titleContainer;
     }
 
-    /**************************************************************************/
+    /****************************************************************************/
     /*!
-        @brief  XX
-    */
-    /**************************************************************************/
+     * @brief   XX
+     */
+    /****************************************************************************/
     #renderTrustedDevices() {
         for (const connectedDevice of this.alarm.connected_deactivation_devices) {
             const deviceContainer = document.createElement("div");
 
             const iconElem = document.createElement("i");
-            iconElem.className =
-                "fa-duotone fa-solid fa-mobile fa-lg";
+
+            iconElem.className = "fa-duotone fa-solid fa-mobile fa-lg";
             iconElem.title = connectedDevice.name;
 
             deviceContainer.appendChild(iconElem);
@@ -243,64 +179,64 @@ class AlarmTile extends Tile {
         }
     }
 
-    /**************************************************************************/
+    /****************************************************************************/
     /*!
-        @brief  XX
-    */
-    /**************************************************************************/
+     * @brief   XX
+     */
+    /****************************************************************************/
     setCheckboxValue(value) {
         this.checkboxValue = value;
 
-        const checkboxElem = document.getElementById(this.checkboxElementId);
+        const checkboxElem = this.root.querySelector("#" + CSS.escape(this.checkboxElementId));
         checkboxElem.checked = this.checkboxValue;
     }
 
-    /**************************************************************************/
+    /****************************************************************************/
     /*!
-        @brief  XX
-    */
-    /**************************************************************************/
+     * @brief   XX
+     */
+    /****************************************************************************/
     getCheckboxValue() {
-        const checkboxElem = document.getElementById(this.checkboxElementId);
+        const checkboxElem = this.root.querySelector("#" + CSS.escape(this.checkboxElementId));
         this.checkboxValue = checkboxElem.checked;
 
         return this.checkboxValue;
     }
 
-    /**************************************************************************/
+    /****************************************************************************/
     /*!
-        @brief  XX
-    */
-    /**************************************************************************/
+     * @brief   XX
+     */
+    /****************************************************************************/
     setSubtitle1(subtitle) {
-        const titleElem = document.getElementById(this.subtitle1Id);
+        const titleElem = this.root.querySelector("#" + CSS.escape(this.subtitle1Id));
         this.subtitle1 = subtitle;
 
         titleElem.textContent = this.subtitle1;
     }
 
-    /**************************************************************************/
+    /****************************************************************************/
     /*!
-        @brief  XX
-    */
-    /**************************************************************************/
+     * @brief   XX
+     */
+    /****************************************************************************/
     setSubtitle2(subtitle) {
-        const titleElem = document.getElementById(this.subtitle2Id);
+        const titleElem = this.root.querySelector("#" + CSS.escape(this.subtitle2Id));
         this.subtitle2 = subtitle;
 
         titleElem.textContent = this.subtitle2;
     }
 
-    /**************************************************************************/
+    /****************************************************************************/
     /*!
-        @brief  XX
-    */
-    /**************************************************************************/
+     * @brief   XX
+     */
+    /****************************************************************************/
     setIcon(icon) {
         this.icon.icon = icon.icon ?? "";
         this.icon.title = icon.title ?? "";
 
-        const iconElem = document.getElementById(this.iconElementId);
+        const iconElem = this.root.querySelector("#" + CSS.escape(this.iconElementId));
         iconElem.className = this.icon.icon;
         iconElem.title = this.icon.title;
     }

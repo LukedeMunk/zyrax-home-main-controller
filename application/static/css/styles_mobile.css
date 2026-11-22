@@ -1,19 +1,36 @@
 /******************************************************************************/
 /*
  * File:    styles_mobile.css
+ * Version: 0.10.0
  * Author:  Luke de Munk
- * Version: 0.9.0
- * 
- * Brief:   Additional styles for mobile version.
+ *
+ * Brief:   Positions the secondary dashboard and settings navigation on small
+ *          screens.
  *
  *          More information:
  *          https://github.com/LukedeMunk/zyrax-home-main-controller
- *
- * Template version:        0.0.4
- * Template information:    https://github.com/LukedeMunk/templates
  */
 /******************************************************************************/
-/* #region Base elements */
+[data-dashboard-navigation] .floating-navigation-bar.right,
+[data-ref="sections"] .floating-navigation-bar.left {
+    top: 50%;
+    bottom: auto;
+    flex-direction: column;
+    max-height: 70vh;
+    overflow: auto;
+    transform: translateY(-50%);
+}
+
+[data-dashboard-navigation] .floating-navigation-bar.right {
+    left: auto;
+    right: 8px;
+}
+
+[data-ref="sections"] .floating-navigation-bar.left {
+    left: 8px;
+}
+
+
 h1 {
     font-size: var(--font-size-h1-mobile);
 }
@@ -31,88 +48,98 @@ h4 {
 }
 
 p {
-    font-size: var(--font-size-small);
+    font-size: var(--font-size-p-mobile);
 }
 
-nav i {
+.floating-navigation-bar i {
     font-size: var(--font-size-h3);
 }
 
 .page {
-    left: 5%;
-    width: 90%;
+    left: 0;
+    width: 100%;
 }
 
 .base-container {
-    padding: 50px 10px;
-    margin-bottom: 30px !important;
+    margin-bottom: 24px !important;
+    padding: 22px 14px;
 }
 
 .flex {
-    flex-direction: column;
     margin: auto;
-    align-items: center;
+    flex-direction: column;
+    align-items: stretch;
 }
 
 .banner {
+    width: 100%;
     margin: auto;
-    width: 85%;
 }
 
 .half-width {
-    width: 90% !important;
+    width: 100% !important;
 }
 
 select {
-    appearance: none;
-    height: 30px !important;
-    min-height: 30px !important;
-    -webkit-appearance: menulist-button; /* For iOS compatibility */
+    min-height: var(--control-height) !important;
+    appearance: auto;
 }
 
 fieldset {
     width: 100%;
 }
 
-.navigation-item-title {
+.floating-navigation-bar .navigation-item-title {
     display: none;
 }
 
-.banner-stack {
-    right: 50%;
-    transform: translateX(50%);
-    width: 90%;
+.banner-stack,
+.loading-banner-stack {
+    right: 10px;
+    width: calc(100vw - 20px);
+    transform: none;
 }
 
 .popup-container {
-    width: 80%;
+    width: calc(100vw - 20px);
 }
-/* #endregion */
 
-/* #region Custom mobile styles */
-.big-modal {
+.popup-button-container {
+    flex-direction: column;
+}
+
+.popup-button-container > * {
     width: 100%;
+    max-width: none;
+}
+
+.basics-fieldset-margin {
+    display: none;
+}
+
+.big-modal {
+    width: calc(100% - 12px);
 }
 
 .small-bottom-modal {
-    width: 98%;
-    min-width: 200px;
-    padding-bottom: 25px;
-    bottom: 10px;
+    bottom: -12px;
+    width: calc(100% - 12px);
+    min-width: 0;
+    padding-bottom: 22px;
 }
 
 .container-form.welcome {
-    width: 98% !important;
-    min-width: 200px;
+    width: 100% !important;
+    min-width: 0;
 }
 
 .sidebar {
-    width: 20%;
-    min-width: 50px;
+    width: 64px;
+    min-width: 64px;
 }
 
 .right-shifted {
-    transform: translateX(50px);
+    transform: translateX(64px);
 }
 
 .sidebar-menu-item-title {
@@ -120,8 +147,8 @@ fieldset {
 }
 
 .sidebar-menu li {
+    margin-bottom: 20px;
     justify-content: center;
-    margin-bottom: 30px;
     font-size: var(--font-size-h3);
 }
 
@@ -129,4 +156,11 @@ fieldset {
     width: 80px;
     height: 80px;
 }
-/* #endregion */
+
+.input-icon-container {
+    width: 100%;
+}
+
+.cell-flex {
+    gap: 7px;
+}

@@ -1,55 +1,41 @@
 {% extends "base.html" %}
 
+{% block component_styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='vendor/templates/css/ui_components/Overlay.css') }}">
+{% endblock %}
+
 {% block content %}
+<div data-ref="mode-dialogs"></div>
+<div data-ref="loading"></div>
+<div data-ref="ledstrip-settings"></div>
 
-<script>
-    page = LEDSTRIP_PAGE;
+<script id="pageData" type="application/json">{{ dict(stripOrGroup=(group if group_selected else ledstrip), groupSelected=group_selected, devices=devices|default([]), ledstripOrGroupId=id, modeConfigurations=mode_configurations, palettes=palettes, powerAnimations=power_animations, LEDSTRIP_MODES=LEDSTRIP_MODES) | tojson }}</script>
 
-    let groupSelected = "{{group_selected}}" == "True";
-    let ledstripOrGroupId = parseInt("{{id}}");
-    let powerAnimations = JSON.parse('{{ power_animations | tojson | safe }}');
-    let palettes = JSON.parse('{{ palettes | tojson | safe }}');
-    let stripOrGroup;
-    let devices;
-
-    if (groupSelected) {
-        stripOrGroup = JSON.parse('{{ group | tojson | safe }}');
-        devices = JSON.parse('{{ devices | tojson | safe }}');
-    } else {
-        stripOrGroup = JSON.parse('{{ ledstrip | tojson | safe }}');
-    }
-    let modeConfigurations = JSON.parse('{{ mode_configurations | tojson | safe }}');
-
-    const LEDSTRIP_MODES = JSON.parse('{{ LEDSTRIP_MODES | tojson | safe }}');
-</script>
-
-<script src="../static/js/pages/control_ledstrip_page.js" defer></script>
-<link rel="stylesheet" href="../static/css/styles_tiles.css">
-<link rel="stylesheet" media="screen and (max-device-width: 699px)" href="../static/css/styles_tiles_mobile.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/styles_tiles.css') }}">
+<link rel="stylesheet" media="screen and (max-width: 699px)" href="{{ url_for('static', filename='css/styles_tiles_mobile.css') }}">
 
 <div class="container-form">
     <div class="base-container">
         <p id="ledstripMessageField" class="message warning" style="margin-top: 0px;"></p>
-            <fieldset class="flex" style="margin-top: 0px; flex-direction: column;">
-                <legend id="basicsTitle">Basics</legend>
-                <div style="display: flex; align-items: flex-end; margin: 0px auto; gap: 10px">
-                    <label class="switch" style="margin: 0px;">
-                        <input id="powerCb" type="checkbox" onclick="setPower();">
-                        <span class="slider round"></span>
-                    </label>
+        <fieldset class="flex" style="margin-top: 0px; flex-direction: column;">
+            <legend id="basicsTitle">Basics</legend>
+            <div style="display: flex; align-items: flex-end; margin: 0px auto; gap: 10px">
+                <label class="switch" style="margin: 0px;">
+                    <input id="powerCb" type="checkbox" data-action="setPower">
+                    <span class="slider round"></span>
+                </label>
 
-                    <div class="input-field-container" style="min-width: unset; margin: 0px;">
-                        <p id="colorTitle" class="input-field-title gradient-background">Color</p>
-                        <input id="colorColor" type="color" class="input-field"/>
-                    </div>
+                <div class="input-field-container" style="min-width: unset; margin: 0px;">
+                    <p id="colorTitle" class="input-field-title gradient-background">Color</p>
+                    <input id="colorColor" type="color" class="input-field"/>
                 </div>
+            </div>
 
-                <div class="input-field-container">
-                    <p id="brightnessTitle" class="range-title" style="background-color: transparent;">Brightness</p>
-                    <input id="brightnessRange" type="range" min="10" max="255" onchange="setBrightness();" style="width: 100%;"/>
-                </div>
-            </fieldset>
-        </div>
+            <div class="input-field-container">
+                <p id="brightnessTitle" class="range-title" style="background-color: transparent;">Brightness</p>
+                <div data-brightness-field></div>
+            </div>
+        </fieldset>
     </div>
 </div>
 
@@ -63,13 +49,20 @@
 
 <div class="container-form">
     <div class="base-container">
-        <div class="flex" style="flex-direction: column;">
-            <div class="input-field-container">
-                <p id="powerAnimationSelectTitle" class="input-field-title gradient-background">Select power animation</p>
-                <select id="powerAnimationSelect" class="input-field" onchange="setPowerAnimation();"></select>
-            </div>
-        </div>
+        <h3 id="powerAnimationTitle" style="margin-top: 0px;"></h3>
+        <div id="powerAnimationContainer" class="flex-grid" role="group" aria-labelledby="powerAnimationTitle" style="justify-content: center;"></div>
     </div>
 </div>
 
+{% if not group_selected %}
+<div class="container-form">
+    <div class="base-container">
+        <div class="ledstrip-actions" data-ref="ledstrip-actions"></div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block page_scripts %}
+<script type="module" src="{{ url_for('static', filename='js/pages/control_ledstrip_page.js') }}"></script>
 {% endblock %}

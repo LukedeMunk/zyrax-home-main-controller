@@ -1,15 +1,13 @@
 {% extends "base.html" %}
 
+{% block component_styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='vendor/templates/css/ui_components/MouseContextMenu.css') }}">
+{% endblock %}
+
 {% block content %}
+<script id="pageData" type="application/json">{{ dict(strip=ledstrip) | tojson }}</script>
 
-<script>
-    page = CONFIGURATION_PAGE;
-
-    let strip = JSON.parse('{{ ledstrip | tojson | safe }}');
-</script>
-
-<script src="../static/js/pages/configure_led_addressing_page.js" defer></script>
-
+<div data-ref="led-menu"></div>
 <div class="container-form">
     <div class="base-container">
         <div id="toolbarContainer" style="display: flex; justify-content: space-between;">
@@ -20,7 +18,7 @@
                 <input id="addressTxt" type="text" class="input-field" value="0"/>
             </div>
 
-            <div class="button-message" onclick="toggleSegmentType(undefined, true);">
+            <div class="button-message" data-action="toggleSegmentType">
                 <i id="drawingElementIcon" class=""></i>
                 <p id="drawingElementField" style="margin: 0px;"></p>
             </div>
@@ -28,14 +26,17 @@
         <div style="display: flex; gap: 20px;">
             <canvas id="ledCanvas" class="ledstrip-addressing-canvas" width="800" height="600"></canvas>
             <div>
-                <button id="clearBtn" onclick="resetAll();">Clear</button>
-                <button id="resetBtn" onclick="loadCurrent();">Reset</button>
-                <button id="resetAddressingBtn" onclick="resetAddressing();">Reset addressing</button>
-                <button id="saveBtn" onclick="save();" style="margin-top: 40px;">Save</button>
-                <button id="cancelBtn" onclick="cancel();">Cancel</button>
+                <button id="clearBtn" data-action="resetAll">Clear</button>
+                <button id="resetBtn" data-action="loadCurrent">Reset</button>
+                <button id="resetAddressingBtn" data-action="resetAddressing">Reset addressing</button>
+                <button id="saveBtn" data-action="save" style="margin-top: 40px;">Save</button>
+                <button id="cancelBtn">Cancel</button>
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
 
+{% block page_scripts %}
+<script type="module" src="{{ url_for('static', filename='js/pages/configure_led_addressing_page.js') }}"></script>
 {% endblock %}

@@ -1,38 +1,44 @@
-/******************************************************************************/
+/****************************************************************************/
 /*
  * File:    alarm_page.js
  * Author:  Luke de Munk
- * Version: 0.9.0
- * 
- * Brief:   JavaScript for the control sensors page. More information:
+ * Version: 0.10.0
+ *
+ * Brief:   Page controller for alarm.
+ *
+ *          More information:
  *          https://github.com/LukedeMunk/zyrax-home-main-controller
  */
-/******************************************************************************/
+/****************************************************************************/
+
+import {
+    TEXT_ALARM_NOT_TRIGGERED_YET, TEXT_BACK_ONLINE, TEXT_CHANGES_SAVED_SUCCESSFULLY, TEXT_DATE,
+    TEXT_DISCONNECTED_CONNECTING, TEXT_EDIT_DEACTIVATION_DEVICE, TEXT_ERROR, TEXT_FIELD_INVALID_IP,
+    TEXT_FIELD_REQUIRED, TEXT_FIELD_UNIQUE, TEXT_ITEM_ADDED_SUCCESSFULLY,
+    TEXT_NEW_DEACTIVATION_DEVICE, TEXT_PLEASE_SELECT_DEVICE, TEXT_SENSOR, TEXT_SUCCESS, TEXT_TIME,
+    TEXT_TRIGGER_LOGS
+} from "../domain/language_pack_english.js";
+import { mountPage, readPageData } from "../core/page.js";
+import { submitForm } from "../services/forms.js";
+import { listSensors, listNetworkDevices } from "../services/sensors.js";
+import { ModalStack } from "../../vendor/templates/js/core/modal-stack.js";
+import {
+    StandardTable, LoadingBannerManager
+} from "../../vendor/templates/js/ui_components/index.js";
+
+const { http, banners, signal, delay, components } = mountPage("dashboard");
+let { alarm, devices, alarmTriggerTimes } = readPageData();
+const DEVICE_TYPE_RF_DEVICE = 1;
+const IP_RE = /^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4}$/;
+
 //#region Elements
-/* Text elements */
 const deactivationDeviceModalTitleElem = document.getElementById("deactivationDeviceModalTitle");
-
-/* Fields */
 const errorMessageDeactivationDeviceFieldElem = document.getElementById("errorMessageDeactivationDeviceField");
-
-/* Buttons */
 const manuallyAddDeviceBtnElem = document.getElementById("manuallyAddDeviceBtn");
 const submitDeactivationDeviceBtnElem = document.getElementById("submitDeactivationDeviceBtn");
-
-/* Icons */
-
-/* Input elements */
 const deactivationDeviceNameTxtElem = document.getElementById("deactivationDeviceNameTxt");
 const deactivationDeviceIpTxtElem = document.getElementById("deactivationDeviceIpTxt");
-
-/* Tables */
-const triggerTableHeaderElem = document.getElementById("triggerTableHeader");
-const triggerTableElem = document.getElementById("triggerTable");
-
-/* Modals */
 const deactivationDeviceModalElem = document.getElementById("deactivationDeviceModal");
-
-/* Other */
 const stateContainerElem = document.getElementById("stateContainer");
 const deactivationDeviceContainerElem = document.getElementById("deactivationDeviceContainer");
 const triggerDeviceContainerElem = document.getElementById("triggerDeviceContainer");
@@ -45,121 +51,115 @@ const alarmTriggerTableContainerElem = document.getElementById("alarmTriggerTabl
 //#endregion
 
 //#region Constants
-const TRIGGER_COLUMNS = [TEXT_SENSOR, TEXT_DATE, TEXT_TIME];
 //#endregion
 
 //#region Variables
 let isFetchingStates = false;
-let isFetchingNetworkDevices = false;
+
 let networkDevices = [];
 //#endregion
 
+const table = new StandardTable(alarmTriggerTableContainerElem, {
+    title: TEXT_TRIGGER_LOGS + " (" + alarmTriggerTimes.length + ")",
+    columns: [{ key: "sensor", title: TEXT_SENSOR }, {
+        key: "date",
+        title: TEXT_DATE
+    }, { key: "time", title: TEXT_TIME }],
+    rows: alarmTriggerTimes,
+    emptyMessage: TEXT_ALARM_NOT_TRIGGERED_YET
+}).mount();
 
-const alarmTriggerTableObject = new StandardTable(alarmTriggerTableContainerElem, ALARM_TRIGGER_TABLE_CONFIGURATION);
+const loading = new LoadingBannerManager(document.querySelector('[data-ref="loading"]')).mount();
+const stack = new ModalStack();
 
-/******************************************************************************/
+components.push(table, loading, stack);
+
+let connectionTask = null;
+let lastDeactivationDeviceData;
+
+/****************************************************************************/
 /*!
-    @brief  When page finished loading, this function is executed.
-*/
-/******************************************************************************/
-$(document).ready(function() {
+ * @brief   Opens the deactivation device editor through its modal stack.
+ */
+/****************************************************************************/
+function openDeviceDialog() {
+    stack.open(deactivationDeviceModalElem, {
+        onRequestClose: () => stack.close(deactivationDeviceModalElem)
+    });
+}
+
+deactivationDeviceModalElem.querySelector(".close-modal-button").addEventListener("click", () =>
+    stack.close(deactivationDeviceModalElem), { signal });
+
+/****************************************************************************/
+/*!
+ * @brief   When page finished loading, this function is executed.
+ */
+/****************************************************************************/
+manuallyAddDeviceBtnElem.addEventListener("click", manuallyAddDeactivationDevice, { signal });
+initialize();
+
+/****************************************************************************/
+/*!
+ * @brief   Loads page text, initial state and page-specific controls.
+ */
+/****************************************************************************/
+function initialize() {
     loadStates();
     loadDeactivationDeviceTiles();
     loadTriggerDeviceTiles();
     //generateTriggerTable();
-    
     isFetchingStates = true;
     fetchStates();
-});
+}
 
 //#region Generate alarm trigger table
-/******************************************************************************/
+/****************************************************************************/
 /*!
-    @brief  Generates the alarm trigger table.
-*/
-/******************************************************************************/
-function generateTriggerTable() {
-    alarmTriggerTableObject.reset();
-    alarmTriggerTableObject.setTitle(TEXT_TRIGGER_LOGS + " (" + alarmTriggerTimes.length + ")");
-
-    /* Fill rows */
-    for (let triggerRow of alarmTriggerTimes) {
-        let row = {
-            data: [{
-                type: CELL_TYPE_TEXT,
-                value: triggerRow.sensor
-            },
-            {
-                type: CELL_TYPE_TEXT,
-                value: triggerRow.date
-            },
-            {
-                type: CELL_TYPE_TEXT,
-                value: triggerRow.time
-            }]
-        }
-        alarmTriggerTableObject.appendRow(row);
-    }
-
-    /* If no rows, generate alternative text */
-    if (alarmTriggerTimes.length == 0) {
-        alarmTriggerTableObject.appendEmptyTableRow();
-    }
-    
-    alarmTriggerTableObject.restoreScrollPosition();
-}
+ * @brief   Generates the alarm trigger table.
+ */
+/****************************************************************************/
 //#endregion
-
 //#region Interval update requests
-/******************************************************************************/
+/****************************************************************************/
 /*!
-    @brief  Asynchronous interval function for fetching the states from the
-            back-end for real-time monitoring.
-*/
-/******************************************************************************/
+ * @brief   Asynchronous interval function for fetching the states from the
+ * back-end for real-time monitoring.
+ */
+/****************************************************************************/
 async function fetchStates() {
-    if (!isFetchingStates) {
-        setTimeout(fetchStates, BACK_END_UPDATE_INTERVAL_5S);
-        return;
-    }
-
-    let response;
-    
     try {
-        response = await fetch("get_sensors", {signal: AbortSignal.timeout(FETCH_TIMEOUT)});
-    } catch {
-        loadingBanners.show(TEXT_DISCONNECTED_CONNECTING);
-        setTimeout(waitUntilConnected, BACK_END_UPDATE_INTERVAL_1S, fetchStates);
-        return;
+        devices = await listSensors(http, signal);
+        loadStates();
+        if (connectionTask !== null) {
+            loading.close(connectionTask);
+            connectionTask = null;
+            banners.show({ title: TEXT_BACK_ONLINE, message: TEXT_BACK_ONLINE, type: "success" });
+        }
+    } catch (error) {
+        if (signal.aborted) return;
+
+        if (connectionTask === null) connectionTask =
+            loading.show({ message: TEXT_DISCONNECTED_CONNECTING });
     }
 
-    let data = await response.json();
-    devices = data;
-    loadStates();
-    generateTriggerTable();
-
-    setTimeout(fetchStates, BACK_END_UPDATE_INTERVAL_1S);
+    if (!signal.aborted) delay(fetchStates, 1000);
 }
 
-/******************************************************************************/
+/****************************************************************************/
 /*!
-    @brief  Pauses the back-end refreshes for the specified amount of time
-    @param  seconds             Number of seconds to continue refreshes
-*/
-/******************************************************************************/
-function pauseRefreshes(seconds=2) {
-    isFetchingStates = false;
-    setTimeout(function() {isFetchingStates = true}, seconds*1000);
-}
+ * @brief   Pauses the back-end refreshes for the specified amount of time
+ * @param   seconds                 Number of seconds to continue refreshes
+ */
+/****************************************************************************/
 //#endregion
-
 //#region Utilities
 //#region Load functionality
-/******************************************************************************/
+/****************************************************************************/
 /*!
-    @brief  Loads states to front-end.
-*/
-/******************************************************************************/
+ * @brief   Loads states to front-end.
+ */
+/****************************************************************************/
 function loadStates() {
     stateContainerElem.innerHTML = "";
 
@@ -186,9 +186,9 @@ function loadStates() {
 
         icon = document.createElement("i");
         if (device.state) {
-            icon.className = device.icon;// + " fa-xl";
+            icon.className = device.icon; // + " fa-xl";
         } else {
-            icon.className = device.icon_low_state;// + " fa-xl";
+            icon.className = device.icon_low_state; // + " fa-xl";
         }
 
         fieldset.append(legend);
@@ -198,11 +198,11 @@ function loadStates() {
     }
 }
 
-/******************************************************************************/
+/****************************************************************************/
 /*!
-    @brief  Loads the deactivation device tiles.
-*/
-/******************************************************************************/
+ * @brief   Loads the deactivation device tiles.
+ */
+/****************************************************************************/
 function loadDeactivationDeviceTiles() {
     let tile;
     let grid;
@@ -213,11 +213,19 @@ function loadDeactivationDeviceTiles() {
     for (let device of alarm.deactivation_devices) {
         tile = document.createElement("div");
         tile.className = "tile";
+
+        /****************************************************************************/
+        /*!
+         * @brief   Runs the action bound to the selected control.
+         * @returns Calculated value or configured element.
+         */
+        /****************************************************************************/
         tile.onclick = () => loadDeactivationDeviceModal(device.id);
         tile.style.backgroundColor = "var(--background4)";
 
         grid = document.createElement("div");
-        title = document.createTextNode(device.name);
+
+        const title = document.createTextNode(device.name);
 
         grid.appendChild(title);
         tile.appendChild(grid);
@@ -231,9 +239,15 @@ function loadDeactivationDeviceTiles() {
         deactivationDeviceContainerElem.appendChild(tile);
     }
 
-    
     tile = document.createElement("div");
     tile.className = "tile";
+
+    /****************************************************************************/
+    /*!
+     * @brief   Runs the action bound to the selected control.
+     * @returns Calculated value or configured element.
+     */
+    /****************************************************************************/
     tile.onclick = () => loadDeactivationDeviceModal();
 
     grid = document.createElement("div");
@@ -248,21 +262,19 @@ function loadDeactivationDeviceTiles() {
     deactivationDeviceContainerElem.appendChild(tile);
 }
 
-/******************************************************************************/
+/****************************************************************************/
 /*!
-    @brief  Loads the deactivation device modal.
-    @param  id              ID of the deactivation device
-*/
-/******************************************************************************/
-function loadDeactivationDeviceModal(id=undefined) {
-
-    
+ * @brief   Loads the deactivation device modal.
+ * @param   id                      ID of the deactivation device
+ */
+/****************************************************************************/
+function loadDeactivationDeviceModal(id = undefined) {
     /* Reset error styling */
     errorMessageDeactivationDeviceFieldElem.style.display = "none";
 
     deactivationDeviceNameTxtElem.classList.remove("invalid-input");
     deactivationDeviceIpTxtElem.classList.remove("invalid-input");
-    
+
     deactivationDeviceIpContainerElem.style.display = "block";
     networkDevicesContainerElem.style.display = "none";
     searchingDevicesContainerElem.style.display = "none";
@@ -272,53 +284,78 @@ function loadDeactivationDeviceModal(id=undefined) {
         deactivationDeviceModalTitleElem.textContent = TEXT_NEW_DEACTIVATION_DEVICE;
         deactivationDeviceNameTxtElem.value = "";
         deactivationDeviceIpTxtElem.value = "";
-        submitDeactivationDeviceBtnElem.onclick = () => addDeactivationDevice();
 
-        showModal(deactivationDeviceModalElem);
+        /****************************************************************************/
+        /*!
+         * @brief   Runs the action bound to the selected control.
+         * @returns Calculated value or configured element.
+         */
+        /****************************************************************************/
+        submitDeactivationDeviceBtnElem.onclick = () => saveDeactivationDevice(-1, false);
+
+        openDeviceDialog();
         fetchNetworkDevices();
+
         return;
     }
 
-    let deactivationDevice = alarm.deactivation_devices[getIndexFromId(alarm.deactivation_devices, id)];
+    let deactivationDevice = alarm.deactivation_devices.find(device => device.id === id);
 
     deactivationDeviceModalTitleElem.textContent = TEXT_EDIT_DEACTIVATION_DEVICE;
     deactivationDeviceNameTxtElem.value = deactivationDevice.name;
     deactivationDeviceIpTxtElem.value = deactivationDevice.ip_address;
-    submitDeactivationDeviceBtnElem.onclick = () => updateDeactivationDevice(deactivationDevice.id);
 
-    showModal(deactivationDeviceModalElem);
+    /****************************************************************************/
+    /*!
+     * @brief   Runs the action bound to the selected control.
+     * @returns Calculated value or configured element.
+     */
+    /****************************************************************************/
+    submitDeactivationDeviceBtnElem.onclick = () =>
+        saveDeactivationDevice(deactivationDevice.id, true);
+
+    openDeviceDialog();
 }
 
-/******************************************************************************/
+/****************************************************************************/
 /*!
-    @brief  Loads the trigger device tiles.
-*/
-/******************************************************************************/
+ * @brief   Loads the trigger device tiles.
+ */
+/****************************************************************************/
 function loadTriggerDeviceTiles() {
     let tile;
     let grid;
     let icon;
 
     triggerDeviceContainerElem.innerHTML = "";
-    console.log(alarm)
+
     for (let device of devices) {
         if (device.type != DEVICE_TYPE_RF_DEVICE) {
             continue;
         }
-        
+
         tile = document.createElement("div");
         tile.className = "tile";
         tile.id = "triggerDeviceTile" + device.id;
+
         for (let triggerDevice of alarm.trigger_device_ids) {
             if (triggerDevice == device.id) {
                 tile.className = "tile tile-selected";
                 break;
             }
         }
+
+        /****************************************************************************/
+        /*!
+         * @brief   Runs the action bound to the selected control.
+         * @returns Calculated value or configured element.
+         */
+        /****************************************************************************/
         tile.onclick = () => toggleTriggerDeviceSelection(device.id);
 
         grid = document.createElement("div");
-        title = document.createTextNode(device.name);
+
+        const title = document.createTextNode(device.name);
 
         grid.appendChild(title);
         tile.appendChild(grid);
@@ -333,12 +370,12 @@ function loadTriggerDeviceTiles() {
     }
 }
 
-/******************************************************************************/
+/****************************************************************************/
 /*!
-    @brief  Asynchronous function for fetching connected network devices from
-            the back-end.
-*/
-/******************************************************************************/
+ * @brief   Asynchronous function for fetching connected network devices from
+ * the back-end.
+ */
+/****************************************************************************/
 async function fetchNetworkDevices() {
     deactivationDeviceIpContainerElem.style.display = "none";
     networkDevicesContainerElem.style.display = "none";
@@ -346,20 +383,12 @@ async function fetchNetworkDevices() {
     manuallyAddDeviceBtnElem.style.display = "none";
 
     try {
-        let response = await fetch("get_network_devices");
-    } catch {
-        fetchTimeouts++;
-        if (fetchTimeouts > FETCH_TIMEOUTS_BEFORE_RECONNECT) {
-            loadingBanners.show(TEXT_DISCONNECTED_CONNECTING);
-            setTimeout(waitUntilConnected, BACK_END_UPDATE_INTERVAL_1S, fetchNetworkDevices);
-        } else {
-            setTimeout(fetchNetworkDevices, BACK_END_UPDATE_INTERVAL_1S);
-        }
+        networkDevices = await listNetworkDevices(http, signal);
+    } catch (error) {
+        if (!signal.aborted && deactivationDeviceModalElem.open) delay(fetchNetworkDevices, 1000);
+
         return;
     }
-
-    fetchTimeouts = 0;
-    networkDevices = await response.json();
 
     let id = 0;
     for (let device of networkDevices) {
@@ -370,11 +399,11 @@ async function fetchNetworkDevices() {
     loadNetworkDevices();
 }
 
-/******************************************************************************/
+/****************************************************************************/
 /*!
-    @brief  Loads the network devices.
-*/
-/******************************************************************************/
+ * @brief   Loads the network devices.
+ */
+/****************************************************************************/
 function loadNetworkDevices() {
     networkDevicesContainerElem.innerHTML = "";
     networkDevicesContainerElem.style.display = "grid";
@@ -390,87 +419,257 @@ function loadNetworkDevices() {
         tile.id = "deactivationDeviceTile" + device.id;
         tile.className = "tile";
         tile.style.backgroundColor = "var(--background2)";
+
+        /****************************************************************************/
+        /*!
+         * @brief   Runs the action bound to the selected control.
+         * @returns Calculated value or configured element.
+         */
+        /****************************************************************************/
         tile.onclick = () => toggleDeactivationDeviceSelection(device.id);
 
         grid = document.createElement("div");
         grid.style.gridColumn = "span 2";
-        title = document.createTextNode(device.hostname);
+
+        const title = document.createTextNode(device.hostname);
 
         grid.appendChild(title);
         tile.appendChild(grid);
 
         grid = document.createElement("div");
         icon = document.createElement("i");
-        icon.className = DEVICE_TYPE_ICONS[device.type];
-        
+        icon.className = [
+            "fa-solid fa-lightbulb", "fa-solid fa-door-open", "fa-solid fa-camera-cctv"
+        ][device.type]
+            ?? "";
+
         grid.appendChild(icon);
         tile.appendChild(grid);
 
         networkDevicesContainerElem.appendChild(tile);
     }
 }
-//#endregion
 
-/******************************************************************************/
+//#endregion
+/****************************************************************************/
 /*!
-    @brief  Selects or deselects the specified trigger device.
-    @param  id              ID of the trigger device
-*/
-/******************************************************************************/
-function toggleTriggerDeviceSelection(id) {
-    const tileElem = document.getElementById("triggerDeviceTile" + id);
-    if (tileElem.classList.contains("tile-selected")) {
-        tileElem.classList.remove("tile-selected");
-        deleteTriggerDevice(id);
-    } else {
-        tileElem.classList.add("tile-selected");
-        addTriggerDevice(id);
+ * @brief   Selects or deselects the specified trigger device.
+ * @param   id                      ID of the trigger device
+ */
+/****************************************************************************/
+async function toggleTriggerDeviceSelection(id) {
+    const tile = document.getElementById("triggerDeviceTile" + id);
+    if (tile.getAttribute("aria-busy") === "true") return;
+
+    const selected = isAlarmTriggerDevice(id);
+    tile.setAttribute("aria-busy", "true");
+
+    try {
+        await submitForm(http, selected
+            ? "/delete_alarm_trigger_device"
+            : "/add_alarm_trigger_device", { id }, signal);
+        alarm.trigger_device_ids = selected
+            ? alarm.trigger_device_ids.filter(key => key != id)
+            : [...alarm.trigger_device_ids, id];
+        tile.classList.toggle("tile-selected", !selected);
+        loadStates();
+        banners.show({
+            title: TEXT_SUCCESS,
+            message: selected ? TEXT_CHANGES_SAVED_SUCCESSFULLY : TEXT_ITEM_ADDED_SUCCESSFULLY,
+            type: "success"
+        });
+    } catch (error) {
+        if (!signal.aborted) banners.show({
+            title: TEXT_ERROR,
+            message: error.message,
+            type: "error"
+        });
+    } finally {
+        tile.removeAttribute("aria-busy");
     }
-    
-    loadStates();
 }
 
-/******************************************************************************/
+/****************************************************************************/
 /*!
-    @brief  Selects or deselects the specified deactivation device.
-    @param  id              ID of the deactivation device
-*/
-/******************************************************************************/
+ * @brief   Selects or deselects the specified deactivation device.
+ * @param   id                      ID of the deactivation device
+ */
+/****************************************************************************/
 function toggleDeactivationDeviceSelection(id) {
     for (let device of networkDevices) {
-        document.getElementById("deactivationDeviceTile" + device.id).classList.remove("tile-selected");
+        document.getElementById("deactivationDeviceTile" + device.id)
+            .classList.remove("tile-selected");
     }
 
     const tileElem = document.getElementById("deactivationDeviceTile" + id);
     tileElem.classList.add("tile-selected");
 }
 
-/******************************************************************************/
+/****************************************************************************/
 /*!
-    @brief  Loads the DOM elements for manually adding a deactivation device.
-*/
-/******************************************************************************/
+ * @brief   Loads the DOM elements for manually adding a deactivation device.
+ */
+/****************************************************************************/
 function manuallyAddDeactivationDevice() {
     deactivationDeviceIpContainerElem.style.display = "block";
     manuallyAddDeviceBtnElem.style.display = "none";
     networkDevicesContainerElem.style.display = "none";
-    submitDeactivationDeviceBtnElem.onclick = () => addDeactivationDevice(true);
+
+    /****************************************************************************/
+    /*!
+     * @brief   Runs the action bound to the selected control.
+     * @returns Calculated value or configured element.
+     */
+    /****************************************************************************/
+    submitDeactivationDeviceBtnElem.onclick = () => saveDeactivationDevice(-1, true);
 }
 
-/******************************************************************************/
+/****************************************************************************/
 /*!
-    @brief  Checks whether the specified device is an alarm trigger device.
-    @param  id              ID of the trigger device
-    @return bool            True if is a trigger device
-*/
-/******************************************************************************/
+ * @brief   Checks whether the specified device is an alarm trigger device.
+ * @param   id                      ID of the trigger device
+ * @returns bool True if is a trigger device
+ */
+/****************************************************************************/
 function isAlarmTriggerDevice(deviceId) {
     for (let id of alarm.trigger_device_ids) {
         if (id == deviceId) {
-            return true
+            return true;
         }
     }
 
     return false;
 }
+
 //#endregion
+/****************************************************************************/
+/*!
+ * @brief   Validates deactivation device fields before saving them.
+ * @param   id                      Identifier of the affected item.
+ * @param   manually                Whether to validate a manually entered device.
+ * @returns Whether the operation or validation condition succeeds.
+ */
+/****************************************************************************/
+function validateDeactivationDevice(id = -1, manually = false) {
+    /* Get user input */
+    let name = deactivationDeviceNameTxtElem.value;
+    let ipAddress = deactivationDeviceIpTxtElem.value;
+
+    if (!manually) {
+        ipAddress = undefined;
+
+        for (let device of networkDevices) {
+            if (document.getElementById("deactivationDeviceTile" + device.id)
+                .classList.contains("tile-selected")) {
+                ipAddress = device.ip_address;
+                break;
+            }
+        }
+    }
+
+    /* Reset error styling */
+    errorMessageDeactivationDeviceFieldElem.style.display = "none";
+
+    deactivationDeviceNameTxtElem.classList.remove("invalid-input");
+    deactivationDeviceIpTxtElem.classList.remove("invalid-input");
+
+    /* Validate name */
+    if (name == "") {
+        deactivationDeviceNameTxtElem.classList.add("invalid-input");
+        deactivationDeviceNameTxtElem.focus();
+        errorMessageDeactivationDeviceFieldElem.textContent = TEXT_FIELD_REQUIRED;
+        errorMessageDeactivationDeviceFieldElem.style.display = "inline-block";
+
+        return false;
+    }
+
+    /* Validate IP */
+    if (!manually && ipAddress == undefined) {
+        errorMessageDeactivationDeviceFieldElem.textContent = TEXT_PLEASE_SELECT_DEVICE;
+        errorMessageDeactivationDeviceFieldElem.style.display = "inline-block";
+
+        return false;
+    } else {
+        if (ipAddress == "") {
+            deactivationDeviceIpTxtElem.classList.add("invalid-input");
+            deactivationDeviceIpTxtElem.focus();
+            errorMessageDeactivationDeviceFieldElem.textContent = TEXT_FIELD_REQUIRED;
+            errorMessageDeactivationDeviceFieldElem.style.display = "inline-block";
+
+            return false;
+        }
+
+        if (!ipAddress.match(IP_RE)) {
+            deactivationDeviceIpTxtElem.classList.add("invalid-input");
+            deactivationDeviceIpTxtElem.focus();
+            errorMessageDeactivationDeviceFieldElem.textContent = TEXT_FIELD_INVALID_IP;
+            errorMessageDeactivationDeviceFieldElem.style.display = "inline-block";
+
+            return false;
+        }
+    }
+
+    for (let deactivationDevice of alarm.deactivation_devices) {
+        if (deactivationDevice.id == id) {
+            continue;
+        }
+
+        /* Check if name is unique */
+        if (deactivationDevice.name == name) {
+            deactivationDeviceNameTxtElem.classList.add("invalid-input");
+            deactivationDeviceNameTxtElem.focus();
+            errorMessageDeactivationDeviceFieldElem.textContent = TEXT_FIELD_UNIQUE;
+            errorMessageDeactivationDeviceFieldElem.style.display = "inline-block";
+
+            return false;
+        }
+
+        /* Check if IP is unique */
+        if (deactivationDevice.ip_address == ipAddress) {
+            deactivationDeviceIpTxtElem.classList.add("invalid-input");
+            deactivationDeviceIpTxtElem.focus();
+            errorMessageDeactivationDeviceFieldElem.textContent = TEXT_FIELD_UNIQUE;
+            errorMessageDeactivationDeviceFieldElem.style.display = "inline-block";
+
+            return false;
+        }
+    }
+
+    lastDeactivationDeviceData = { id: id, name: name, ip_address: ipAddress };
+
+    return true;
+}
+
+/****************************************************************************/
+/*!
+ * @brief   Saves a deactivation device and refreshes the alarm controls.
+ * @param   id                      Identifier of the affected item.
+ * @param   manual                  Whether the deactivation device was entered manually.
+ */
+/****************************************************************************/
+async function saveDeactivationDevice(id, manual) {
+    if (!validateDeactivationDevice(id, manual)) return;
+
+    try {
+        const adding = id === -1;
+        const result = await submitForm(http, adding
+            ? "/add_deactivation_device"
+            : "/update_deactivation_device", lastDeactivationDeviceData, signal);
+        if (adding) alarm.deactivation_devices.push({
+            ...lastDeactivationDeviceData,
+            id: result.id
+        });
+        else Object.assign(alarm.deactivation_devices.find(device =>
+            device.id === id), lastDeactivationDeviceData);
+        loadDeactivationDeviceTiles();
+        stack.close(deactivationDeviceModalElem);
+        banners.show({
+            title: TEXT_SUCCESS,
+            message: adding ? TEXT_ITEM_ADDED_SUCCESSFULLY : TEXT_CHANGES_SAVED_SUCCESSFULLY,
+            type: "success"
+        });
+    } catch (error) {
+        errorMessageDeactivationDeviceFieldElem.textContent = error.message;
+        errorMessageDeactivationDeviceFieldElem.style.display = "inline-block";
+    }
+}

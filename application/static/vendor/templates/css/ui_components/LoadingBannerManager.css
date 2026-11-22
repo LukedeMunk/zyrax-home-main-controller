@@ -1,0 +1,112 @@
+/******************************************************************************/
+/*
+ * File:    LoadingBannerManager.css
+ * Author:  Luke de Munk
+ * Version: 0.1.0
+ *
+ * Brief:   Styles loading and progress notification banners.
+ * 
+ *          Read-only
+ *
+ *          More information: https://github.com/LukedeMunk/templates
+ *          Part of Templates library.
+ */
+/******************************************************************************/
+.loading-banner-stack {
+    position: fixed;
+    top: 18px;
+    right: 18px;
+    display: flex;
+    width: min(420px, calc(100vw - 36px));
+    flex-direction: column;
+    gap: 10px;
+    z-index: var(--z-banner);
+}
+
+.loading-banner-container {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    max-width: 420px;
+    padding: 16px;
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+    background: var(--surface-gradient);
+    border: 1px solid var(--border2);
+    border-left: 4px solid var(--accent);
+    border-radius: var(--radius-medium);
+    box-shadow: var(--shadow-large);
+    opacity: 0;
+    transform: translateY(-10px) scale(0.98);
+    pointer-events: none;
+    cursor: progress;
+    transition: opacity var(--transition-base), transform var(--transition-base);
+}
+
+.loading-banner-container.show {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+}
+
+.loading-banner-content {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.loading-banner-icon {
+    width: 30px;
+    max-width: 30px;
+    height: 6px;
+    flex: 0 0 auto;
+    color: var(--accent);
+}
+
+.loading-banner-message {
+    margin: 0;
+    color: var(--text);
+    font-weight: 650;
+    text-align: left;
+}
+
+.loading-banner-progress {
+    margin: 0;
+    color: var(--secondary-text);
+    font-size: var(--font-size-small);
+    text-align: right;
+}
+
+.progress {
+    width: 100%;
+    height: 9px;
+    margin: 2px auto 0;
+    overflow: hidden;
+    background: var(--background5);
+    border-radius: var(--radius-pill);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.16);
+}
+
+.bar {
+    width: 0;
+    height: 100%;
+    min-width: 0;
+    background: var(--button-gradient);
+    border-radius: inherit;
+    box-shadow: 0 0 12px var(--focus-ring);
+    font-size: 0;
+    transition: width var(--transition-base);
+}
+
+.loading-banner-progress-bar {
+    display: block;
+}
+
+@media (max-width: 520px) {
+    .loading-banner-stack {
+        top: 10px;
+        right: 10px;
+        width: calc(100vw - 20px);
+    }
+}

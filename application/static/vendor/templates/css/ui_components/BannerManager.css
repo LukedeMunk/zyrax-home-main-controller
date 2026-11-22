@@ -1,0 +1,162 @@
+/******************************************************************************/
+/*
+ * File:    BannerManager.css
+ * Author:  Luke de Munk
+ * Version: 0.1.0
+ *
+ * Brief:   Styles transient notification banners and their status variants.
+ * 
+ *          Read-only
+ *
+ *          More information: https://github.com/LukedeMunk/templates
+ *          Part of Templates library.
+ */
+/******************************************************************************/
+.banner-stack {
+    position: fixed;
+    top: 18px;
+    right: 18px;
+    display: flex;
+    width: min(420px, calc(100vw - 36px));
+    flex-direction: column;
+    gap: 10px;
+    z-index: var(--z-banner);
+}
+
+.banner-container {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    max-width: 420px;
+    padding: 15px 16px;
+    gap: 12px;
+    align-items: flex-start;
+    background: var(--surface-gradient);
+    border: 1px solid var(--border2);
+    border-left: 4px solid var(--accent);
+    border-radius: var(--radius-medium);
+    box-shadow: var(--shadow-large);
+    opacity: 0;
+    transform: translateY(-10px) scale(0.98);
+    pointer-events: none;
+    cursor: default;
+    transition: opacity var(--transition-base), transform var(--transition-base);
+}
+
+.banner-container.show {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+}
+
+.banner-container[data-type="success"] {
+    border-left-color: var(--success-border) !important;
+}
+
+.banner-container[data-type="warning"] {
+    border-left-color: var(--warning-border) !important;
+}
+
+.banner-container[data-type="error"] {
+    border-left-color: var(--error-border) !important;
+}
+
+.banner-icon,
+.banner-icon.fa-solid {
+    display: inline-flex;
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+    align-items: center;
+    justify-content: center;
+    background: var(--accent-soft);
+    color: var(--icon-blue);
+    border-radius: 50%;
+    font-size: 18px;
+    line-height: 1;
+    text-align: center;
+}
+
+.banner-icon.fa-check-circle {
+    background: var(--success-background);
+    color: var(--success-text);
+}
+
+.banner-icon.fa-triangle-exclamation {
+    background: var(--warning-background);
+    color: var(--warning-text);
+}
+
+.banner-icon.fa-circle-xmark {
+    background: var(--error-background);
+    color: var(--error-text);
+}
+
+.banner-content {
+    display: flex;
+    min-width: 0;
+    flex: 1;
+    flex-direction: column;
+    gap: 3px;
+    align-items: flex-start;
+}
+
+.banner-title {
+    margin: 1px 0 0;
+    color: var(--text);
+    font-size: var(--font-size-h4);
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+.banner-message {
+    margin: 0;
+    color: var(--secondary-text);
+    font-size: var(--font-size-p);
+    line-height: 1.45;
+    text-align: left;
+    overflow-wrap: anywhere;
+}
+
+.banner-close-button {
+    display: grid;
+    width: 32px;
+    height: 32px;
+    margin: -4px -5px 0 auto;
+    padding: 0;
+    flex: 0 0 32px;
+    place-items: center;
+    background: transparent;
+    color: var(--secondary-text);
+    border-radius: 50%;
+    box-shadow: none;
+    min-width: 32px;
+    min-height: 32px;
+    border: 0;
+    cursor: pointer;
+}
+
+.banner-close-button:hover {
+    background: var(--hover-item);
+    color: var(--text);
+    border-radius: 50%;
+    box-shadow: none;
+    transform: none;
+}
+
+.banner-close-button:active:not(:disabled) {
+    box-shadow: none;
+    transform: scale(0.94);
+}
+
+.banner-close-button i {
+    pointer-events: none;
+}
+
+@media (max-width: 520px) {
+    .banner-stack {
+        top: 10px;
+        right: 10px;
+        width: calc(100vw - 20px);
+    }
+}

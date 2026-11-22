@@ -4,20 +4,11 @@
 <link rel="stylesheet"
       href="{{ url_for('static', filename='css/styles_device_catalog.css') }}">
 {% endblock %}
-{% block page_title %}{% endblock %}
-{% block content %}
-<script>
-    page = DEVICES_PAGE;
-    const CATALOG_MODELS = {{ DEVICE_MODELS | tojson }};
-    const CATALOG_RF_TYPE = {{ DEVICE_TYPE_RF_DEVICE | tojson }};
-    const CATALOG_IR_TYPE = {{ DEVICE_TYPE_IR_DEVICE | tojson }};
-    const CATALOG_RF_TAP_MODEL = {{ RF_SWITCH_MODEL_ID_TAP | tojson }};
-    const CATALOG_LEDSTRIP_TYPE = {{ DEVICE_TYPE_LEDSTRIP | tojson }};
-</script>
-<script src="../static/js/ui_components/DeviceCatalogView.js" defer></script>
-<script src="../static/js/ui_components/WizardDialog.js" defer></script>
-<script src="../static/js/pages/devices_page.js" defer></script>
 
+{% block page_title %}{% endblock %}
+
+{% block content %}
+<script id="pageData" type="application/json">{{ dict(CATALOG_MODELS=DEVICE_MODELS, CATALOG_RF_TYPE=DEVICE_TYPE_RF_DEVICE, CATALOG_IR_TYPE=DEVICE_TYPE_IR_DEVICE, CATALOG_RF_TAP_MODEL=RF_SWITCH_MODEL_ID_TAP, CATALOG_LEDSTRIP_TYPE=DEVICE_TYPE_LEDSTRIP) | tojson }}</script>
 <div id="deviceCatalogContainer" class="device-catalog" lang="en">
     <aside class="catalog-sidebar">
         <div class="catalog-brand"><i class="fa-solid fa-bolt"></i> ZyraX
@@ -46,6 +37,7 @@
                 <i class="fa-solid fa-plus"></i> <span data-catalog-text="TEXT_CATALOG_ADD_DEVICE"></span>
             </button>
         </header>
+        
         <div class="catalog-summary">
             <div><small id="catalogCountTitle"><span data-catalog-text="TEXT_CATALOG_DEVICES"></span></small>
                 <strong id="catalogCountField">–</strong></div>
@@ -53,6 +45,7 @@
             <div><small><span data-catalog-text="TEXT_CATALOG_CONTROLLER"></span></small>
                 <strong id="catalogStatusField" role="status" data-catalog-text="TEXT_CATALOG_CONNECTING"></strong></div>
         </div>
+
         <div id="catalogCategoriesContainer" class="catalog-tabs"
              data-catalog-aria-label="TEXT_CATALOG_CATEGORIES"></div>
         <div class="catalog-filters">
@@ -65,6 +58,20 @@
         <div id="catalogCardsContainer" class="catalog-grid"></div>
     </main>
 </div>
-<dialog id="catalogWizardDialog" class="catalog-dialog" lang="en"
-        aria-labelledby="catalogWizardTitle"></dialog>
+
+<dialog id="catalogIconPicker" class="modal" aria-labelledby="catalogIconTitle">
+    <button type="button" class="close-modal-button" data-dismiss aria-label="Close">
+        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+    </button>
+    <h2 id="catalogIconTitle">Pick icon</h2>
+    <div class="icon-grid"></div>
+    <div class="modal-form-actions">
+        <button type="button" data-dismiss>Close</button>
+    </div>
+</dialog>
+<dialog id="catalogWizardDialog" class="modal catalog-dialog" lang="en" aria-labelledby="catalogWizardTitle"></dialog>
+{% endblock %}
+
+{% block page_scripts %}
+<script type="module" src="{{ url_for('static', filename='js/pages/devices_page.js') }}"></script>
 {% endblock %}

@@ -1,28 +1,23 @@
 {% extends "base.html" %}
 
+{% block component_styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='vendor/templates/css/ui_components/Overlay.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='vendor/templates/css/ui_components/MultiStepModalForm.css') }}">
+{% endblock %}
+
 {% block content %}
-<script>
-    let page = AUTOMATIONS_PAGE;
-    
-    const DEVICE_CATEGORIES = JSON.parse('{{ DEVICE_CATEGORIES | tojson | safe }}');
-    const DEVICE_MODELS = JSON.parse('{{ DEVICE_MODELS | tojson | safe }}');
+<script id="pageData" type="application/json">{{ dict(automations=automations, devices=devices, groups=groups, actions=actions, modes=modes, models=DEVICE_MODELS) | tojson }}</script>
 
-    let automations = JSON.parse('{{ automations | tojson | safe }}');
-    let actions = JSON.parse('{{ actions | tojson | safe }}');
-    let modes = JSON.parse('{{ modes | tojson | safe }}');
-
-    let devices = JSON.parse('{{ devices | tojson | safe }}');
-    let groups = JSON.parse('{{ groups | tojson | safe }}');
-</script>
-
-<script src="../static/js/ui_components/DeviceCatalogView.js" defer></script>
-<script src="../static/js/pages/automations_page.js" defer></script>
-
-<link rel="stylesheet" media="screen and (max-device-width: 699px)" href="../static/css/styles_tiles_mobile.css">
-<link rel="stylesheet" href="../static/css/styles_tiles.css">
-<link rel="stylesheet" href="../static/css/styles_device_catalog.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/styles_tiles.css') }}">
+<link rel="stylesheet" media="screen and (max-width: 699px)" href="{{ url_for('static', filename='css/styles_tiles_mobile.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/styles_device_catalog.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/styles_automation_modal.css') }}">
 
 
+<div data-ref="automation-editor"></div>
 <div id="automationContainer" class="flex-grid"></div>
+{% endblock %}
 
+{% block page_scripts %}
+<script type="module" src="{{ url_for('static', filename='js/pages/automations_page.js') }}"></script>
 {% endblock %}

@@ -1,25 +1,16 @@
 {% extends "base.html" %}
 
 {% block content %}
+<script id="pageData" type="application/json">{{ dict(languages=SUPPORTED_UI_LANGUAGES, rfEnabled=rpi_rf_receiver_enabled) | tojson }}</script>
 
-<script>
-    page = INITIAL_SETUP_PAGE;
-    
-    const SUPPORTED_UI_LANGUAGES = JSON.parse('{{ SUPPORTED_UI_LANGUAGES | tojson | safe }}');
-    let loginAccount = [];
-    let selectedProfile = {};
-    let rpiRfEnabled = "{{ rpi_rf_receiver_enabled }}" == "True";
-</script>
-
-<script src="../static/js/pages/initial_setup_page.js" defer></script>
-<link rel="stylesheet" href="../static/css/styles_welcome_screen.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/styles_welcome_screen.css') }}">
 
 <div id="welcomeContainer" class="container-form" style="height: 100vh;">
     <div class="welcome-container">
-        <div class="welcome-logo"><img src="../static/images/logo.png" alt="ZyraX Logo"></div>
+        <div class="welcome-logo"><img src="{{ url_for('static', filename='images/logo.png') }}" alt="ZyraX Logo"></div>
         <div id="welcomeTitle" class="welcome-title-container" style="margin-top: 32px;"></div>
         <div id="welcomeSubtitle" class="welcome-subtitle">Let's get your home connected and personalized.</div>
-        <div class="fade-button"><button id="getStartedBtn" onclick="scrollToSection('accountContainer');">Get Started</button></div>
+        <div class="fade-button"><button class="welcome-action" id="getStartedBtn" data-action="scrollToSection">Get Started</button></div>
     </div>
 </div>
 
@@ -28,7 +19,7 @@
         <h3 id="accountModalTitle" style="margin-top: 0px;">Add Account</h3>
 
         <p id="errorMessageAccountField" class="message error" style="margin: 0px; margin-top: 15px;"></p>
-        
+
         <div class="input-field-container" style="width: 100%;">
             <p id="accountEmailTitle" class="input-field-title gradient-background">Email</p>
             <input id="accountEmailTxt" class="input-field" type="text" placeholder="Email">
@@ -67,7 +58,7 @@
             <input id="accountRetypePasswordTxt" class="input-field" type="password" placeholder="Password">
         </div>
 
-        <button id="nextBtn" onclick="createAccount();">Next</button>
+        <button class="welcome-action" id="createAccountBtn" data-action="createAccount">Next</button>
     </div>
 </div>
 
@@ -83,7 +74,7 @@
         </div>
 
         <p id="errorMessageProfileField" class="message error" style="margin: 0px; margin-top: 15px;"></p>
-        
+
         <div class="input-field-container" style="width: 100%;">
             <p id="profileNameTitle" class="input-field-title gradient-background">Name</p>
             <input id="profileNameTxt" class="input-field" type="text" placeholder="Name">
@@ -94,7 +85,7 @@
             <select id="profileLanguageSelect" class="input-field"></select>
         </div>
 
-        <button id="nextBtn" onclick="createProfile();">Next</button>
+        <button class="welcome-action" id="createProfileBtn" data-action="createProfile">Next</button>
     </div>
 </div>
 
@@ -109,13 +100,13 @@
 
                 <div class="switch-input-container">
                     <label class="switch" style="margin: 15px;">
-                        <input id="weatherServiceEnabledCb" type="checkbox" onclick="toggleWeatherServiceEnabled();">
+                        <input id="weatherServiceEnabledCb" type="checkbox" data-action="toggleWeatherServiceEnabled">
                         <span class="slider round"></span>
                     </label>
 
                     <div class="input-field-container" style="margin: 10px;">
                         <p id="weatherApiKeyTitle" class="input-field-title gradient-background">API key</p>
-                        <input id="weatherApiKeyTxt" class="input-field disabled" type="text" placeholder="API key" onchange="submitWeatherModuleConfiguration();" disabled>
+                        <input id="weatherApiKeyTxt" class="input-field disabled" type="text" placeholder="API key" data-action="submitWeatherModuleConfiguration" disabled>
                     </div>
                 </div>
             </fieldset>
@@ -125,13 +116,13 @@
 
                 <div class="switch-input-container">
                     <label class="switch" style="margin: 15px;">
-                        <input id="telegramServiceEnabledCb" type="checkbox" onclick="toggleTelegramServiceEnabled();">
+                        <input id="telegramServiceEnabledCb" type="checkbox" data-action="toggleTelegramServiceEnabled">
                         <span class="slider round"></span>
                     </label>
 
                     <div class="input-field-container" style="margin: 10px;">
                         <p id="telegramBotTokenTitle" class="input-field-title gradient-background">Bot Token</p>
-                        <input id="telegramBotTokenTxt" class="input-field disabled" type="text" placeholder="Telegram Bot Token" onchange="submitTelegramModuleConfiguration();" disabled>
+                        <input id="telegramBotTokenTxt" class="input-field disabled" type="text" placeholder="Telegram Bot Token" data-action="submitTelegramModuleConfiguration" disabled>
                     </div>
                 </div>
             </fieldset>
@@ -140,14 +131,18 @@
                 <legend id="rpiRfModuleTitle">Raspberry Pi RF receiver enabled</legend>
                 <div class="centered-flex" style="margin: 10px 0px;">
                     <label class="switch" style="margin: 15px;">
-                        <input id="rpiRfModuleEnabledCb" type="checkbox" onclick="submitRpiRfModuleEnabled();">
+                        <input id="rpiRfModuleEnabledCb" type="checkbox" data-action="submitRpiRfModuleEnabled">
                         <span class="slider round"></span>
                     </label>
                 </div>
             </fieldset>
         </div>
 
-        <button id="finishBtn" onclick="redirect('/configuration?show_welcome_message');">Finish</button>
+        <button class="welcome-action" id="finishBtn" data-action="finishSetup">Finish</button>
     </div>
 </div>
+{% endblock %}
+
+{% block page_scripts %}
+<script type="module" src="{{ url_for('static', filename='js/pages/initial_setup_page.js') }}"></script>
 {% endblock %}

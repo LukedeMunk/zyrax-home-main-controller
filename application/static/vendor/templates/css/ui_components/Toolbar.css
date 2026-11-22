@@ -1,0 +1,98 @@
+/******************************************************************************/
+/*
+ * File:    Toolbar.css
+ * Author:  Luke de Munk
+ * Version: 0.1.0
+ *
+ * Brief:   Styles grouped toolbar actions and their interaction states.
+ * 
+ *          Read-only
+ *
+ *          More information: https://github.com/LukedeMunk/templates
+ *          Part of Templates library.
+ */
+/******************************************************************************/
+.divider {
+    width: 1px;
+    height: 32px;
+    margin: auto 4px;
+    background: var(--border3);
+}
+
+.toolbar-button.selected {
+    background: var(--active-item);
+    color: var(--accent);
+    border-color: var(--accent-soft);
+    border-radius: var(--radius-small);
+}
+
+.toolbar-button.disabled {
+    background: transparent;
+    color: var(--muted-text);
+    opacity: 0.58;
+    cursor: not-allowed;
+}
+
+.toolbar-button.disabled:hover {
+    background: transparent;
+    border-color: transparent;
+    border-radius: var(--radius-small);
+}
+
+.toolbar-button-icon {
+    display: inline-flex;
+    min-height: 20px;
+    line-height: unset !important;
+    padding-top: 2px;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent);
+    line-height: 1;
+}
+
+.dot-loader.toolbar-button-loading-icon {
+    width: 30px;
+    min-height: 6px;
+    height: 6px;
+    flex: 0 0 6px;
+    color: var(--accent);
+}
+
+.toolbar-button-title {
+    margin: 0;
+    color: inherit;
+    font-size: var(--font-size-extra-small);
+    font-weight: 500;
+    line-height: 1.25;
+}
+
+.button-progress-bar {
+    position: absolute;
+    right: 8px;
+    bottom: 5px;
+    left: 8px;
+    height: 3px;
+    overflow: hidden;
+    background: var(--background5);
+    border-radius: var(--radius-pill);
+}
+
+.button-progress-bar::after {
+    content: "";
+    display: block;
+    width: var(--progress, 0%);
+    height: 100%;
+    background: var(--button-gradient);
+    border-radius: inherit;
+    transition: width var(--transition-fast);
+}
+
+.toolbar-button:has(.toolbar-button-loading-icon[style*="display: grid"]) {
+    cursor: progress;
+}
+
+@media (max-width: 700px) {
+    .divider {
+        height: 28px;
+    }
+}

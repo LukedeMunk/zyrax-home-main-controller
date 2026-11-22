@@ -1,7 +1,7 @@
 /******************************************************************************/
 /*
  * File:    styles_tiles.css
- * Version: 0.9.0
+ * Version: 0.10.0
  * Author:  Luke de Munk
  * 
  * Brief:   Additional styles for draggable tiles.
@@ -55,9 +55,6 @@
     gap: 8px;
 }
 
-.dashboard-configuration-actions .danger-button {
-    color: var(--text-red);
-}
 
 .dashboard-empty-state {
     display: flex;
@@ -91,7 +88,7 @@
 .dashboard-grid .tile {
     position: relative;
     width: auto;
-    height: auto !important;
+    height: auto;
     min-width: 0;
     min-height: 0;
     box-sizing: border-box;
@@ -134,14 +131,15 @@
 }
 
 .dashboard-drop-preview.invalid {
-    border-color: var(--text-red);
-    background: color-mix(in srgb, var(--text-red) 12%, transparent);
+    border-color: var(--error-text);
+    background: color-mix(in srgb, var(--error-text) 12%, transparent);
 }
 
 .dashboard-tile-options-button {
     position: absolute;
     top: 0px;
     right: 0px;
+    margin: 0;
     z-index: 5;
     width: 24px;
     min-width: 24px;
@@ -161,44 +159,55 @@
 }
 
 .automation-tile-error {
-    outline: 2px solid var(--text-red);
+    outline: 2px solid var(--error-text);
 }
 
 .tile {
-    grid-row: span 1;
-    height: 25px;
-
-    cursor: pointer;
-    font-size: var(--font-size-p);
-    text-align: left;
-    background-color: var(--background3);
-    border-radius: 15px;
-    
-    justify-content: center;
-    align-items: center;
-    transition: 200ms;
-    box-shadow: var(--shadow-small);
-
-    padding: 10px 20px;
-    display: flex;
+    min-width: 0;
+    min-height: unset;
+    height: 45px;
+    padding: 8px 16px;
+    flex-direction: row;
     justify-content: space-between;
-    align-items: center;
+    text-align: left;
 }
 
-.dark-shadow {
+.tile.add-tile {
+    justify-content: center;
+    border-color: color-mix(in srgb, var(--border3) 45%, transparent);
+    background: var(--background3);
+}
+
+.tile.add-tile:hover:not(.disabled) {
+    border-color: var(--border3);
+}
+
+.add-tile > i {
+    font-size: 1.5em;
+    line-height: 1;
+}
+
+/* A tile switch represents device power independently of tile selection. */
+.tile:has(.switch input:checked) {
+    color: var(--text);
     box-shadow: var(--shadow-small);
 }
 
-.tile-selected {
-    color: var(--secondary-text);
-    background: var(--background4);
-    outline: 2px solid var(--icon-green) !important;
-    border-radius: 15px;
+.tile-icons {
+    display: flex;
+    min-width: 0;
+    gap: 8px;
+    align-items: center;
+    justify-content: flex-end;
 }
 
-.tile:hover {
-    transform: scale(1.03); 
-    transition: 200ms;
+.tile-icons-start {
+    justify-content: flex-start;
+}
+
+.tile > .range-field {
+    grid-column: 1 / -1;
+    min-width: 0;
 }
 
 .dashboard-tile-dragging:hover {
@@ -217,10 +226,10 @@
 }
 
 .tile1x2 {
-    height: 60px !important;
+    height: 100px;
     display: grid;
-    grid-template-rows: repeat(2, 50%);
-    grid-template-columns: repeat(2, 50%);
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     grid-row-gap: 10px;
 
     grid-row: span 2;
@@ -228,21 +237,12 @@
     padding: 20px;
 }
 
-.tile2x2-centered {
-    height: 60px !important;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-
-    grid-column: span 2;
-    padding: 20px;
-}
   
 .tile2x2 {
-    height: 60px !important;
+    height: 100px;
     display: grid;
-    grid-template-rows: repeat(2, 50%);
-    grid-template-columns: repeat(3, 33%);
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     grid-row-gap: 10px;
 
     grid-row: span 2;
@@ -252,7 +252,7 @@
 }
 
 .tile2x4 {
-    height: 170px !important;       /*2*180 +15 from gap*/
+    height: 210px;
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -262,10 +262,10 @@
 }
 
 .tile4x4 {
-    height: 170px !important;       /*2*180 +15 from gap*/
+    height: 210px;
     display: grid;
-    grid-template-rows: repeat(2, 50%);
-    grid-template-columns: repeat(2, 50%);
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     grid-gap: 10px;
 
     grid-row: span 4;
@@ -277,6 +277,46 @@
     user-select: none;
 }
 
-.tile .can-drag {
-    
+.tile.mode-tile {
+    height: auto;
+    min-height: unset;
+    padding: 5px 6px 5px 16px;
+}
+
+.tile.power-animation-tile {
+    width: 100%;
+    min-height: 44px;
+    margin: 0;
+    padding: 12px 16px;
+}
+
+.tile.power-animation-tile:hover:not(:disabled) {
+    background: var(--background2);
+    border-radius: var(--radius-large);
+}
+
+.tile.power-animation-tile.tile-selected:hover:not(:disabled) {
+    background: var(--active-item);
+}
+
+.mode-tile > p {
+    flex: 1;
+}
+
+.mode-tile button {
+    flex: none;
+    width: 34px;
+    min-width: 0;
+    height: 34px;
+    min-height: unset;
+    margin: 0;
+    padding: 0;
+    background: var(--background5);
+    color: var(--icon);
+    border-radius: 50%;
+}
+
+.mode-tile button:hover:not(:disabled) {
+    background: var(--hover-item);
+    border-radius: 50%;
 }

@@ -1,0 +1,119 @@
+/******************************************************************************/
+/*
+ * File:    MouseContextMenu.css
+ * Author:  Luke de Munk
+ * Version: 0.1.0
+ *
+ * Brief:   Styles accessible pointer context menus and nested submenus.
+ * 
+ *          Read-only
+ *
+ *          More information: https://github.com/LukedeMunk/templates
+ *          Part of Templates library.
+ */
+/******************************************************************************/
+.mouse-context-menu {
+    position: fixed;
+    min-width: 200px;
+    padding: 6px;
+    background: var(--surface-gradient);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-medium);
+    box-shadow: var(--shadow-large);
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+    pointer-events: none;
+    text-align: left;
+    transition: opacity var(--transition-fast), transform var(--transition-fast);
+    z-index: var(--z-modal);
+}
+
+.mouse-context-menu.show {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+}
+
+.mouse-context-menu-item {
+    position: relative;
+    display: flex;
+    min-height: 40px;
+    padding: 9px 11px;
+    gap: 10px;
+    align-items: center;
+    color: var(--text);
+    border-radius: var(--radius-small);
+    font-size: var(--font-size-p);
+    cursor: pointer;
+    transition: background var(--transition-fast), color var(--transition-fast);
+    width: 100%;
+    margin: 0;
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    font-weight: 400;
+    text-align: left;
+    justify-content: flex-start;
+}
+
+.mouse-context-menu-item:hover,
+.mouse-context-menu-item:focus-visible {
+    background: var(--active-item);
+    color: var(--text);
+    border-radius: var(--radius-small);
+    box-shadow: none;
+    transform: none;
+}
+
+.mouse-context-menu-item:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+    box-shadow: none;
+}
+
+.mouse-context-menu-item.disabled,
+.mouse-context-menu-item:disabled {
+    color: var(--muted-text);
+    background: transparent;
+    pointer-events: none;
+}
+
+.mouse-context-menu-item i {
+    width: 18px;
+    color: var(--accent);
+    text-align: center;
+}
+
+.mouse-context-menu-item .submenu {
+    position: absolute;
+    top: -6px;
+    left: 100%;
+    min-width: 200px;
+    margin-left: 8px;
+    padding: 6px;
+    overflow: visible;
+    background: var(--surface-gradient);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-medium);
+    box-shadow: var(--shadow-large);
+    opacity: 0;
+    transform: translateX(-6px) scale(0.98);
+    pointer-events: none;
+    transition: opacity var(--transition-fast), transform var(--transition-fast);
+}
+
+.mouse-context-menu.submenus-left .mouse-context-menu-item .submenu {
+    right: 100%;
+    left: auto;
+    margin-right: 8px;
+    margin-left: 0;
+    transform: translateX(6px) scale(0.98);
+}
+
+.mouse-context-menu-item:hover > .submenu,
+.mouse-context-menu-item:focus-within > .submenu,
+.mouse-context-menu-item .submenu.hover {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+    pointer-events: auto;
+}

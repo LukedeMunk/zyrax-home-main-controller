@@ -1,32 +1,36 @@
-/******************************************************************************/
+/****************************************************************************/
 /*
- * File:    control_rf_devices_page.js
+ * File:    rf_devices_page.js
  * Author:  Luke de Munk
- * Version: 0.9.0
- * 
- * Brief:   JavaScript for the control sensors page. More information:
+ * Version: 0.10.0
+ *
+ * Brief:   Page controller for RF devices.
+ *
+ *          More information:
  *          https://github.com/LukedeMunk/zyrax-home-main-controller
  */
-/******************************************************************************/
+/****************************************************************************/
+
+import {
+    TEXT_BACK_ONLINE, TEXT_DATE, TEXT_DISCONNECTED_CONNECTING, TEXT_SENSOR, TEXT_TIME,
+    TEXT_TRIGGER_LOGS
+} from "../domain/language_pack_english.js";
+import { mountPage, readPageData } from "../core/page.js";
+import { listSensors } from "../services/sensors.js";
+import { LoadingBannerManager } from "../../vendor/templates/js/ui_components/index.js";
+
+const { http, signal, delay, components, banners } = mountPage("dashboard");
+let { devices, sensorTriggerTimes } = readPageData();
+const loading = new LoadingBannerManager(document.querySelector('[data-ref="loading"]')).mount();
+
+components.push(loading);
+
+let task = null;
+
 //#region Elements
-/* Text elements */
-/* Fields */
-
-/* Buttons */
-
-/* Icons */
-/* Input elements */
-const triggersAlarmCbElem = document.getElementById("triggersAlarmCb");
-
-/* Tables */
 const triggerTableHeaderElem = document.getElementById("triggerTableHeader");
 const triggerTableElem = document.getElementById("triggerTable");
-
-/* Modals */
-
-/* Other */
 const stateContainerElem = document.getElementById("stateContainer");
-
 //#endregion
 
 //#region Constants
@@ -34,33 +38,33 @@ const TRIGGER_COLUMNS = [TEXT_SENSOR, TEXT_DATE, TEXT_TIME];
 //#endregion
 
 //#region Variables
-let isFetchingStates = false;
+const DEVICE_TYPE_RF_DEVICE = 1;
+
 //#endregion
-
-
-/******************************************************************************/
+/****************************************************************************/
 /*!
-    @brief  When page finished loading, this function is executed.
-*/
-/******************************************************************************/
-$(document).ready(function() {
-    page = SENSOR_PAGE;
+ * @brief   When page finished loading, this function is executed.
+ */
+/****************************************************************************/
+initialize();
 
+/****************************************************************************/
+/*!
+ * @brief   Loads page text, initial state and page-specific controls.
+ */
+/****************************************************************************/
+function initialize() {
     loadStates();
-
     generateTriggerTable();
-    
-    isFetchingStates = true;
     fetchStates();
-});
-
+}
 
 //#region Generate trigger table
-/******************************************************************************/
+/****************************************************************************/
 /*!
-    @brief  Generates the trigger table.
-*/
-/******************************************************************************/
+ * @brief   Generates the trigger table.
+ */
+/****************************************************************************/
 function generateTriggerTable() {
     triggerTableHeaderElem.innerHTML = "";
     triggerTableElem.innerHTML = "";
@@ -69,11 +73,11 @@ function generateTriggerTable() {
     generateTriggerTableBody();
 }
 
-/******************************************************************************/
+/****************************************************************************/
 /*!
-    @brief  Generates the trigger table head.
-*/
-/******************************************************************************/
+ * @brief   Generates the trigger table head.
+ */
+/****************************************************************************/
 function generateTriggerTableHead() {
     let row;
     let th;
@@ -81,11 +85,11 @@ function generateTriggerTableHead() {
 
     /* Row 1 */
     let tHead = triggerTableHeaderElem.createTHead();
+
     row = tHead.insertRow();
 
     th = document.createElement("th");
-    th.colSpan = TRIGGER_COLUMNS.length;                                          //Span over all columns
-
+    th.colSpan = TRIGGER_COLUMNS.length; //Span over all columns
     /* Header title */
     cellContent = document.createTextNode(TEXT_TRIGGER_LOGS);
     th.appendChild(cellContent);
@@ -98,7 +102,7 @@ function generateTriggerTableHead() {
     for (let column of TRIGGER_COLUMNS) {
         let th = document.createElement("th");
         let cellContent = document.createTextNode(column);
-        
+
         th.style.width = "10%";
 
         if (column == TEXT_SENSOR) {
@@ -110,26 +114,26 @@ function generateTriggerTableHead() {
     }
 }
 
-/******************************************************************************/
+/****************************************************************************/
 /*!
-    @brief  Generates the trigger table body.
-*/
-/******************************************************************************/
+ * @brief   Generates the trigger table body.
+ */
+/****************************************************************************/
 function generateTriggerTableBody() {
     let row;
     let cell;
     let cellContent;
     let numRows = 0;
-    
+
     for (let trigger of sensorTriggerTimes) {
-        let device = devices[getIndexFromId(devices, trigger.device_id)];
-        
+        let device = devices.find(item => String(item.id) === String(trigger.device_id));
+
         row = triggerTableElem.insertRow();
 
         /* Sensor */
         cell = row.insertCell();
         cell.style.width = "70%";
-        cellContent = document.createTextNode(device.name);
+        cellContent = document.createTextNode(device?.name ?? "");
         cell.appendChild(cellContent);
 
         /* Date */
@@ -151,26 +155,25 @@ function generateTriggerTableBody() {
         row = triggerTableElem.insertRow();
 
         cell = row.insertCell();
-        cell.colSpan = TRIGGER_COLUMNS.length;                                  //Span over all columns
+        cell.colSpan = TRIGGER_COLUMNS.length; //Span over all columns
         cell.style.textAlign = "center";
 
         cellContent = document.createTextNode("");
         cell.appendChild(cellContent);
         row.appendChild(cell);
+
         return;
     }
-
 }
 //#endregion
 
-
 //#region Utilities
 //#region Load functionality
-/******************************************************************************/
+/****************************************************************************/
 /*!
-    @brief  Loads states to front-end.
-*/
-/******************************************************************************/
+ * @brief   Loads states to front-end.
+ */
+/****************************************************************************/
 function loadStates() {
     stateContainerElem.innerHTML = "";
 
@@ -208,43 +211,27 @@ function loadStates() {
 //#endregion
 
 //#region Interval update requests
-/******************************************************************************/
+/****************************************************************************/
 /*!
-    @brief  Asynchronous interval function for fetching the states from the
-            back-end for real-time monitoring.
-*/
-/******************************************************************************/
+ * @brief   Asynchronous interval function for fetching the states from the
+ * back-end for real-time monitoring.
+ */
+/****************************************************************************/
 async function fetchStates() {
-    if (!isFetchingStates) {
-        setTimeout(fetchStates, BACK_END_UPDATE_INTERVAL_5S);
-        return;
-    }
-
     try {
-        let response = await fetch("get_sensors", {signal: AbortSignal.timeout(FETCH_TIMEOUT)});
-    } catch {
-        loadingBanners.show(TEXT_DISCONNECTED_CONNECTING);
-        setTimeout(waitUntilConnected, BACK_END_UPDATE_INTERVAL_1S, fetchStates);
-        return;
+        devices = await listSensors(http, signal);
+        loadStates();
+        generateTriggerTable();
+        if (task !== null) {
+            loading.close(task);
+            task = null;
+            banners.show({ title: TEXT_BACK_ONLINE, message: TEXT_BACK_ONLINE, type: "success" });
+        }
+    } catch (error) {
+        if (signal.aborted) return;
+
+        if (task === null) task = loading.show({ message: TEXT_DISCONNECTED_CONNECTING });
     }
 
-    let data = await response.json();
-    devices = data;
-    loadStates();
-    generateTriggerTable();
-
-    setTimeout(fetchStates, BACK_END_UPDATE_INTERVAL_1S);
+    if (!signal.aborted) delay(fetchStates, 1000);
 }
-
-/******************************************************************************/
-/*!
-    @brief  Updates button classes to see which mode and power animations is
-            selected.
-*/
-/******************************************************************************/
-function pauseRefreshes(seconds=2) {
-    isFetchingStates = false;
-    setTimeout(function() {isFetchingStates = true}, seconds*1000);
-}
-//#endregion
-//#endregion

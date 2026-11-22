@@ -1,0 +1,427 @@
+/******************************************************************************/
+/*
+ * File:    styles_automation_modal.css
+ * Version: 0.10.0
+ * Author:  Luke de Munk
+ *
+ * Brief:   Styles for the automation wizard and catalog-style choice tiles.
+ *
+ *          More information:
+ *          https://github.com/LukedeMunk/zyrax-home-main-controller
+ */
+/******************************************************************************/
+/* #region Automation wizard */
+.automation-modal {
+    max-height: min(820px, calc(100vh - 32px));
+    max-height: min(820px, calc(100dvh - 32px));
+    max-width: 1000px;
+    overflow: hidden;
+    padding-bottom: 0px;
+    width: 90%;
+}
+
+.automation-wizard {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.automation-modal[open] {
+    display: flex;
+    flex-direction: column;
+}
+
+.automation-progress {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    flex: none;
+}
+
+.automation-progress .modal-stepper-item {
+    min-width: 0;
+}
+
+.automation-progress-step .modal-stepper-label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.automation-wizard-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    padding: 10px 8px 14px 4px;
+    scrollbar-gutter: stable;
+}
+
+.automation-step-heading {
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.automation-step-heading h4,
+.automation-step-heading p {
+    margin: 0px 0px 5px;
+}
+
+.automation-step-heading p {
+    color: var(--secondary-text);
+}
+
+.automation-field-grid {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.automation-field {
+    min-width: 0px;
+    text-align: left;
+}
+
+.automation-field label,
+.automation-day-field legend {
+    color: var(--secondary-text);
+    display: block;
+    font-size: var(--font-size-small);
+    margin-bottom: 2px;
+}
+
+.automation-field input,
+.automation-field select {
+    margin: 4px 0px;
+    max-width: none;
+    width: 100%;
+}
+
+.automation-checkbox-row {
+    align-items: center;
+    display: flex;
+    gap: 10px;
+    margin: 15px 0px;
+}
+
+.automation-checkbox-row input,
+.automation-day-option input {
+    height: 20px;
+    margin: 0px;
+    min-width: 20px;
+    width: 20px;
+}
+
+.automation-rule-list,
+.automation-review-list {
+    display: grid;
+    gap: 12px;
+}
+
+.automation-rule-card,
+.automation-review-section,
+.automation-notice {
+    background: var(--background4);
+    border-radius: 12px;
+    padding: 14px;
+    text-align: left;
+}
+
+.automation-rule-card.has-error {
+    border: 1px solid var(--error-border);
+}
+
+.automation-rule-header {
+    align-items: center;
+    display: flex;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.automation-rule-number {
+    align-items: center;
+    background: var(--background5);
+    border-radius: 50%;
+    display: flex;
+    flex: 0 0 30px;
+    height: 30px;
+    justify-content: center;
+}
+
+.automation-rule-tools {
+    display: flex;
+    gap: 4px;
+    margin-left: auto;
+}
+
+.automation-rule-tools button {
+    background: transparent;
+    box-shadow: none;
+    height: 38px;
+    margin: 0px;
+    padding: 8px;
+    width: 38px;
+}
+
+.automation-rule-tools button:disabled {
+    color: var(--icon-disabled);
+    cursor: not-allowed;
+}
+
+.automation-add-button,
+.automation-text-button {
+    background: transparent;
+    border: 1px dashed var(--border2);
+    box-shadow: none;
+    margin: 14px 0px;
+    width: 100%;
+}
+
+.automation-text-button {
+    border: none;
+    color: var(--link-text);
+    margin-top: 5px;
+    width: auto;
+}
+
+.automation-day-field {
+    border: 0px;
+    margin: 0px;
+    padding: 0px;
+    text-align: left;
+}
+
+.automation-target-field {
+    border: 0px;
+    margin: 0px;
+    min-width: 0px;
+    padding: 0px;
+    text-align: left;
+}
+
+.automation-target-field legend {
+    color: var(--secondary-text);
+    font-size: var(--font-size-small);
+}
+
+.automation-target-option {
+    align-items: center;
+    display: flex;
+    gap: 8px;
+    min-height: 32px;
+}
+
+.automation-target-option input {
+    height: 20px;
+    margin: 0px;
+    min-width: 20px;
+    width: 20px;
+}
+
+.automation-day-field > div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-top: 8px;
+}
+
+.automation-day-option {
+    align-items: center;
+    background: var(--background3);
+    border-radius: 8px;
+    display: flex;
+    gap: 5px;
+    padding: 7px;
+}
+
+.automation-notice {
+    margin: 10px 0px;
+}
+
+.automation-notice.info {
+    color: var(--secondary-text);
+}
+
+.automation-notice.warning {
+    background: var(--warning-background);
+    color: var(--warning-text);
+}
+
+.automation-notice.success {
+    background: var(--success-background);
+    color: var(--success-text);
+}
+
+.automation-notice ul {
+    margin-bottom: 0px;
+}
+
+.automation-field-error {
+    color: var(--error-text);
+    font-size: var(--font-size-small);
+    margin: 5px 0px;
+}
+
+.automation-advanced {
+    border-top: 1px solid var(--border3);
+    margin-top: 18px;
+    padding-top: 12px;
+    text-align: left;
+}
+
+.automation-advanced summary {
+    cursor: pointer;
+    font-weight: bold;
+    margin-bottom: 12px;
+}
+
+.automation-review-section > span {
+    color: var(--secondary-text);
+    font-size: var(--font-size-small);
+    text-transform: uppercase;
+}
+
+.automation-review-section p {
+    margin: 6px 0px 0px;
+}
+
+.automation-wizard-footer {
+    flex: none;
+    justify-content: flex-end;
+    margin-top: 10px;
+    padding-block: 12px;
+    border-top: 1px solid var(--border3);
+}
+
+@media only screen and (max-width: 700px) {
+    .automation-modal {
+        border-radius: 15px;
+        max-height: calc(100vh - 16px);
+        max-height: calc(100dvh - 16px);
+        padding-top: 16px;
+        width: calc(100% - 16px);
+    }
+
+    .automation-progress {
+        gap: 4px;
+    }
+
+    .automation-progress .automation-progress-step {
+        min-height: 44px;
+        padding: 4px;
+        grid-template-columns: 1fr;
+        justify-items: center;
+    }
+
+    .automation-progress-step .modal-stepper-label {
+        display: none;
+    }
+
+    .automation-wizard-body {
+        flex: 1;
+        max-height: none;
+        min-height: 0px;
+    }
+
+    .automation-wizard {
+        flex: 1;
+        min-height: 0px;
+    }
+
+    .automation-field-grid {
+        grid-template-columns: 1fr;
+    }
+
+
+}
+/* #endregion */
+
+.automation-choice-field {
+    min-width: 0;
+    grid-column: 1 / -1;
+    margin: 0 0 8px;
+    border: 0;
+    padding: 0;
+    text-align: left;
+}
+
+.automation-choice-field legend {
+    margin-bottom: 8px;
+    padding: 0;
+    font-weight: 600;
+}
+
+.automation-choice-field .catalog-choices {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    max-height: none;
+    overflow: visible;
+    padding: 0;
+}
+
+.automation-choice-tile {
+    position: relative;
+    display: grid;
+    align-content: start;
+    justify-items: start;
+    gap: 8px;
+    min-width: 0;
+    padding: 12px;
+    border: 1px solid var(--border3);
+    border-radius: 11px;
+    background: var(--background2);
+    color: var(--text);
+    cursor: pointer;
+    overflow-wrap: anywhere;
+    transition: background var(--transition-base), border-color var(--transition-base);
+}
+
+.automation-choice-tile input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.automation-choice-tile:hover {
+    background: var(--active-item);
+    border-color: var(--accent);
+}
+
+.automation-choice-tile:has(input:checked) {
+    border-color: var(--link-text);
+    background: var(--active-item);
+}
+
+.automation-choice-tile:focus-within {
+    outline: 2px solid var(--link-text);
+    outline-offset: 1px;
+}
+
+.automation-choice-check {
+    position: absolute;
+    top: 11px;
+    right: 11px;
+    color: var(--link-text);
+    visibility: hidden;
+}
+
+.automation-choice-tile:has(input:checked) .automation-choice-check {
+    visibility: visible;
+}
+
+@media (max-width: 800px) {
+    .automation-choice-field .catalog-choices {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .automation-choice-tile {
+        transition: none;
+    }
+}
+

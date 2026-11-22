@@ -1,0 +1,1 @@
+- Verbeter de code styling van js files. Gebruik AGENTS_HTML_CSS_JAVASCRIPT.md daarvoor. Voeg ook overal function headers toe, waar deze nog niet staan. Pas geen functionaliteit aan. Let ook op de newlines

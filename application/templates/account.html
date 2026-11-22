@@ -1,16 +1,15 @@
 {% extends "base.html" %}
 
+{% block component_styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='vendor/templates/css/ui_components/PasswordModalForm.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='vendor/templates/css/ui_components/Overlay.css') }}">
+{% endblock %}
+
 {% block content %}
+<script id="pageData" type="application/json">{{ dict(account=account, profiles=user_profiles, themes=UI_THEMES, languages=SUPPORTED_UI_LANGUAGES) | tojson }}</script>
 
-<script>
-    page = ACCOUNT_PAGE;
-    let account = JSON.parse('{{ account | tojson | safe }}');
-    const UI_THEMES = JSON.parse('{{ UI_THEMES | tojson | safe }}');
-    const SUPPORTED_UI_LANGUAGES = JSON.parse('{{ SUPPORTED_UI_LANGUAGES | tojson | safe }}');
-</script>
-
-<script src="../static/js/pages/account_page.js" defer></script>
-
+<div data-ref="sections"></div>
+<div data-ref="password"></div>
 <style>
     html {
         overflow: hidden;
@@ -27,7 +26,7 @@
         </div>
 
         <p id="errorMessageProfileField" class="message error" style="margin: 0px; margin-top: 15px;"></p>
-        
+
         <div class="input-field-container" style="width: 100%;">
             <p id="profileNameTitle" class="input-field-title gradient-background">Name</p>
             <input id="profileNameTxt" class="input-field" type="text" placeholder="Name">
@@ -44,8 +43,8 @@
         </div>
 
         <div class="centered-flex">
-            <button id="submitProfileBtn" onclick="updateProfile();">Save</button>
-            <button id="deleteProfileBtn" onclick="deleteProfile();">Delete</button>
+            <button id="submitProfileBtn" data-action="updateProfile">Save</button>
+            <button id="deleteProfileBtn" data-action="deleteProfile">Delete</button>
         </div>
     </div>
 </div>
@@ -60,13 +59,17 @@
 <div id="accountContainer" class="container-form right-shifted" style="min-height: 100vh; width: 50%; margin: auto;">
     <div class="base-container">
         <p id="errorMessageAccountField" class="message error" style="margin: 0px; margin-top: 15px;"></p>
-        
+
         <div class="input-field-container" style="width: 100%;">
             <p id="accountEmailTitle" class="input-field-title gradient-background">Email</p>
             <input id="accountEmailTxt" class="input-field" type="text" placeholder="Email">
         </div>
 
-        <p id="changePasswordBtn" onclick="passwordModalObject.show();" class="change-password-link">Change password</p>
+        <p id="changePasswordBtn" data-action="passwordModalObject" class="change-password-link">Change password</p>
     </div>
 </div>
+{% endblock %}
+
+{% block page_scripts %}
+<script type="module" src="{{ url_for('static', filename='js/pages/account_page.js') }}"></script>
 {% endblock %}

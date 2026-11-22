@@ -1,17 +1,11 @@
 {% extends "base.html" %}
 
 {% block content %}
+<script id="pageData" type="application/json">{{ dict(devices=devices, sensorTriggerTimes=sensor_trigger_times) | tojson }}</script>
 
-<script>
-    page = SENSOR_PAGE;
-    
-    let devices = JSON.parse('{{ devices | tojson | safe }}');
-    let sensorTriggerTimes = JSON.parse('{{ sensor_trigger_times | tojson | safe }}');
-</script>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/styles_tiles.css') }}">
 
-<script src="../static/js/pages/rf_devices_page.js" defer></script>
-<link rel="stylesheet" href="../static/css/styles_tiles.css">
-
+<div data-ref="loading"></div>
 <div class="container-form">
     <div class="base-container">
         <div id="stateContainer" class="flex"></div>
@@ -36,4 +30,8 @@
         </table>
     </div>
 </div>
+{% endblock %}
+
+{% block page_scripts %}
+<script type="module" src="{{ url_for('static', filename='js/pages/rf_devices_page.js') }}"></script>
 {% endblock %}

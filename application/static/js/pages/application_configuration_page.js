@@ -1,152 +1,178 @@
-/******************************************************************************/
+/****************************************************************************/
 /*
  * File:    application_configuration_page.js
  * Author:  Luke de Munk
- * Version: 0.9.0
- * 
- * Brief:   JavaScript for the application configuration page. More information:
+ * Version: 0.10.0
+ *
+ * Brief:   Page controller for application configuration.
+ *
+ *          More information:
  *          https://github.com/LukedeMunk/zyrax-home-main-controller
  */
-/******************************************************************************/
+/****************************************************************************/
+
+import {
+    TEXT_API_KEYS, TEXT_APPLICATION_CONFIGURATION_RESETTED_SUCCESSFULLY, TEXT_CANCEL,
+    TEXT_CHANGES_SAVED_SUCCESSFULLY, TEXT_DELETE, TEXT_ERROR, TEXT_KEY_NOT_VALID,
+    TEXT_Q_ARE_YOU_SURE, TEXT_Q_DELETE_APPLICATION_CONFIGURATION, TEXT_SUCCESS
+} from "../domain/language_pack_english.js";
+import { mountPage, readPageData } from "../core/page.js";
+import { submitForm } from "../services/forms.js";
+
+const { http, popup, banners, signal } = mountPage("dashboard");
+let { weatherApiKey, telegramBotToken } = readPageData();
 //#region Elements
-/* Text elements */
 const modulesTitleElem = document.getElementById("modulesTitle");
-const weatherApiKeyTitleElem = document.getElementById("weatherApiKeyTitle");
-const telegramBotTokenTitleElem = document.getElementById("telegramBotTokenTitle");
-
-/* Fields */
-const errorMessageConfigurationFieldElem = document.getElementById("errorMessageConfigurationField");
-
-/* Buttons */
-const submitConfigurationBtnElem = document.getElementById("submitBtn");
-const resetConfigurationBtnElem = document.getElementById("resetBtn");
-
-/* Icons */
-
-/* Input elements */
+const errorMessageConfigurationFieldElem =
+    document.getElementById("errorMessageConfigurationField");
 const weatherApiKeyTxtElem = document.getElementById("weatherApiKeyTxt");
 const telegramBotTokenTxtElem = document.getElementById("telegramBotTokenTxt");
 
-/* Tables */
-
-/* Modals */
-
-/* Other */
 //#endregion
-
-//#region Constants
-//#endregion
-
-//#region Variables
-//#endregion
-
 //#region Key automation listeners
 /* Ledstrip modal flow */
+/****************************************************************************/
+/*!
+ * @brief   Moves focus to the Telegram token when Enter is pressed.
+ * @param   e                       Event reported by the bound control.
+ */
+/****************************************************************************/
 weatherApiKeyTxtElem.addEventListener("keydown", function (e) {
     if (e.code === "Enter") {
         telegramBotTokenTxtElem.focus();
     }
 });
+
+/****************************************************************************/
+/*!
+ * @brief   Submits the integration configuration when Enter is pressed.
+ * @param   e                       Event reported by the bound control.
+ */
+/****************************************************************************/
 telegramBotTokenTxtElem.addEventListener("keydown", function (e) {
     if (e.code === "Enter") {
         submitConfiguration();
     }
 });
-//#endregion
 
-/******************************************************************************/
+//#endregion
+/****************************************************************************/
 /*!
-    @brief  When page finished loading, this function is executed.
-*/
-/******************************************************************************/
-$(document).ready(function() {
+ * @brief   When page finished loading, this function is executed.
+ */
+/****************************************************************************/
+document.querySelector('[data-action="submitConfiguration"]').addEventListener("click", () =>
+    submitConfiguration(), { signal });
+document.querySelector('[data-action="resetConfiguration"]').addEventListener("click", () =>
+    resetConfiguration(), { signal });
+initialize();
+
+/****************************************************************************/
+/*!
+ * @brief   Loads page text, initial state and page-specific controls.
+ */
+/****************************************************************************/
+function initialize() {
     loadText();
-    
+
     weatherApiKeyTxtElem.value = weatherApiKey;
     telegramBotTokenTxtElem.value = telegramBotToken;
-});
+}
 
 //#region Main functionality
-/******************************************************************************/
+/****************************************************************************/
 /*!
-    @brief  Submits the configuration when valid.
-    @param  device              Device object
-*/
-/******************************************************************************/
+ * @brief   Submits the configuration when valid.
+ * @param   device                  Device object
+ */
+/****************************************************************************/
 async function submitConfiguration() {
     if (!validateConfiguration()) {
         return;
     }
 
-    let data = {
-        weather_api_key: weatherApiKey,
-        telegram_bot_token: telegramBotToken
-    }
+    let data = { weather_api_key: weatherApiKey, telegram_bot_token: telegramBotToken };
 
-    const result = await httpPostRequestJsonReturn("/update_application_configuration", data);
-    
-    if (result.status_code != HTTP_CODE_OK) {
+    try {
+        await submitForm(http, "/update_application_configuration", data, signal);
+    } catch (error) {
         errorMessageConfigurationFieldElem.style.display = "inline-block";
-        errorMessageConfigurationFieldElem.textContent = result.message;
+        errorMessageConfigurationFieldElem.textContent = error.message;
+
         return;
     }
-    
-    banners.show(TEXT_SUCCESS, TEXT_CHANGES_SAVED_SUCCESSFULLY, MESSAGE_TYPE_SUCCESS);
-}
 
-/******************************************************************************/
-/*!
-    @brief  Shows a confirmation before resetting the application configuration.
-*/
-/******************************************************************************/
-function resetConfigurationConfirm() {
-    return new Promise((resolve) => {
-        let buttons = [DELETE_POPUP_BUTTON(resolve), CANCEL_POPUP_BUTTON(resolve)];
-        
-        popups.show(TEXT_Q_ARE_YOU_SURE, TEXT_Q_DELETE_APPLICATION_CONFIGURATION, buttons, MESSAGE_TYPE_WARNING);
+    banners.show({
+        title: TEXT_SUCCESS,
+        message: TEXT_CHANGES_SAVED_SUCCESSFULLY,
+        type: "success"
     });
 }
 
-/******************************************************************************/
+/****************************************************************************/
 /*!
-    @brief  Resets the application configuration.
-*/
-/******************************************************************************/
+ * @brief   Shows a confirmation before resetting the application configuration.
+ */
+/****************************************************************************/
+function resetConfigurationConfirm() {
+    return popup.confirm({
+        title: TEXT_Q_ARE_YOU_SURE,
+        message: TEXT_Q_DELETE_APPLICATION_CONFIGURATION,
+        type: "warning",
+        confirmLabel: TEXT_DELETE,
+        cancelLabel: TEXT_CANCEL
+    });
+}
+
+/****************************************************************************/
+/*!
+ * @brief   Resets the application configuration.
+ */
+/****************************************************************************/
 async function resetConfiguration() {
     const choice = await resetConfigurationConfirm();
-    if (choice == CHOICE_OPTION_CANCEL) return;
+    if (!choice) return;
 
-    const result = await httpPostRequestErrorBanner("/reset_configuration");
-    if (result.status_code != HTTP_CODE_OK) return;
-    
+    try {
+        await submitForm(http, "/reset_configuration", {}, signal);
+    } catch (error) {
+        banners.show({ title: TEXT_ERROR, message: error.message, type: "error" });
+
+        return;
+    }
+
     weatherApiKey = "";
     telegramBotToken = "";
     weatherApiKeyTxtElem.value = weatherApiKey;
     telegramBotTokenTxtElem.value = telegramBotToken;
-    
-    banners.show(TEXT_SUCCESS, TEXT_APPLICATION_CONFIGURATION_RESETTED_SUCCESSFULLY, MESSAGE_TYPE_SUCCESS);
-}
-//#endregion
 
+    banners.show({
+        title: TEXT_SUCCESS,
+        message: TEXT_APPLICATION_CONFIGURATION_RESETTED_SUCCESSFULLY,
+        type: "success"
+    });
+}
+
+//#endregion
 //#region Utilities
 //#region Load functions
-/******************************************************************************/
+/****************************************************************************/
 /*!
-    @brief  Loads the text of elements in the selected language.
-*/
-/******************************************************************************/
+ * @brief   Loads the text of elements in the selected language.
+ */
+/****************************************************************************/
 function loadText() {
     modulesTitleElem.textContent = TEXT_API_KEYS;
 }
-//#endregion
 
+//#endregion
 //#region Validators
-/******************************************************************************/
+/****************************************************************************/
 /*!
-    @brief  Validates the application configuration.
-    @return bool                True if valid
-*/
-/******************************************************************************/
+ * @brief   Validates the application configuration.
+ * @returns bool True if valid
+ */
+/****************************************************************************/
 function validateConfiguration() {
     /* Get user input */
     let weatherApiKeyInput = weatherApiKeyTxtElem.value;
@@ -164,6 +190,7 @@ function validateConfiguration() {
         weatherApiKeyTxtElem.focus();
         errorMessageConfigurationFieldElem.textContent = TEXT_KEY_NOT_VALID;
         errorMessageConfigurationFieldElem.style.display = "inline-block";
+
         return false;
     }
 
@@ -173,9 +200,10 @@ function validateConfiguration() {
         telegramBotTokenTxtElem.focus();
         errorMessageConfigurationFieldElem.textContent = TEXT_KEY_NOT_VALID;
         errorMessageConfigurationFieldElem.style.display = "inline-block";
+
         return false;
     }
-    
+
     weatherApiKey = weatherApiKeyInput;
     telegramBotToken = telegramBotTokenInput;
 

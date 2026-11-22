@@ -1,273 +1,336 @@
-/******************************************************************************/
+/****************************************************************************/
 /*
  * File:    account_page.js
- * Version: 0.9.0
  * Author:  Luke de Munk
- * 
- * Brief:   JavaScript for the account page. More information:
+ * Version: 0.10.0
+ *
+ * Brief:   Page controller for account.
+ *
+ *          More information:
  *          https://github.com/LukedeMunk/zyrax-home-main-controller
  */
-/******************************************************************************/
-//#region Elements
-/* Text elements */
-const accountEmailTitleElem = document.getElementById("accountEmailTitle");
+/****************************************************************************/
 
-const profileOverviewTitleElem = document.getElementById("profileOverviewTitle");
-const profileNameTitleElem = document.getElementById("profileNameTitle");
-const profileLanguageTitleElem = document.getElementById("profileLanguageTitle");
-const profileThemeTitleElem = document.getElementById("profileThemeTitle");
+import {
+    TEXT_CANCEL, TEXT_CHANGES_SAVED_SUCCESSFULLY, TEXT_DELETE, TEXT_ERROR, TEXT_FIELD_NO_SYMBOLS,
+    TEXT_FIELD_REQUIRED, TEXT_FIELD_UNIQUE, TEXT_FILE_NOT_SUPPORTED, TEXT_LOGOUT,
+    TEXT_MANAGE_ACCOUNT, TEXT_MANAGE_PROFILE, TEXT_MANAGE_PROFILES, TEXT_NO_FILE_SELECTED,
+    TEXT_PASSWORD_UPDATED_SUCCESSFULLY, TEXT_PROFILE_ADDED_SUCCESSFULLY,
+    TEXT_PROFILE_DELETED_SUCCESSFULLY, TEXT_Q_ARE_YOU_SURE, TEXT_SUCCESS, TEXT_WARNING,
+    VAR_TEXT_Q_DELETE, VAR_TEXT_TEXT_PASSWORD_UPDATED_WARNING
+} from "../domain/language_pack_english.js";
+import { mountPage, readPageData, applyTheme, profileStorage } from "../core/page.js";
+import { scrollToSection } from "../core/scroll.js";
+import { submitForm } from "../services/forms.js";
+import { pickProfile } from "../services/session.js";
+import { uploadProfilePicture } from "../services/profiles.js";
+import { SYMBOL_CRITICAL_RE } from "../domain/validation.js";
+import { ProfilePicker } from "../ui_components/ProfilePicker.js";
+import { ModalStack } from "../../vendor/templates/js/core/modal-stack.js";
+import {
+    FloatingNavigationBar, PasswordModalForm
+} from "../../vendor/templates/js/ui_components/index.js";
 
-/* Fields */
-const errorMessageProfileFieldElem = document.getElementById("errorMessageProfileField");
-const profilePicturePreviewElem = document.getElementById("profilePicturePreview");
+const { http, banners, popup, signal, components } = mountPage("account");
+const { account, profiles, themes, languages } = readPageData();
 
-/* Buttons */
-const submitProfileBtnElem = document.getElementById("submitProfileBtn");
-const deleteProfileBtnElem = document.getElementById("deleteProfileBtn");
-
-const changePasswordBtnElem = document.getElementById("changePasswordBtn");
-
-/* Icons */
-
-/* Input elements */
-const accountEmailTxtElem = document.getElementById("accountEmailTxt");
-const accountPasswordTxtElem = document.getElementById("accountPasswordTxt");
-const accountRetypePasswordTxtElem = document.getElementById("accountRetypePasswordTxt");
-
-const profilePictureUploadElem = document.getElementById("profilePictureUpload");
-
-const profileNameTxtElem = document.getElementById("profileNameTxt");
-const profileLanguageSelectElem = document.getElementById("profileLanguageSelect");
-const profileUiThemeSelectElem = document.getElementById("profileUiThemeSelect");
-
-/* Tables */
-
-/* Modals */
-
-/* Other */
-const profileSelectContainerElem = document.getElementById("profileSelectContainer");
-//#endregion
-
-//#region Constants
-//#endregion
-
-//#region Variables
-let selectedProfile;
-//#endregion
-
-//#region Event listeners
-document.addEventListener("profileChanged", (e) => {
-    loadProfileOptions(userProfiles, true, loadProfile, profileId);
-
-    if (e.detail.action == "delete") {
-        //scrollToSection("profilesContainer");
-    }
-});
-
-profilePictureUploadElem.addEventListener("change", async () => {
-    if (profilePictureUploadElem.files.length == 0) {
-        banners.show(TEXT_WARNING, TEXT_NO_FILE_SELECTED, MESSAGE_TYPE_WARNING);
-        return;
-    }
-
-    /* Validate file */
-    const file = profilePictureUploadElem.files[0];
-    const extension = file.name.substring(file.name.lastIndexOf(".")).toLowerCase();
-
-    if (!ALLOWED_IMAGE_EXTENSIONS.includes(extension)) {
-        banners.show(TEXT_ERROR, TEXT_FILE_NOT_SUPPORTED, MESSAGE_TYPE_ERROR);
-        profilePictureUploadElem.value = "";
-        return;
-    }
-
-    /* Upload file */
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-        let image = {
-                src: e.target.result,
-                file: file
-            }
-            
-        await uploadProfilePicture(image);
-    };
-
-    reader.readAsDataURL(file);
-});
-
-window.addEventListener("scroll", () => {
-    updateActiveItem(window.scrollY + 100);                                     //Offset header
-});
-//#endregion
-
-const profileNavigationBarObject = new FloatingNavigationBar(PROFILE_BAR_CONFIGURATION);
-
-/******************************************************************************/
+/****************************************************************************/
 /*!
-    @brief  When page finished loading, this function is executed.
-*/
-/******************************************************************************/
-$(document).ready(function() {
-    profileNavigationBarObject.render();
+ * @brief   Returns the page element with the requested identifier.
+ * @param   name                    Visible name or element identifier.
+ * @returns The page element with the requested identifier.
+ */
+/****************************************************************************/
+const id = name => document.getElementById(name);
 
-    passwordModalObject.render();
+const profileId = Number(profileStorage().getItem("profileId"));
+let selectedId = profileId;
+let newPicture;
+const stack = new ModalStack();
+const passwordRoot = document.querySelector('[data-ref="password"]');
+const password = new PasswordModalForm(passwordRoot, { modalStack: stack }).mount();
+const passwordError = document.createElement("p");
 
-    loadLanguageSelectOptions(profileLanguageSelectElem);
-    loadUiThemeSelectOptions(profileUiThemeSelectElem);
+passwordError.className = "message error";
+passwordError.setAttribute("role", "alert");
 
-    selectedProfile = userProfiles[getIndexFromId(userProfiles, profileId)];
+const picker = new ProfilePicker(id("profileSelectContainer"), {
+    profiles,
+    selectedId: profileId,
+    allowAdd: true
+}).mount();
+const links = [
+    ["profile", TEXT_MANAGE_PROFILE, "fa-user"], ["profiles", TEXT_MANAGE_PROFILES, "fa-users"],
+    ["account", TEXT_MANAGE_ACCOUNT, "fa-file-user"],
+    ["logout", TEXT_LOGOUT, "fa-right-from-bracket"]
+].map(([action, label, icon]) => ({ action, label, icon: "fa-duotone fa-solid " + icon }));
+const sections = document.querySelector('[data-ref="sections"]');
+const navigation = new FloatingNavigationBar(sections, { location: "left", items: links }).mount();
 
-    loadProfile();
-    accountEmailTxtElem.value = account.email;
-    loadProfileOptions(userProfiles, true, loadProfile, profileId);
+components.push(stack, password, picker, navigation);
 
-    /* Scroll to right place */
-    if (window.location.hash == "") {
-        scrollToTop();
-        profileNavigationBarObject.setButtonSelected("profileBtn", true);
-    } else {
-        setTimeout(() => { scrollToSection(window.location.hash.replace('#', '')); }, 0);
-    }
+for (const language of languages)
+    id("profileLanguageSelect")
+    .add(new Option(language.language, language.id));
+for (const theme of themes) id("profileUiThemeSelect").add(new Option(theme.name, theme.id));
+
+id("accountEmailTxt").value = account.email;
+loadProfile(profileId, false);
+scrollToSection(location.hash.slice(1) || "profileContainer", signal);
+
+id("profileSelectContainer").addEventListener("ui:select", event => loadProfile(event.detail.id), {
+    signal
 });
 
-/******************************************************************************/
+/****************************************************************************/
 /*!
-    @brief  Uploads the specified signature image to the backend.
-    @param  image               Image object
-*/
-/******************************************************************************/
-async function uploadProfilePicture(image) {
-    let formData = new FormData();
-    formData.append("image", image.file);
-    formData.append("profile_id", selectedProfile.id);
+ * @brief   Navigates account sections or clears the profile session on logout.
+ * @param   detail                  Data reported by the component event.
+ */
+/****************************************************************************/
+sections.addEventListener("ui:action", ({ detail }) => {
+    if (detail.action === "logout") {
+        localStorage.removeItem("profileId");
+        sessionStorage.removeItem("profileId");
+        sessionStorage.removeItem("loggedIn");
+        location.assign("./logout");
+    } else scrollToSection(detail.action + "Container", signal);
+}, { signal });
 
-    let response = await fetch("/upload_profile_picture", {
-        method: "POST",
-        body: formData,
+let activeSection;
+
+/****************************************************************************/
+/*!
+ * @brief   Marks the account section currently visible in the sidebar.
+ */
+/****************************************************************************/
+function highlight() {
+    const top = window.scrollY + 100;
+
+    /****************************************************************************/
+    /*!
+     * @brief   Finds the account section containing the current scroll position.
+     * @param   item                    Item in the current collection.
+     * @returns Calculated value or configured element.
+     */
+    /****************************************************************************/
+    const current = links.find(item => {
+        const node = id(item.action + "Container");
+
+        return node && top >= node.offsetTop && top < node.offsetTop + node.offsetHeight;
+    })?.action;
+    if (current === activeSection) return;
+
+    activeSection = current;
+    navigation.update({
+        items: links.map(item => ({ ...item, selected: item.action === current }))
     });
+}
+highlight();
 
-    if (response.status != HTTP_CODE_OK) {
-        banners.show(TEXT_IMAGE_UPLOAD_FAILED, TEXT_IMAGE_UPLOAD_FAILED, MESSAGE_TYPE_ERROR);
+window.addEventListener("scroll", highlight, { signal });
+
+/****************************************************************************/
+/*!
+ * @brief   Opens the password editor and clears its previous error.
+ */
+/****************************************************************************/
+id("changePasswordBtn").addEventListener("click", () => {
+    password.show();
+    passwordError.textContent = "";
+    passwordRoot.querySelector("dialog").append(passwordError);
+}, { signal });
+
+/****************************************************************************/
+/*!
+ * @brief   Saves a password change and displays its confirmation or error.
+ * @param   detail                  Data reported by the component event.
+ */
+/****************************************************************************/
+passwordRoot.addEventListener("ui:submit", async ({ detail }) => {
+    try {
+        const { currentPassword, newPassword } = detail.values;
+        const warning = await submitForm(http, "/update_password", {
+            current_password: currentPassword,
+            password: newPassword
+        }, signal);
+
+        password.close();
+        sessionStorage.setItem("update_password", 0);
+        banners.show(warning ? {
+            title: TEXT_WARNING,
+            message: VAR_TEXT_TEXT_PASSWORD_UPDATED_WARNING(warning),
+            type: "warning"
+        } : { title: TEXT_SUCCESS, message: TEXT_PASSWORD_UPDATED_SUCCESSFULLY, type: "success" });
+    } catch (error) {
+        passwordError.textContent = error.message;
+    }
+}, { signal });
+id("submitProfileBtn").addEventListener("click", saveProfile, { signal });
+
+/****************************************************************************/
+/*!
+ * @brief   Confirms profile deletion and activates a remaining profile if needed.
+ */
+/****************************************************************************/
+id("deleteProfileBtn").addEventListener("click", async () => {
+    const profile = profiles.find(item => item.id === selectedId);
+    if (!profile || profiles.length < 2) return;
+    if (!(await popup.confirm({
+        title: TEXT_Q_ARE_YOU_SURE,
+        message: VAR_TEXT_Q_DELETE(profile.name),
+        type: "warning",
+        confirmLabel: TEXT_DELETE,
+        cancelLabel: TEXT_CANCEL
+    }))) return;
+
+    try {
+        await submitForm(http, "/delete_profile", { id: selectedId }, signal);
+        profiles.splice(profiles.indexOf(profile), 1);
+        if (selectedId === profileId) {
+            await pickProfile(http, profiles[0].id, signal);
+            profileStorage().setItem("profileId", profiles[0].id);
+            applyTheme(profiles[0].ui_theme);
+            location.assign("./");
+
+            return;
+        }
+        loadProfile(profileId);
+        banners.show({
+            title: TEXT_SUCCESS,
+            message: TEXT_PROFILE_DELETED_SUCCESSFULLY,
+            type: "success"
+        });
+    } catch (error) {
+        showError(error);
+    }
+}, { signal });
+
+/****************************************************************************/
+/*!
+ * @brief   Validates and previews the selected profile picture.
+ * @param   event                   Event reported by the bound control.
+ */
+/****************************************************************************/
+id("profilePictureUpload").addEventListener("change", async event => {
+    const file = event.target.files[0];
+    if (!file || !/\.(jpe?g|gif|png)$/i.test(file.name)) {
+        showError(new Error(file ? TEXT_FILE_NOT_SUPPORTED : TEXT_NO_FILE_SELECTED));
+
+        return;
+    }
+    if (selectedId === -1) {
+        newPicture = file;
+
+        const reader = new FileReader();
+
+        /****************************************************************************/
+        /*!
+         * @brief   Applies a successfully loaded response or file preview.
+         */
+        /****************************************************************************/
+        reader.onload = () => {
+            if (!signal.aborted
+                && newPicture === file) id("profilePicturePreview").src = reader.result;
+        };
+        reader.readAsDataURL(file);
+
         return;
     }
 
-    /* Refresh account info with the right image */
-    let result = await httpGetRequestErrorBanner("/get_profiles");
-    if (result.status_code != HTTP_CODE_OK) return;
-
-    userProfiles = result.message.profiles;
-
-    console.log(selectedProfile.id)
-    console.log(profileId)
-    console.log(selectedProfile.id == profileId)
-    if (selectedProfile.id == profileId) {
-        navigationBarObject.setButtonImage("accountNavBtn", "/get_profile_picture?id=" + profileId + "&t=" + Date.now());//t parameter for caching
+    try {
+        await uploadProfilePicture(selectedId, file, signal);
+        loadProfile(profileId);
+    } catch (error) {
+        showError(error);
     }
+}, { signal });
 
-    loadProfile(profileId);
-    loadProfileOptions(userProfiles, true, loadProfile, profileId);
+/****************************************************************************/
+/*!
+ * @brief   Loads a profile into the editor and optionally scrolls to it.
+ * @param   key                     Profile identifier to load.
+ * @param   scroll                  Whether to scroll to the selected profile.
+ */
+/****************************************************************************/
+function loadProfile(key, scroll = true) {
+    const profile = profiles.find(item => item.id === key);
+    selectedId = profile?.id ?? -1;
+    picker.update({ profiles, selectedId });
+    newPicture = null;
+    id("profilePictureUpload").value = "";
+    id("profilePicturePreview").src = profile
+        ? "/get_profile_picture?id=" + profile.id
+        + "&t="
+        + Date.now()
+        : "/get_default_profile_picture";
+    id("profileNameTxt").value = profile?.name ?? "";
+    id("profileLanguageSelect").value = profile?.language ?? 0;
+    id("profileUiThemeSelect").value = profile?.ui_theme ?? themes[0]?.id;
+    id("deleteProfileBtn").style.display = profile && profiles.length > 1 ? "block" : "none";
+    if (scroll) scrollToSection("profileContainer", signal);
 }
 
-//#region Loaders
-/******************************************************************************/
+/****************************************************************************/
 /*!
-    @brief  Loads the UI theme select options.
-*/
-/******************************************************************************/
-function loadUiThemeSelectOptions(element) {
-    element.innerHTML = "";
-    
-    for (let theme of UI_THEMES) {
-        option = document.createElement("option");
-        option.value = theme.id;
-        option.text = theme.name;
-        
-        element.appendChild(option);
-    }
-}
+ * @brief   Validates and saves the profile and its selected picture.
+ */
+/****************************************************************************/
+async function saveProfile() {
+    const field = id("profileNameTxt");
+    const name = field.value;
+    const adding = selectedId === -1;
+    const error = !name
+        ? TEXT_FIELD_REQUIRED
+        : SYMBOL_CRITICAL_RE.test(name)
+        ? TEXT_FIELD_NO_SYMBOLS
+        : profiles.some(p => p.id !== selectedId && p.name === name)
+        ? TEXT_FIELD_UNIQUE
+        : "";
 
-/******************************************************************************/
-/*!
-    @brief  Loads the specified profile. When no profile specified, loads the
-            current selected profile.
-    @param  id                  ID of the profile to load. (-1 for empty)
-*/
-/******************************************************************************/
-function loadProfile(id=undefined) {
-    profilePictureUploadElem.value = "";
+    field.classList.toggle("invalid-input", Boolean(error));
+    id("errorMessageProfileField").style.display = error ? "inline-block" : "none";
+    if (error) {
+        id("errorMessageProfileField").textContent = error;
+        field.focus();
 
-    /* -1 means add profile */
-    if (id == -1) {
-        profilePicturePreviewElem.src = "/get_default_profile_picture";
-        profileNameTxtElem.value = "";
-        profileLanguageSelectElem.value = 0;
-        profileUiThemeSelectElem.selectedIndex = 0;
-        submitProfileBtnElem.onclick = () => addProfile();
-        deleteProfileBtnElem.style.display = "none";
-        selectedProfile = {id: -1};
-
-        scrollToSection("profileContainer");
         return;
     }
 
-    if (id == undefined) {
-        id = selectedProfile.id;
-    }
+    const data = { id: selectedId, name, language: id("profileLanguageSelect").value };
+    if (!adding) data.ui_theme = id("profileUiThemeSelect").value;
 
-    selectedProfile = userProfiles[getIndexFromId(userProfiles, id)];
+    try {
+        const saved =
+            await submitForm(http, adding ? "/add_profile" : "/update_profile", data, signal);
+        if (adding) {
+            data.id = saved.id;
+            profiles.push(data);
 
-    profilePicturePreviewElem.src = "/get_profile_picture?id=" + selectedProfile.id + "&t=" + Date.now();//t parameter for caching
-    profileNameTxtElem.value = selectedProfile.name;
-    profileLanguageSelectElem.value = selectedProfile.language;
-    profileUiThemeSelectElem.selectedIndex = selectedProfile.ui_theme;
-    submitProfileBtnElem.onclick = () => updateProfile(selectedProfile.id);
-    deleteProfileBtnElem.onclick = () => deleteProfile(selectedProfile.id);
-
-    if (userProfiles.length > 1) {
-        deleteProfileBtnElem.style.display = "block";
-    } else {
-        deleteProfileBtnElem.style.display = "none";
-    }
-
-    scrollToSection("profileContainer");
-}
-//#endregion
-
-
-//#region Utilities
-/******************************************************************************/
-/*!
-    @brief  Loads the text of elements in the selected language.
-*/
-/******************************************************************************/
-function loadText() {
-    profileOverviewTitleElem.textContent = TEXT_PROFILES;
-    profileNameTitleElem.textContent = TEXT_NAME;
-    profileLanguageTitleElem.textContent = TEXT_LANGUAGE;
-    profileThemeTitleElem.textContent = TEXT_UI_THEME;
-
-    accountEmailTitleElem.textContent = TEXT_EMAIL;
-    changePasswordBtnElem.textContent = TEXT_CHANGE_PASSWORD;
-}
-
-/******************************************************************************/
-/*!
-    @brief  Updates the active side menu item based on the scroll position.
-    @param  scrollPosition      Scroll position
-*/
-/******************************************************************************/
-function updateActiveItem(scrollPosition) {
-    const sections = ["profile", "profiles", "account"];
-    
-    for (let id of sections) {
-        const section = document.getElementById(id + "Container");
-        if (!section) {
-            continue;
+            const picture = newPicture;
+            loadProfile(data.id, false);
+            if (picture) await uploadProfilePicture(saved.id, picture, signal);
+        } else {
+            Object.assign(profiles.find(item => item.id === data.id), data);
+            applyTheme(data.ui_theme);
         }
-
-        if (scrollPosition >= section.offsetTop && scrollPosition < section.offsetTop + section.offsetHeight) {
-            profileNavigationBarObject.setButtonsDeselected();
-            profileNavigationBarObject.setButtonSelected(id + "Btn", true);
-        }
+        loadProfile(data.id);
+        banners.show({
+            title: TEXT_SUCCESS,
+            message: adding ? TEXT_PROFILE_ADDED_SUCCESSFULLY : TEXT_CHANGES_SAVED_SUCCESSFULLY,
+            type: "success"
+        });
+    } catch (error) {
+        showError(error);
     }
 }
-//#endregion
+
+/****************************************************************************/
+/*!
+ * @brief   Displays a page error unless the page lifecycle has ended.
+ * @param   error                   Failure to display.
+ */
+/****************************************************************************/
+function showError(error) {
+    if (!signal.aborted) banners.show({ title: TEXT_ERROR, message: error.message, type: "error" });
+}

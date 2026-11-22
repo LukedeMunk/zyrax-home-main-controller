@@ -1,0 +1,531 @@
+@import url("./LoadingBannerManager.css");
+
+/******************************************************************************/
+/*
+ * File:    global.css
+ * Author:  Luke de Munk
+ * Version: 0.1.0
+ *
+ * Brief:   Provides shared foundations and controls for UI components.
+ * 
+ *          Read-only
+ *
+ *          More information: https://github.com/LukedeMunk/templates
+ *          Part of Templates library.
+ */
+/******************************************************************************/
+.centered-flex {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    justify-content: center;
+}
+
+::placeholder {
+    color: var(--muted-text);
+    font-family: var(--font-family) !important;
+    font-size: var(--font-size-small);
+    opacity: 1;
+}
+
+.input-field-container {
+    width: min(100%, 380px);
+    min-width: 80px;
+    margin: 14px auto;
+}
+
+.input-field-title {
+    position: relative;
+    display: block;
+    z-index: 2;
+    top: 8px;
+    width: fit-content;
+    margin: 0 0 0 12px;
+    padding: 0 7px;
+    background: linear-gradient(
+        0deg,
+        var(--background3) 50%,
+        rgb(from var(--background3) r g b / 0.36) 100%
+    );
+    color: var(--secondary-text);
+    font-size: var(--font-size-small);
+    font-weight: 650;
+    line-height: 1.2;
+    text-align: left;
+    cursor: default;
+}
+
+.input-field {
+    width: 100%;
+    margin: 0;
+    user-select: text;
+}
+
+input,
+select,
+textarea {
+    width: min(70%, 380px);
+    min-width: 80px;
+    min-height: var(--control-height);
+    margin: 10px 0;
+    padding: 9px 12px;
+    background: var(--background3);
+    color: var(--text);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-small);
+    font-family: var(--font-family) !important;
+    font-size: var(--font-size-p);
+    line-height: 1.35;
+    text-align: left;
+    caret-color: var(--accent);
+    cursor: pointer;
+    transition:
+        border-color var(--transition-fast),
+        box-shadow var(--transition-fast),
+        background var(--transition-fast);
+}
+
+input:hover,
+select:hover,
+textarea:hover {
+    border-color: var(--border1);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    border-color: var(--accent);
+    outline: none;
+    box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="search"],
+textarea {
+    cursor: text;
+    user-select: text;
+}
+
+textarea {
+    min-height: 96px;
+    resize: vertical;
+}
+
+input:disabled,
+select:disabled,
+textarea:disabled,
+button:disabled,
+.button:disabled,
+.disabled {
+    opacity: 0.56;
+    cursor: not-allowed !important;
+}
+
+input:disabled,
+select:disabled,
+textarea:disabled {
+    background: var(--background4);
+    color: var(--muted-text);
+}
+
+.invalid-input,
+[aria-invalid="true"] {
+    border-color: var(--error-border) !important;
+    box-shadow: 0 0 0 3px var(--error-background) !important;
+}
+
+input[type="radio"] {
+    width: 18px;
+    height: 18px;
+    min-width: 18px;
+    min-height: 18px;
+    margin: auto;
+    padding: 0;
+    accent-color: var(--accent-strong);
+}
+
+select {
+    padding-right: 34px;
+}
+
+option {
+    background: var(--background3);
+    color: var(--text);
+}
+
+option:checked,
+option.selected {
+    background: var(--active-item);
+}
+
+input[type="checkbox"] {
+    appearance: none;
+    display: grid;
+    width: 21px;
+    height: 21px;
+    min-width: 21px;
+    min-height: 21px;
+    margin: auto;
+    padding: 0;
+    place-content: center;
+    background: var(--background3);
+    border: 1px solid var(--border1);
+    border-radius: 6px;
+    color: var(--accent-contrast);
+    cursor: pointer;
+}
+
+input[type="checkbox"]::before {
+    content: "";
+    width: 12px;
+    height: 12px;
+    background: currentColor;
+    clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+    transform: scale(0);
+    transform-origin: center;
+    transition: transform var(--transition-fast);
+}
+
+input[type="checkbox"]:checked {
+    background: var(--accent-strong);
+    border-color: var(--accent-strong);
+}
+
+input[type="checkbox"]:checked::before {
+    transform: scale(1);
+}
+
+input[type="checkbox"]:focus-visible {
+    outline: var(--focus-ring-width) solid var(--accent);
+    outline-offset: 3px;
+    box-shadow: 0 0 0 4px var(--focus-ring);
+}
+
+.message {
+    display: none;
+    margin: 12px 0;
+    padding: 10px 12px;
+    border: 1px solid transparent;
+    border-radius: var(--radius-small);
+    font-size: var(--font-size-p);
+    font-weight: 500;
+    line-height: 1.4;
+    cursor: default;
+    transition: opacity var(--transition-base);
+}
+
+.error {
+    background: var(--error-background) !important;
+    color: var(--error-text) !important;
+    border-color: var(--error-border) !important;
+}
+
+.warning {
+    background: var(--warning-background) !important;
+    color: var(--warning-text) !important;
+    border-color: var(--warning-border) !important;
+}
+
+.success {
+    background: var(--success-background) !important;
+    color: var(--success-text) !important;
+    border-color: var(--success-border) !important;
+}
+
+button,
+.button {
+    position: relative;
+    display: inline-flex;
+    width: min(200px, calc(100% - 20px));
+    min-height: var(--control-height);
+    margin: 10px;
+    padding: 10px 16px;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    overflow: hidden;
+    background: var(--button-gradient);
+    color: var(--accent-contrast);
+    border: 1px solid transparent;
+    border-radius: var(--radius-small);
+    box-shadow: var(--shadow-small);
+    font-family: var(--font-family) !important;
+    font-size: var(--font-size-p);
+    font-weight: 500;
+    line-height: 1.2;
+    text-decoration: none;
+    cursor: pointer;
+    transition:
+        transform var(--transition-fast),
+        box-shadow var(--transition-fast),
+        background var(--transition-base),
+        border-color var(--transition-fast);
+}
+
+button:hover:not(:disabled),
+.button:hover:not(:disabled) {
+    background: var(--button-gradient-hover);
+    border-radius: var(--radius-small);
+    box-shadow: var(--shadow-medium);
+    transform: translateY(-1px);
+}
+
+button:active:not(:disabled),
+.button:active:not(:disabled) {
+    box-shadow: var(--shadow-small);
+    transform: translateY(0) scale(0.985);
+}
+
+button:focus-visible,
+.button:focus-visible {
+    outline: var(--focus-ring-width) solid var(--accent);
+    outline-offset: 3px;
+    box-shadow: 0 0 0 5px var(--focus-ring), var(--shadow-small);
+}
+
+button[aria-busy="true"],
+.button.loading {
+    color: transparent;
+    pointer-events: none;
+}
+
+button[aria-busy="true"]::after,
+.button.loading::after {
+    content: "";
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(255, 255, 255, 0.42);
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: component-spin 700ms linear infinite;
+}
+
+@keyframes component-spin {
+    to {
+        transform: rotate(1turn);
+    }
+}
+
+.popup-list-container {
+    max-height: 180px;
+    padding: 12px 14px 8px 34px;
+    overflow-y: auto;
+    background: var(--background2);
+    border: 1px solid var(--border3);
+    border-radius: var(--radius-medium);
+    font-weight: 650;
+    text-align: left;
+}
+
+.popup-list-container li {
+    margin-bottom: 8px;
+}
+
+.modal {
+    width: min(92%, 620px);
+    max-height: min(90vh, 840px);
+    margin: auto;
+    padding: clamp(22px, 4vw, 36px);
+    overflow-x: hidden;
+    overflow-y: auto;
+    background: var(--surface-gradient);
+    color: var(--text);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-large);
+    box-shadow: var(--shadow-large);
+    opacity: 0;
+    outline: 0;
+    transform: translateY(12px) scale(0.985);
+    transition: opacity var(--transition-base), transform var(--transition-base);
+    z-index: var(--z-modal);
+}
+
+.modal.show {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+.modal::backdrop {
+    background: transparent;
+}
+
+.close-modal-button {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    display: grid;
+    width: 36px;
+    min-width: 36px;
+    height: 36px;
+    min-height: 36px;
+    margin: 0;
+    padding: 0;
+    place-items: center;
+    background: transparent;
+    color: var(--secondary-text);
+    border: 0;
+    border-radius: 50%;
+    box-shadow: none;
+}
+
+.close-modal-button:hover:not(:disabled) {
+    background: var(--hover-item);
+    color: var(--text);
+    border-radius: 50%;
+    box-shadow: none;
+    transform: none;
+}
+
+.close-modal-button:active:not(:disabled) {
+    box-shadow: none;
+    transform: scale(0.94);
+}
+
+.clickable {
+    color: var(--link-text) !important;
+    cursor: pointer;
+    transition: color var(--transition-fast), transform var(--transition-fast);
+}
+
+.clickable:hover {
+    color: var(--link-text-hover) !important;
+}
+
+.clickable:active {
+    transform: scale(0.96);
+}
+
+.dot-loader {
+    display: grid;
+    height: 6px;
+    aspect-ratio: 5;
+}
+
+.dot-loader::before,
+.dot-loader::after {
+    content: "";
+    grid-area: 1 / 1;
+    background: var(--dot-loading-icon) left, var(--dot-loading-icon) right;
+    background-size: 20% 100%;
+    animation: dot-loader-1-keyframes 1s infinite;
+}
+
+.dot-loader::after {
+    background: var(--dot-loading-icon) calc(100% / 3), var(--dot-loading-icon) calc(200% / 3);
+    background-size: 20% 100%;
+    animation-direction: reverse;
+}
+
+@keyframes dot-loader-1-keyframes {
+    80%,
+    100% {
+        transform: rotate(0.5turn);
+    }
+}
+
+.overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    background: var(--overlay);
+    backdrop-filter: blur(6px) saturate(0.85);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--transition-base), backdrop-filter var(--transition-base);
+    z-index: var(--z-overlay);
+}
+
+.overlay.show {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: stretch;
+    justify-content: center;
+}
+
+.toolbar-sub {
+    display: flex;
+    min-width: 0;
+    align-items: stretch;
+    background: var(--surface-gradient);
+    border: 1px solid var(--border3);
+    border-radius: var(--radius-medium);
+    box-shadow: var(--shadow-small);
+}
+
+.toolbar-button {
+    display: flex;
+    width: 104px;
+    min-height: 68px;
+    margin: 0;
+    padding: 12px;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    color: var(--text);
+    border: 1px solid transparent;
+    border-radius: var(--radius-small);
+    box-shadow: none;
+    cursor: pointer;
+}
+
+.toolbar-button:hover:not(.disabled) {
+    background: var(--hover-item);
+    border-color: var(--border3);
+    border-radius: var(--radius-small);
+    box-shadow: none;
+    transform: none;
+}
+
+.toolbar-button i {
+    line-height: unset !important;
+}
+
+.toolbar-button p {
+    margin: 0;
+    color: inherit;
+    font-size: var(--font-size-extra-small);
+}
+
+.input-icon-container {
+    display: flex;
+    width: min(95%, 380px);
+    margin: auto;
+    gap: 14px;
+    align-items: center;
+}
+
+@media (max-width: 700px) {
+    input,
+    select,
+    textarea {
+        width: 100%;
+        max-width: none;
+    }
+
+    .modal {
+        width: calc(100% - 20px);
+        padding: 28px 18px 22px;
+    }
+
+    .toolbar-sub {
+        max-width: 100%;
+        overflow-x: auto;
+    }
+
+    .toolbar-button {
+        width: 88px;
+        min-width: 88px;
+    }
+}

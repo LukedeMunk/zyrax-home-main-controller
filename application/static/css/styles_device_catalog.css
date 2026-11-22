@@ -1,13 +1,24 @@
+/******************************************************************************/
+/*
+ * File:    styles_device_catalog.css
+ * Version: 0.10.0
+ * Author:  Luke de Munk
+ * 
+ * Brief:   Styles for the device catalog.
+ *
+ *          More information:
+ *          https://github.com/LukedeMunk/zyrax-home-main-controller
+ */
+/******************************************************************************/
 body.devices-page {
     width: 100%;
     margin: 0;
 }
-.device-catalog, .catalog-dialog {
+.device-catalog {
     color: var(--text);
-    font: 14px/1.5 "Segoe UI", sans-serif;
+    font-size: var(--font-size-p);
     text-align: left;
 }
-.device-catalog *, .catalog-dialog * { box-sizing: border-box; }
 .device-catalog {
     display: grid;
     grid-template-columns: 225px minmax(0, 1fr);
@@ -73,7 +84,7 @@ body.devices-page {
     letter-spacing: -1px;
 }
 .device-catalog small, .catalog-dialog small { color: var(--secondary-text); }
-.device-catalog button, .catalog-dialog button {
+.device-catalog button {
     font: inherit;
     font-family: inherit !important;
     color: inherit;
@@ -86,17 +97,17 @@ body.devices-page {
     border: 1px solid var(--border3);
     border-radius: 11px;
     padding: 11px 17px;
-    transition: background .2s, transform .2s;
+    transition: background var(--transition-base), transform var(--transition-base), border-radius var(--transition-base);
 }
-.device-catalog button:hover, .catalog-dialog button:hover {
+.device-catalog button:hover {
     background: var(--hover-item);
     transform: translateY(-1px);
 }
 .device-catalog button:focus-visible, .catalog-dialog button:focus-visible,
 .device-catalog input:focus-visible, .catalog-dialog input:focus-visible,
 .device-catalog select:focus-visible, .catalog-dialog select:focus-visible {
-    outline: 2px solid var(--link-text);
-    outline-offset: 2px;
+    outline: none;
+    box-shadow: 0 0 0 3px var(--focus-ring);
 }
 .catalog-dialog button:disabled {
     opacity: .5;
@@ -147,8 +158,7 @@ body.devices-page {
 }
 .catalog-filters { margin: 26px 0; }
 .catalog-filters input { flex: 1 1 160px; }
-.catalog-filters input, .catalog-filters select,
-.catalog-fields input, .catalog-fields select {
+.catalog-filters input, .catalog-filters select {
     width: auto;
     min-width: 0;
     max-width: 100%;
@@ -162,10 +172,7 @@ body.devices-page {
     border: 1px solid var(--border3);
     border-radius: 10px;
 }
-.catalog-fields input:not([type="checkbox"]), .catalog-fields select {
-    width: 100%;
-}
-.devices-page .catalog-filters select, .devices-page .catalog-fields select {
+.devices-page .catalog-filters select {
     appearance: auto;
     height: auto !important;
     min-height: 44px !important;
@@ -176,13 +183,18 @@ body.devices-page {
     gap: 16px;
 }
 .device-catalog .catalog-card {
+    display: block;
+    width: 100%;
     padding: 22px;
     text-align: left;
     background: var(--background2);
     border-radius: 16px;
     overflow-wrap: anywhere;
 }
-.device-catalog .catalog-card:hover { background: var(--background3); }
+.device-catalog .catalog-card:hover:not(:disabled) {
+    background: var(--background3);
+    border-radius: var(--radius-small);
+}
 .catalog-card > strong, .catalog-card > small { display: block; }
 .catalog-card > strong { margin-top: 22px; font-size: 15px; }
 .catalog-card > span:last-child { margin-top: 22px; font-size: 12px; }
@@ -208,31 +220,20 @@ body.devices-page {
 .catalog-offline { color: var(--error-text); }
 .catalog-empty, .catalog-center { padding: 20px; text-align: center; }
 .catalog-footer { margin-top: 36px; color: var(--secondary-text); }
-.catalog-dialog {
-    position: fixed;
-    inset: 0;
+.modal.catalog-dialog {
     width: min(780px, calc(100% - 28px));
-    max-width: none;
-    max-height: 90dvh;
-    margin: auto;
-    padding: 0;
-    background: var(--background2);
-    border: 1px solid var(--border3);
-    border-radius: 22px;
-    box-shadow: 0 30px 100px #0007;
+    text-align: left;
 }
-.catalog-dialog::backdrop { background: #050817aa; backdrop-filter: blur(8px); }
-.catalog-dialog header, .catalog-dialog footer { padding: 20px 30px; }
-.catalog-dialog header { border-bottom: 1px solid var(--border3); }
-.catalog-dialog footer { border-top: 1px solid var(--border3); flex-wrap: wrap; }
-.catalog-dialog h2 { margin: 5px 0 0; font-size: 22px; }
-.catalog-dialog h3 { margin: 0 0 5px; font-size: 15px; }
-.catalog-dialog-body { padding: 28px 30px; min-height: 320px; }
+.catalog-dialog header { padding-inline-end: 30px; }
+.catalog-dialog h2 { margin: 4px 0 16px; }
+.catalog-dialog-body { min-height: min(220px, 28dvh); }
 .catalog-dialog-body > p { margin: 0 0 18px; }
 .catalog-dialog .catalog-discovery {
     width: 100%;
     margin: 0 0 24px;
     padding: 20px;
+    background: var(--background2);
+    color: var(--text);
     text-align: left;
 }
 .catalog-discovery > span:nth-child(2) { flex: 1; }
@@ -242,18 +243,32 @@ body.devices-page {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 10px;
 }
-.catalog-choices button { text-align: left; background: var(--background2); }
-.catalog-choices .catalog-icon { display: grid; margin-bottom: 8px; }
+.catalog-choices button {
+    display: grid;
+    width: 100%;
+    min-width: 0;
+    margin: 0;
+    padding: 12px;
+    justify-items: start;
+    justify-content: start;
+    overflow-wrap: anywhere;
+    text-align: left;
+    background: var(--background2);
+    color: var(--text);
+    border-color: var(--border3);
+}
+
+.catalog-choices button:hover:not(:disabled),
+.catalog-dialog .catalog-discovery:hover:not(:disabled) {
+    background: var(--active-item);
+    color: var(--text);
+    border-color: var(--accent);
+}
 .catalog-dialog-body > button { margin: 0 8px 12px 0; }
-.catalog-fields, .catalog-fields label { display: grid; gap: 10px; }
+.catalog-fields { display: grid; gap: 10px; }
+.catalog-fields .modal-form-field { display: block; width: 100%; margin: 0; }
 .catalog-fields [hidden] { display: none; }
 .catalog-fields > div:empty { display: none; }
-.catalog-fields input[type="checkbox"] {
-    justify-self: start;
-    width: 20px;
-    height: 20px;
-    padding: 0;
-}
 .catalog-split { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .catalog-icon-choice {
     display: flex;
@@ -307,8 +322,6 @@ body.devices-page {
     .catalog-heading { align-items: flex-start; flex-wrap: wrap; }
     .catalog-heading h1 { font-size: 27px; }
     .catalog-choices { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .catalog-dialog header, .catalog-dialog footer,
-    .catalog-dialog-body { padding: 18px 20px; }
     .catalog-split { grid-template-columns: 1fr; }
 }
 @media (prefers-reduced-motion: reduce) {

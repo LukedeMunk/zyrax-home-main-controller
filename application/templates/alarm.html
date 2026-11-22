@@ -1,20 +1,20 @@
 {% extends "base.html" %}
 
+{% block component_styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='vendor/templates/css/ui_components/Overlay.css') }}">
+{% endblock %}
+
 {% block content %}
+<div data-ref="loading"></div>
 
-<script>
-    page = ALARM_PAGE;
-    
-    let devices = JSON.parse('{{ devices | tojson | safe }}');
-    let alarm = JSON.parse('{{ alarm | tojson | safe }}');
-    let alarmTriggerTimes = JSON.parse('{{ alarm_trigger_times | tojson | safe }}');
-</script>
+<script id="pageData" type="application/json">{{ dict(alarm=alarm, devices=devices, alarmTriggerTimes=alarm_trigger_times) | tojson }}</script>
 
-<script src="../static/js/pages/alarm_page.js" defer></script>
-<link rel="stylesheet" href="../static/css/styles_tiles.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/styles_tiles.css') }}">
 
 <dialog id="deactivationDeviceModal" class="modal">
-    <i class="fa-solid fa-xmark close-modal-button clickable" target-modal="deactivationDeviceModal"></i>
+    <button type="button" class="close-modal-button" aria-label="Close">
+        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+    </button>
     <h3 id="deactivationDeviceModalTitle" style="margin-top: 0px;">Add deactivation device</h3>
     <p id="errorMessageDeactivationDeviceField" class="message error" style="margin: 0px;"></p>
 
@@ -35,9 +35,9 @@
 
     <div id="networkDevicesContainer" class="flex-grid" style="justify-content: center; margin-bottom: 15px;"></div>
 
-    <p id="manuallyAddDeviceBtn" onclick="manuallyAddDeactivationDevice();" style="cursor: pointer;">My device is not shown here</p>
+    <p id="manuallyAddDeviceBtn" style="cursor: pointer;">My device is not shown here</p>
 
-    <button id="submitDeactivationDeviceBtn" onclick="addDeactivationDevice();">Submit</button>
+    <button id="submitDeactivationDeviceBtn">Submit</button>
 </dialog>
 
 <div class="container-form">
@@ -49,7 +49,7 @@
 <div class="container-form" style="display: none;">
     <div class="base-container">
         <h3 style="margin-top: 0px;">Trusted deactivation devices</h3>
-        
+
         <div id="deactivationDeviceContainer" class="flex-grid" style="justify-content: center;"></div>
     </div>
 </div>
@@ -57,14 +57,18 @@
 <div class="container-form">
     <div class="base-container">
         <h3 style="margin-top: 0px;">Trigger devices</h3>
-        
+
         <div id="triggerDeviceContainer" class="flex-grid" style="justify-content: center;"></div>
     </div>
 </div>
 
 <div class="container-form">
     <div class="base-container">
-        <table id="alarmTriggerTableContainer" class="scrollable-table-container-table"></table>
+        <div id="alarmTriggerTableContainer"></div>
     </div>
 </div>
+{% endblock %}
+
+{% block page_scripts %}
+<script type="module" src="{{ url_for('static', filename='js/pages/alarm_page.js') }}"></script>
 {% endblock %}

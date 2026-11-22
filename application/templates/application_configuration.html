@@ -1,15 +1,9 @@
 {% extends "base.html" %}
 
 {% block content %}
-<script>
-    page = ALARM_PAGE;
-    
-    let weatherApiKey = "{{ weather_api_key }}";
-    let telegramBotToken = "{{ telegram_bot_token }}";
-</script>
+<script id="pageData" type="application/json">{{ dict(weatherApiKey=weather_api_key, telegramBotToken=telegram_bot_token) | tojson }}</script>
 
-<script src="../static/js/pages/application_configuration_page.js" defer></script>
-<link rel="stylesheet" href="../static/css/styles_tiles.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/styles_tiles.css') }}">
 
 <div class="container-form">
     <div class="base-container">
@@ -26,11 +20,15 @@
                     <input id="telegramBotTokenTxt" class="input-field" type="text" placeholder="Telegram Bot Token">
                 </div>
                 <div class="centered-flex">
-                    <button id="submitConfigurationBtn" onclick="submitConfiguration();">Submit</button>
-                    <button id="resetConfigurationBtn" onclick="resetConfiguration();">Reset</button>
+                    <button id="submitConfigurationBtn" data-action="submitConfiguration">Submit</button>
+                    <button id="resetConfigurationBtn" data-action="resetConfiguration">Reset</button>
                 </div>
             </fieldset>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block page_scripts %}
+<script type="module" src="{{ url_for('static', filename='js/pages/application_configuration_page.js') }}"></script>
 {% endblock %}

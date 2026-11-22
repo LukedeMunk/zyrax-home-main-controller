@@ -1,0 +1,686 @@
+/******************************************************************************/
+/*
+ * File:    ModalForm.css
+ * Author:  Luke de Munk
+ * Version: 0.1.0
+ *
+ * Brief:   Styles configurable modal forms and their input blocks.
+ * 
+ *          Read-only
+ *
+ *          More information: https://github.com/LukedeMunk/templates
+ *          Part of Templates library.
+ */
+/******************************************************************************/
+.modal > h2 {
+    margin-top: 0;
+    padding-right: 38px;
+}
+
+.modal form {
+    width: 100%;
+}
+
+.modal-form-field .form-field-error {
+    display: block;
+    margin: 6px 0 0;
+    text-align: left;
+}
+
+.modal-form-field .form-field-error[hidden] {
+    display: none;
+}
+
+.modal-form-field:has(> input[type="checkbox"]) > .input-field-title,
+.modal-form-field:has(> .form-radio-group) > .input-field-title {
+    display: inline;
+    margin: 0;
+    top: 0px;
+    background: transparent;
+}
+
+.form-radio-group {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-direction: column;
+}
+
+.form-radio-group > label {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    cursor: pointer;
+}
+
+.form-radio-group input[type="radio"] {
+    margin: 0;
+    border-radius: 50%;
+}
+
+.form-radio-group input[type="radio"]:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+.form-field-group {
+    width: 100%;
+    margin: 18px 0;
+}
+
+.form-field-group-description {
+    margin: 4px 8px 10px;
+    color: var(--secondary-text);
+    font-size: var(--font-size-small);
+}
+
+.upload-field {
+    display: grid;
+    width: 100%;
+    gap: 10px;
+}
+
+.upload-native-input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    border: 0;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+}
+
+.upload-select-button {
+    width: fit-content;
+    margin: 0;
+}
+
+.upload-field:focus-within .upload-select-button {
+    outline: var(--focus-ring-width) solid var(--accent);
+    outline-offset: 2px;
+}
+
+.file-upload-list,
+.image-upload-previews {
+    display: grid;
+    gap: 10px;
+}
+
+.image-upload-previews {
+    grid-template-columns: repeat(auto-fit, minmax(min(140px, 100%), 1fr));
+}
+
+.file-upload-item,
+.image-upload-item {
+    display: flex;
+    min-width: 0;
+    padding: 10px;
+    gap: 10px;
+    align-items: center;
+    background: var(--background2);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-medium);
+}
+
+.image-upload-item {
+    position: relative;
+    flex-direction: column;
+}
+
+.image-upload-preview {
+    width: 100%;
+    height: 120px;
+    object-fit: cover;
+    border-radius: var(--radius-small);
+}
+
+.upload-file-name {
+    overflow: hidden;
+    flex: 1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.upload-remove-button {
+    width: 30px;
+    height: 30px;
+    margin: 0;
+    padding: 0;
+    flex: 0 0 auto;
+    background: transparent;
+    color: var(--secondary-text);
+    border: 0;
+    box-shadow: none;
+}
+
+.upload-remove-button:hover,
+.upload-remove-button:focus-visible {
+    background: var(--hover-item);
+    color: var(--error-text);
+}
+
+.form-switch {
+    display: inline-flex;
+    width: 100%;
+    margin: 0;
+    gap: 12px;
+    align-items: center;
+    cursor: pointer;
+}
+
+.form-switch > input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    opacity: 0;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+}
+
+.form-switch-track {
+    position: relative;
+    width: 52px;
+    min-width: 52px;
+    height: 30px;
+    background: var(--background6);
+    border: 1px solid var(--border1);
+    border-radius: var(--radius-pill);
+    transition: background var(--transition-base), border-color var(--transition-base);
+}
+
+.form-switch-track::before {
+    content: "";
+    position: absolute;
+    bottom: 3px;
+    left: 3px;
+    width: 22px;
+    height: 22px;
+    background: #ffffff;
+    border-radius: 50%;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.28);
+    transition: transform var(--transition-base);
+}
+
+.form-switch > input:checked + .form-switch-track {
+    background: var(--accent-strong);
+    border-color: var(--accent-strong);
+}
+
+.form-switch > input:checked + .form-switch-track::before {
+    transform: translateX(22px);
+}
+
+.form-switch > input:focus-visible + .form-switch-track {
+    box-shadow: 0 0 0 4px var(--focus-ring);
+}
+
+.form-switch > input:disabled + .form-switch-track {
+    opacity: 0.52;
+    cursor: not-allowed;
+}
+
+.form-switch-text {
+    display: grid;
+    gap: 2px;
+    text-align: left;
+}
+
+.form-switch-label {
+    color: var(--text);
+    font-weight: 650;
+}
+
+.form-switch-description {
+    color: var(--secondary-text);
+    font-size: var(--font-size-small);
+}
+
+.range-field {
+    display: flex;
+    width: 100%;
+    gap: 12px;
+    align-items: center;
+}
+
+.range-field > input[type="range"] {
+    width: 100%;
+    margin: 0;
+}
+
+.range-field-value {
+    min-width: 52px;
+    padding: 5px 8px;
+    background: var(--background4);
+    color: var(--text);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-small);
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+}
+
+.modal-form-actions {
+    display: flex;
+    margin-top: 22px;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-form-actions button {
+    margin: 0;
+}
+
+.inline-cb {
+    display: flex;
+    margin: 16px auto !important;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+}
+
+.flex {
+    display: flex;
+    gap: 20px;
+}
+
+.input-field-horizontal-group {
+    display: flex;
+    width: min(95%, 380px);
+    min-width: 80px;
+    margin: 0 auto;
+    gap: 10px;
+}
+
+.input-field.disabled {
+    background: var(--background4);
+    color: var(--muted-text);
+    border-color: var(--border3);
+    cursor: not-allowed;
+}
+
+input[type="range"] {
+    appearance: none;
+    width: min(70%, 380px);
+    height: 28px;
+    padding: 0;
+    overflow: visible;
+    background: transparent;
+    border: 0;
+    color: var(--accent);
+    cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+    height: 5px;
+    background: var(--range-track);
+    border-radius: var(--radius-pill);
+}
+
+input[type="range"]::-moz-range-track {
+    height: 5px;
+    background: var(--range-track);
+    border-radius: var(--radius-pill);
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    margin-top: -6.5px;
+    background: var(--accent);
+    border: 3px solid var(--background2);
+    border-radius: 50%;
+    box-shadow: 0 0 0 1px var(--accent), var(--shadow-small);
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+input[type="range"]::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    background: var(--accent);
+    border: 3px solid var(--background2);
+    border-radius: 50%;
+    box-shadow: 0 0 0 1px var(--accent), var(--shadow-small);
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+input[type="range"]:hover::-webkit-slider-thumb,
+input[type="range"]:active::-webkit-slider-thumb {
+    transform: scale(1.12);
+}
+
+input[type="range"]:hover::-moz-range-thumb,
+input[type="range"]:active::-moz-range-thumb {
+    transform: scale(1.12);
+}
+
+input[type="range"]:focus-visible {
+    box-shadow: none;
+}
+
+input[type="range"]:focus-visible::-webkit-slider-thumb {
+    box-shadow: 0 0 0 4px var(--focus-ring);
+}
+
+input[type="range"]:focus-visible::-moz-range-thumb {
+    box-shadow: 0 0 0 4px var(--focus-ring);
+}
+
+input[type="range"]:disabled {
+    opacity: 0.45;
+    filter: grayscale(1);
+    cursor: not-allowed;
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 52px;
+    min-width: 52px;
+    height: 30px;
+    min-height: 30px;
+    margin: auto;
+    flex-shrink: 0;
+}
+
+.switch input {
+    width: 1px;
+    height: 1px;
+    min-width: 0;
+    margin: 0;
+    opacity: 0;
+}
+
+.slider {
+    position: absolute;
+    inset: 0;
+    background: var(--background6);
+    border: 1px solid var(--border1);
+    border-radius: var(--radius-pill);
+    cursor: pointer;
+    transition:
+        background var(--transition-base),
+        border-color var(--transition-base),
+        box-shadow var(--transition-fast);
+}
+
+.slider::before {
+    content: "";
+    position: absolute;
+    bottom: 3px;
+    left: 3px;
+    width: 22px;
+    height: 22px;
+    background: #ffffff;
+    border-radius: 50%;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.28);
+    transition: transform var(--transition-base);
+}
+
+.switch input:checked + .slider {
+    background: var(--accent-strong);
+    border-color: var(--accent-strong);
+}
+
+.switch input:focus-visible + .slider {
+    box-shadow: 0 0 0 4px var(--focus-ring);
+}
+
+.switch input:checked + .slider.no-color {
+    background: var(--background6);
+    border-color: var(--border1);
+}
+
+.switch input:checked + .slider::before {
+    transform: translateX(22px);
+}
+
+.switch input:disabled + .slider {
+    opacity: 0.52;
+    cursor: not-allowed;
+}
+
+.slider.round,
+.slider.round::before {
+    border-radius: var(--radius-pill);
+}
+
+.big-modal {
+    width: min(92%, 980px);
+}
+
+.info {
+    background: var(--accent-soft);
+    color: var(--text);
+    border: 1px solid var(--accent);
+}
+
+.input-icon-table-cell {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.toolbar-button-normal-p {
+    font-size: var(--font-size-p) !important;
+}
+
+.toolbar-button.full-width {
+    width: 95%;
+    margin: 10px auto;
+}
+
+.toolbar-button.delete {
+    background: var(--delete-button-gradient);
+    color: #ffffff;
+}
+
+.toolbar-button.delete:hover {
+    background: var(--delete-button-background-1-hover);
+}
+
+legend {
+    margin-left: 10px;
+    padding: 0 7px;
+    color: var(--secondary-text);
+    font-size: var(--font-size-small);
+    font-weight: 500;
+    cursor: default;
+}
+
+#profileModalSubmitBtn {
+    gap: 12px;
+}
+
+fieldset {
+    width: min(78%, 440px);
+    margin: 20px auto 12px;
+    padding: 4px 12px 12px;
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-medium);
+    text-align: left;
+}
+
+fieldset:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+.tile-select {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
+    gap: 12px;
+    padding: 16px;
+}
+
+.tile-select:focus-within {
+    border-color: var(--border2);
+    box-shadow: none;
+}
+
+.tile-select input[type="checkbox"],
+.tile-select input[type="radio"] {
+    position: absolute;
+    overflow: hidden;
+    width: 1px;
+    height: 1px;
+    min-width: 1px;
+    min-height: 1px;
+    margin: -1px;
+    padding: 0;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    border: 0;
+    white-space: nowrap;
+}
+
+.tile-select-container > * {
+    border-radius: var(--radius-medium);
+    transition:
+        border-color var(--transition-fast),
+        background var(--transition-fast),
+        transform var(--transition-fast);
+}
+
+.tile-select-container > .selected,
+.tile-select-container > [aria-selected="true"],
+.tile-select-container > .tile-selected {
+    background: var(--active-item);
+    border-color: var(--accent);
+}
+
+.tile {
+    display: flex;
+    min-height: 112px;
+    padding: 18px;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+    justify-content: center;
+    background: var(--background2);
+    color: var(--text);
+    border: 1px solid var(--border3);
+    border-radius: var(--radius-large);
+    box-shadow: var(--shadow-small);
+    cursor: pointer;
+    transition:
+        background var(--transition-fast),
+        border-color var(--transition-fast),
+        transform var(--transition-fast),
+        box-shadow var(--transition-fast);
+}
+
+.tile:hover:not(.disabled) {
+    border-color: var(--accent);
+    box-shadow: var(--shadow-medium);
+    transform: translateY(-2px);
+}
+
+.tile.tile-selected {
+    background: var(--active-item);
+    color: var(--accent);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+.tile:has(input:checked) {
+    background: var(--active-item);
+    color: var(--accent);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+.tile:has(input:focus-visible) {
+    outline: var(--focus-ring-width) solid var(--accent);
+    outline-offset: 3px;
+}
+
+.tile.disabled {
+    box-shadow: none;
+}
+
+.image-container {
+    display: flex;
+    width: 100%;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+}
+
+.image-wrapper {
+    position: relative;
+    display: grid;
+    overflow: hidden;
+    place-items: center;
+    background: var(--background2);
+    border: 1px solid var(--border3);
+    border-radius: var(--radius-medium);
+}
+
+.main-image,
+.sub-image {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.main-image {
+    max-height: 360px;
+}
+
+.sub-image-container {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.sub-image,
+.cell-image {
+    width: 72px;
+    height: 72px;
+}
+
+.image-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    justify-content: center;
+    background: var(--overlay);
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+}
+
+.image-wrapper:hover .image-overlay,
+.image-wrapper:focus-within .image-overlay {
+    opacity: 1;
+}
+
+.description-input {
+    min-height: 88px;
+}
+
+@media (max-width: 700px) {
+    .flex,
+    .input-field-horizontal-group {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .input-field-horizontal-group,
+    fieldset,
+    input[type="range"] {
+        width: 100%;
+    }
+}

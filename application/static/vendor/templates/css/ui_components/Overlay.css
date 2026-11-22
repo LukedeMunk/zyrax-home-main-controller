@@ -1,0 +1,45 @@
+/******************************************************************************/
+/*
+ * File:    Overlay.css
+ * Author:  Luke de Munk
+ * Version: 0.1.0
+ *
+ * Brief:   Styles for the overlay UI component. The overlay style is shared
+ *          with modal and popup components and is located in global.css.
+ * 
+ *          Read-only
+ *
+ *          More information: https://github.com/LukedeMunk/templates
+ *          Part of Templates library.
+ */
+/******************************************************************************/
+
+.overlay-host {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.overlay-host.page-overlay-host {
+    position: static;
+}
+
+.overlay.component-overlay {
+    position: absolute;
+}
+
+.overlay.page-overlay {
+    position: fixed;
+}
+
+.overlay.component-overlay,
+.overlay.page-overlay {
+    align-items: center;
+    justify-content: center;
+}
+
+.overlay-loading-icon {
+    width: 40px;
+    height: 8px;
+    margin: auto;
+}

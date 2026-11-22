@@ -1,63 +1,54 @@
-/******************************************************************************/
+/****************************************************************************/
 /*
  * File:    realtime_led_coloring_page.js
  * Author:  Luke de Munk
- * Version: 0.9.0
- * 
- * Brief:   JavaScript for the real-time LED coloring page. More information:
+ * Version: 0.10.0
+ *
+ * Brief:   Page controller for realtime LED coloring.
+ *
+ *          More information:
  *          https://github.com/LukedeMunk/zyrax-home-main-controller
  */
-/******************************************************************************/
+/****************************************************************************/
+
+import {
+    TEXT_CLEAR, TEXT_COLOR, TEXT_COLOR_ALL, TEXT_COLOR_SEGMENT, TEXT_DRAWING_TOOLS, TEXT_ERROR,
+    TEXT_USE_GRADIENT
+} from "../domain/language_pack_english.js";
+import { LedCanvas } from "../ui_components/LedCanvas.js";
+import { mountPage, readPageData } from "../core/page.js";
+import { saveDrawing } from "../services/led_editor.js";
+import { Color } from "../domain/Color.js";
+import { colorWheel, determineStripCanvasBounds, getSegments } from "../domain/led_geometry.js";
+
+const { http, signal, banners, components } = mountPage("dashboard");
+const { strip } = readPageData();
+const SEGMENT_TYPE_LED = 1;
+const SEGMENT_TYPE_INACTIVE = 0;
+const CANVAS_PADDING = 40;
 //#region Elements
-/* Text elements */
 const colorSegmentTitleElem = document.getElementById("colorSegmentTitle");
 const drawingToolsTitleElem = document.getElementById("drawingToolsTitle");
 const colorTitleElem = document.getElementById("colorTitle");
 const colorGradientCbTitleElem = document.getElementById("colorGradientCbTitle");
-
-/* Fields */
-/* Buttons */
 const colorAllBtnElem = document.getElementById("colorAllBtn");
 const clearColorsBtnElem = document.getElementById("clearColorsBtn");
-
-/* Icons */
-const toggleSegmentTypeIconElem = document.getElementById("toggleSegmentTypeIcon");
-
-
-/* Input elements */
 const colorColorElem = document.getElementById("colorColor");
 const colorGradientCbElem = document.getElementById("colorGradientCb");
-
-/* Tables */
-
-/* Modals */
-
-/* Other */
 const segmentMouseMenuElem = document.getElementById("segmentMouseMenu");
-const addressingMenuOptionsContainerElem = document.getElementById("addressingMenuOptionsContainer");
-const startAddressInputContainerElem = document.getElementById("startAddressInputContainer");
-const ledMouseMenuElem = document.getElementById("ledMouseMenu");
 const canvasElem = document.getElementById("ledCanvas");
-const ctx = canvasElem.getContext("2d");
+const ledCanvas = new LedCanvas(canvasElem).mount();
+
+components.push(ledCanvas);
 //#endregion
 
 //#region Constants
 const LED_SPACING = 10;
 const LED_RADIUS = 5;
 const POINT_RADIUS = LED_RADIUS + 5;
-const SNAP_POINT = 10;
-const SEGMENT_LINE_COLOR = "rgb(240, 240, 240)";
-const SELECTED_SEGMENT_LINE_COLOR = "rgba(82, 171, 255, 1)";
-const INACTIVE_COLOR = "black";
-const ACTIVE_COLOR = "rgb(240, 240, 240)";
-const LED_ADDRESS_COLOR = "black";
-const COLOR_TEXT = "rgb(240, 240, 240)";
-const POINT_COLOR = "rgb(110, 110, 110)";
 
 const BLACK_COLOR = new Color("#000");
 
-const NO_ANIMATION = 0
-const PROPAGATE_ANIMATION = 0
 const UPDATE_INTERVAL = 100;
 //#endregion
 
@@ -67,7 +58,7 @@ let points = [];
 let selectedSegmentIndex = null;
 let mouseContextMenuVisible = false;
 
-let pencilColor = new Color("#FFF")
+let pencilColor = new Color("#FFF");
 let useGradient = false;
 let gradientPosition = 0;
 
@@ -77,121 +68,193 @@ let lastDrawnLedIndex = -1;
 
 //#region Event listeners
 /* Dragging segment or point on mousemove (only when right button dragging) */
-canvasElem.addEventListener("mousemove", (e) => {
-    let position = getCanvasMousePosition(e);
+/****************************************************************************/
+/*!
+ * @brief   Draws at the current mouse position on the LED canvas.
+ * @param   e                       Event reported by the bound control.
+ */
+/****************************************************************************/
+canvasElem.addEventListener("mousemove", e => {
+    let position = ledCanvas.position(e);
     draw(position);
-});
+}, { signal });
 
 // Touch
-canvasElem.addEventListener("touchmove", (e) => {
-    e.preventDefault(); // Voorkom scrollen
-    let position = getCanvasTouchPosition(e);
+/****************************************************************************/
+/*!
+ * @brief   Draws at a touch position while preventing page scrolling.
+ * @param   e                       Event reported by the bound control.
+ */
+/****************************************************************************/
+canvasElem.addEventListener("touchmove", e => {
+    e.preventDefault();
+    let position = ledCanvas.position(e);
     draw(position);
-}, { passive: false });
+}, { passive: false, signal });
 
-canvasElem.addEventListener("touchstart", (e) => {
-    let position = getCanvasTouchPosition(e);
+/****************************************************************************/
+/*!
+ * @brief   Starts a drawing stroke at the touch position.
+ * @param   e                       Event reported by the bound control.
+ */
+/****************************************************************************/
+canvasElem.addEventListener("touchstart", e => {
+    let position = ledCanvas.position(e);
     startDrawing(position);
-});
+}, { signal });
 
-canvasElem.addEventListener("touchend", (e) => {
+/****************************************************************************/
+/*!
+ * @brief   Ends the active touch drawing stroke.
+ * @param   e                       Event reported by the bound control.
+ */
+/****************************************************************************/
+canvasElem.addEventListener("touchend", e => {
     stopDrawing();
-});
+}, { signal });
 
-canvasElem.addEventListener("mouseleave", (e) => {
+/****************************************************************************/
+/*!
+ * @brief   Stops drawing when the pointer leaves the canvas.
+ * @param   e                       Event reported by the bound control.
+ */
+/****************************************************************************/
+canvasElem.addEventListener("mouseleave", e => {
     if (isDrawing) {
         stopDrawing();
     }
-});
+}, { signal });
 
-canvasElem.addEventListener("mouseenter", (e) => {
+/****************************************************************************/
+/*!
+ * @brief   Restores drawing when the pointer enters with its primary button held.
+ * @param   e                       Event reported by the bound control.
+ */
+/****************************************************************************/
+canvasElem.addEventListener("mouseenter", e => {
     if (e.buttons & 1) {
         isDrawing = true;
     }
-});
+}, { signal });
 
 /* Prevent default context menu */
-canvasElem.addEventListener("contextmenu", (e) => {
+/****************************************************************************/
+/*!
+ * @brief   Suppresses the native LED canvas context menu.
+ * @param   e                       Event reported by the bound control.
+ */
+/****************************************************************************/
+canvasElem.addEventListener("contextmenu", e => {
     e.preventDefault();
-});
+}, { signal });
 
 /* Left or right click on the canvasElem */
-canvasElem.addEventListener("mousedown", (e) => {
-    let position = getCanvasMousePosition(e);
+/****************************************************************************/
+/*!
+ * @brief   Starts drawing or positions the custom canvas context menu.
+ * @param   e                       Event reported by the bound control.
+ */
+/****************************************************************************/
+canvasElem.addEventListener("mousedown", e => {
+    let position = ledCanvas.position(e);
 
     if (e.button === 0) {
         leftMouseDown(position);
     } else if (e.button == 2) {
-        setMouseContextMenuPosition({left:e.pageX, top:e.pageY})
+        setMouseContextMenuPosition({ left: e.pageX, top: e.pageY });
         toggleSegmentMouseContextMenu(false);
         rightMouseDown(position);
     }
-});
+}, { signal });
 
 /* Drawing done */
-canvasElem.addEventListener("mouseup", (e) => {
-    let position = getCanvasMousePosition(e);
+/****************************************************************************/
+/*!
+ * @brief   Finishes drawing or updates the custom canvas context menu.
+ * @param   e                       Event reported by the bound control.
+ */
+/****************************************************************************/
+canvasElem.addEventListener("mouseup", e => {
+    let position = ledCanvas.position(e);
     if (e.button === 0) {
         leftMouseUp(position);
     } else if (e.button == 2) {
-        setMouseContextMenuPosition({left:e.pageX, top:e.pageY})
+        setMouseContextMenuPosition({ left: e.pageX, top: e.pageY });
         rightMouseUp(position);
     }
-});
-//#endregion
+}, { signal });
 
-/******************************************************************************/
+//#endregion
+/****************************************************************************/
 /*!
-    @brief  When page finished loading, this function is executed.
-*/
-/******************************************************************************/
-$(document).ready(function() {
+ * @brief   When page finished loading, this function is executed.
+ */
+/****************************************************************************/
+document.querySelector('[data-action="colorSegment"]').addEventListener("click", () =>
+    colorSegment(), { signal });
+document.querySelector('[data-action="setPencilColor"]').addEventListener("change", () =>
+    setPencilColor(), { signal });
+document.querySelector('[data-action="setGradient"]').addEventListener("click", () =>
+    setGradient(), { signal });
+document.querySelector('[data-action="colorAll"]').addEventListener("click", () =>
+    colorAll(), { signal });
+document.querySelector('[data-action="clearColors"]').addEventListener("click", () =>
+    clearColors(), { signal });
+signal.addEventListener("abort", () => clearInterval(drawingInterval), { once: true });
+initialize();
+
+/****************************************************************************/
+/*!
+ * @brief   Loads page text, initial state and page-specific controls.
+ */
+/****************************************************************************/
+function initialize() {
     colorColorElem.value = pencilColor.toHex();
 
     loadLeds();
     clearColors(false);
-});
-//#endregion
+}
 
+//#endregion
 //#region Coloring functionality
-/******************************************************************************/
+/****************************************************************************/
 /*!
-    @brief  Sets the pencil color.
-*/
-/******************************************************************************/
+ * @brief   Sets the pencil color.
+ */
+/****************************************************************************/
 function setPencilColor() {
     if (useGradient) {
         useGradient = false;
         colorGradientCbElem.checked = false;
     }
-    
+
     pencilColor.setFromHex(colorColorElem.value);
 }
 
-/******************************************************************************/
+/****************************************************************************/
 /*!
-    @brief  Enables or disables the use of a color gradient.
-*/
-/******************************************************************************/
+ * @brief   Enables or disables the use of a color gradient.
+ */
+/****************************************************************************/
 function setGradient() {
     useGradient = colorGradientCbElem.checked;
     gradientPosition = 0;
-    
+
     pencilColor.setFromHex(colorColorElem.value);
 }
 
-/******************************************************************************/
+/****************************************************************************/
 /*!
-    @brief  Resets all the LEDs to black.
-    @param  send                If true, the reset command is sended to the
-                                back-end
-*/
-/******************************************************************************/
-function clearColors(send=true) {
+ * @brief   Resets all the LEDs to black.
+ * @param   send                    If true, the reset command is sended to the
+ * back-end
+ */
+/****************************************************************************/
+function clearColors(send = true) {
     for (let led of strip.leds) {
         led.color = BLACK_COLOR.clone();
     }
-    
+
     if (send) {
         sendLedColors(true);
     }
@@ -199,11 +262,11 @@ function clearColors(send=true) {
     render();
 }
 
-/******************************************************************************/
+/****************************************************************************/
 /*!
-    @brief  Colors all the LEDs with the selected color.
-*/
-/******************************************************************************/
+ * @brief   Colors all the LEDs with the selected color.
+ */
+/****************************************************************************/
 function colorAll() {
     for (let led of strip.leds) {
         if (useGradient) {
@@ -213,25 +276,22 @@ function colorAll() {
         }
         updateLedColors(led.index, pencilColor.clone());
     }
-    
+
     sendLedColors(true);
     render();
 }
 
-/******************************************************************************/
+/****************************************************************************/
 /*!
-    @brief  Colors all the LEDs in the selected segment with the selected
-            color.
-*/
-/******************************************************************************/
+ * @brief   Colors all the LEDs in the selected segment with the selected
+ * color.
+ */
+/****************************************************************************/
 function colorSegment() {
     toggleSegmentMouseContextMenu(false);
     if (selectedSegmentIndex === -1) {
         return;
     }
-    console.log(strip.leds[0])
-    console.log(selectedSegmentIndex)
-    console.log(strip.segments)
 
     for (let led of strip.leds) {
         if (led.segment_index == selectedSegmentIndex) {
@@ -240,7 +300,7 @@ function colorSegment() {
                 colorColorElem.value = pencilColor.toHex();
                 gradientPosition++;
             }
-            updateLedColors(led.index, pencilColor.clone())
+            updateLedColors(led.index, pencilColor.clone());
         }
     }
 
@@ -248,31 +308,39 @@ function colorSegment() {
     sendLedColors(true);
 }
 
-/******************************************************************************/
+/****************************************************************************/
 /*!
-    @brief  Sends the LEDs to the back-end.
-    @param  forceSend           If true, the command is send. Even if there is
-                                no LED change
-*/
-/******************************************************************************/
-function sendLedColors(forceSend=false) {
+ * @brief   Sends the LEDs to the back-end.
+ * @param   forceSend               If true, the command is send. Even if
+ *                                  there is no LED change
+ */
+/****************************************************************************/
+async function sendLedColors(forceSend = false) {
     if (!forceSend && lastDrawnLedIndex == -1) {
         return;
     }
-    
+
     let ledColors = strip.leds.map(led => led.color.toHex());
-    let data = {id: strip.id, leds: ledColors};
-    
-    httpPostRequestErrorBanner("/draw_realtime_leds", data, true);
+    let data = { id: strip.id, leds: ledColors };
+
+    try {
+        await saveDrawing(http, "/draw_realtime_leds", data, signal);
+    } catch (error) {
+        if (!signal.aborted) banners.show({
+            title: TEXT_ERROR,
+            message: error.message,
+            type: "error"
+        });
+    }
 }
 
-/******************************************************************************/
+/****************************************************************************/
 /*!
-    @brief  Sets the specified color to the specified LED.
-    @param  index               LED index
-    @param  color               Color to set
-*/
-/******************************************************************************/
+ * @brief   Sets the specified color to the specified LED.
+ * @param   index                   LED index
+ * @param   color                   Color to set
+ */
+/****************************************************************************/
 function updateLedColors(index, color) {
     let selectedAddress = strip.leds[index].address;
     for (let led of strip.leds) {
@@ -281,37 +349,37 @@ function updateLedColors(index, color) {
         }
     }
 }
-//#endregion
 
+//#endregion
 //#region Utilities
 //#region Canvas functions
-/******************************************************************************/
+/****************************************************************************/
 /*!
-    @brief  Calculates the LEDs for the canvas based on the configured points.
-*/
-/******************************************************************************/
+ * @brief   Calculates the LEDs for the canvas based on the configured points.
+ */
+/****************************************************************************/
 function calculateLeds() {
     let ledIndex = 0;
 
     for (let i = 1; i < points.length; i++) {
-        let dx = points[i].x - points[i-1].x;
-        let dy = points[i].y - points[i-1].y;
-        let length = Math.sqrt(dx*dx + dy*dy);
+        let dx = points[i].x - points[i - 1].x;
+        let dy = points[i].y - points[i - 1].y;
+        let length = Math.sqrt(dx * dx + dy * dy);
         let numberOfLedsInSegment = Math.floor(length / LED_SPACING);
         let nx = dx / length;
         let ny = dy / length;
 
-        if (strip.segments[i-1].type == SEGMENT_TYPE_INACTIVE) {
+        if (strip.segments[i - 1].type == SEGMENT_TYPE_INACTIVE) {
             continue;
         }
 
-        if (i == points.length-1) {
+        if (i == points.length - 1) {
             numberOfLedsInSegment++;
         }
 
         for (let j = 0; j < numberOfLedsInSegment; j++) {
-            let x = Math.floor(points[i-1].x + nx * LED_SPACING * j);
-            let y = points[i-1].y + ny * LED_SPACING * j;
+            let x = Math.floor(points[i - 1].x + nx * LED_SPACING * j);
+            let y = points[i - 1].y + ny * LED_SPACING * j;
 
             strip.leds[ledIndex].x = x;
             strip.leds[ledIndex].y = y;
@@ -320,94 +388,24 @@ function calculateLeds() {
     }
 }
 
-/******************************************************************************/
+/****************************************************************************/
 /*!
-    @brief  Renders the drawn LEDs on the canvas.
-*/
-/******************************************************************************/
+ * @brief   Renders the drawn LEDs on the canvas.
+ */
+/****************************************************************************/
 function render() {
-    ctx.clearRect(0, 0, canvasElem.width, canvasElem.height);
-
-    if (points.length < 2) {
-        return;
-    }
-
-    // Draw lines
-    ctx.lineWidth = 4;
-    for (let i = 0; i < points.length - 1; i++) {
-        ctx.beginPath();
-        if (i === selectedSegmentIndex) {
-            ctx.strokeStyle = SELECTED_SEGMENT_LINE_COLOR;
-        } else {
-            ctx.strokeStyle = points[i].type == SEGMENT_TYPE_LED ? SEGMENT_LINE_COLOR : INACTIVE_COLOR;
-        }
-        ctx.moveTo(points[i].x, points[i].y);
-        ctx.lineTo(points[i + 1].x, points[i + 1].y);
-        ctx.stroke();
-    }
-
-    /* Draw LEDs */
-    for (let led of strip.leds) {
-        renderLed(led);
-    }
+    ledCanvas.update({ points, leds: strip.leds, selectedSegment: selectedSegmentIndex });
 }
 
-/******************************************************************************/
+/****************************************************************************/
 /*!
-    @brief  Draws the specified LED on the canvas.
-    @param  led                 LED to draw
-*/
-/******************************************************************************/
-function renderLed(led) {
-    ctx.beginPath();
-    ctx.arc(led.x, led.y, LED_RADIUS, 0, 2*Math.PI);
-    ctx.fillStyle = led.color.toHex();
-
-    ctx.fill();
-}
-
-/******************************************************************************/
-/*!
-    @brief  Returns the mouse position within the canvas.
-    @param  event               Mouse event
-    @return object              X and Y
-*/
-/******************************************************************************/
-function getCanvasMousePosition(event) {
-    let rect = canvasElem.getBoundingClientRect();
-
-    return {
-        x: event.clientX - rect.left,
-        y: event.clientY - rect.top
-    };
-}
-
-/******************************************************************************/
-/*!
-    @brief  Returns the touch position within the canvas.
-    @param  event               Touch event
-    @return object              X and Y
-*/
-/******************************************************************************/
-function getCanvasTouchPosition(event) {
-    let rect = canvasElem.getBoundingClientRect();
-    let touch = event.touches[0];
-
-    return {
-        x: touch.clientX - rect.left,
-        y: touch.clientY - rect.top
-    };
-}
-
-/******************************************************************************/
-/*!
-    @brief  Returns the LED at the specified position. Or -1 when no LED is on
-            that location.
-    @param  x                   X position
-    @param  y                   Y position
-    @return integer             LED index
-*/
-/******************************************************************************/
+ * @brief   Returns the LED at the specified position. Or -1 when no LED is on
+ *          that location.
+ * @param   x                       X position
+ * @param   y                       Y position
+ * @returns integer LED index
+ */
+/****************************************************************************/
 function findLedAtPosition(x, y) {
     for (let led of strip.leds) {
         let distance = Math.hypot(led.x - x, led.y - y);
@@ -419,68 +417,71 @@ function findLedAtPosition(x, y) {
     return -1;
 }
 
-/******************************************************************************/
+/****************************************************************************/
 /*!
-    @brief  Returns the segment at the specified position. Or -1 when no segment
-            is on that location.
-    @param  x                   X position
-    @param  y                   Y position
-    @return integer             Segment index
-*/
-/******************************************************************************/
+ * @brief   Returns the segment at the specified position. Or -1 when no segment
+ *          is on that location.
+ * @param   x                       X position
+ * @param   y                       Y position
+ * @returns integer                 Segment index
+ */
+/****************************************************************************/
 function findSegmentAtPosition(x, y) {
-    for (let i = 0; i < points.length-1; i++) {
-        if (pointToSegmentDistance({x,y}, points[i], points[i+1]) <= 8) {
+    for (let i = 0; i < points.length - 1; i++) {
+        if (pointToSegmentDistance({ x, y }, points[i], points[i + 1]) <= 8) {
             return i;
         }
     }
+
     return -1;
 }
 
-/******************************************************************************/
+/****************************************************************************/
 /*!
-    @brief  Calculates the distance between the specified point and segment.
-    @param  P                   Point
-    @param  A                   Segment endpoint A
-    @param  B                   Segment endpoint B
-    @return integer             Distance between the point and segment
-*/
-/******************************************************************************/
+ * @brief   Calculates the distance between the specified point and segment.
+ * @param   P                       Point
+ * @param   A                       Segment endpoint A
+ * @param   B                       Segment endpoint B
+ * @returns integer                 Distance between the point and segment
+ */
+/****************************************************************************/
 function pointToSegmentDistance(P, A, B) {
     const ABx = B.x - A.x;
     const ABy = B.y - A.y;
     const APx = P.x - A.x;
     const APy = P.y - A.y;
-    const AB_len_sq = ABx*ABx + ABy*ABy;
-    let t = (APx*ABx + APy*ABy) / AB_len_sq;
+    const AB_len_sq = ABx * ABx + ABy * ABy;
+    let t = (APx * ABx + APy * ABy) / AB_len_sq;
+
     t = Math.max(0, Math.min(1, t));
-    const closestX = A.x + ABx*t;
-    const closestY = A.y + ABy*t;
+
+    const closestX = A.x + ABx * t;
+    const closestY = A.y + ABy * t;
     const dx = P.x - closestX;
     const dy = P.y - closestY;
 
-    return Math.sqrt(dx*dx + dy*dy);
+    return Math.sqrt(dx * dx + dy * dy);
 }
 //#endregion
 
 //#region Mouse event functions
-/******************************************************************************/
+/****************************************************************************/
 /*!
-    @brief  Executed when left mouse button is pressed.
-    @param  position            Mouse position (X, Y)
-*/
-/******************************************************************************/
+ * @brief   Executed when left mouse button is pressed.
+ * @param   position                Mouse position (X, Y)
+ */
+/****************************************************************************/
 function leftMouseDown(position) {
     toggleSegmentMouseContextMenu(false);
     startDrawing(position);
 }
 
-/******************************************************************************/
+/****************************************************************************/
 /*!
-    @brief  Executed when right mouse button is pressed.
-    @param  position            Mouse position (X, Y)
-*/
-/******************************************************************************/
+ * @brief   Executed when right mouse button is pressed.
+ * @param   position                Mouse position (X, Y)
+ */
+/****************************************************************************/
 function rightMouseDown(position) {
     let segmentIndex = findSegmentAtPosition(position.x, position.y);
     if (segmentIndex !== -1) {
@@ -492,22 +493,22 @@ function rightMouseDown(position) {
     render();
 }
 
-/******************************************************************************/
+/****************************************************************************/
 /*!
-    @brief  Executed when left mouse button is lifted.
-    @param  position            Mouse position (X, Y)
-*/
-/******************************************************************************/
+ * @brief   Executed when left mouse button is lifted.
+ * @param   position                Mouse position (X, Y)
+ */
+/****************************************************************************/
 function leftMouseUp(position) {
     stopDrawing();
 }
 
-/******************************************************************************/
+/****************************************************************************/
 /*!
-    @brief  Executed when right mouse button is lifted.
-    @param  position            Mouse position (X, Y)
-*/
-/******************************************************************************/
+ * @brief   Executed when right mouse button is lifted.
+ * @param   position                Mouse position (X, Y)
+ */
+/****************************************************************************/
 function rightMouseUp(position) {
     if (selectedSegmentIndex !== null) {
         toggleSegmentMouseContextMenu(true);
@@ -515,21 +516,24 @@ function rightMouseUp(position) {
     }
 }
 
-/******************************************************************************/
+/****************************************************************************/
 /*!
-    @brief  Start of drawing LEDs.
-    @param  position            Mouse position (X, Y)
-*/
-/******************************************************************************/
+ * @brief   Start of drawing LEDs.
+ * @param   position                Mouse position (X, Y)
+ */
+/****************************************************************************/
 function startDrawing(position) {
     isDrawing = true;
     lastDrawnLedIndex = -1;
 
     /* Start update interval */
     if (!drawingInterval) {
-        drawingInterval = setInterval(() => {
-            sendLedColors();
-        }, UPDATE_INTERVAL);
+        /****************************************************************************/
+        /*!
+         * @brief   Sends pending LED color changes at the drawing update interval.
+         */
+        /****************************************************************************/
+        drawingInterval = setInterval(() => { sendLedColors(); }, UPDATE_INTERVAL);
     }
 
     let selectedLedIndex = findLedAtPosition(position.x, position.y);
@@ -545,12 +549,12 @@ function startDrawing(position) {
     }
 }
 
-/******************************************************************************/
+/****************************************************************************/
 /*!
-    @brief  Draws selected LEDs.
-    @param  position            Mouse position (X, Y)
-*/
-/******************************************************************************/
+ * @brief   Draws selected LEDs.
+ * @param   position                Mouse position (X, Y)
+ */
+/****************************************************************************/
 function draw(position) {
     if (!isDrawing) {
         return;
@@ -572,12 +576,12 @@ function draw(position) {
     render();
 }
 
-/******************************************************************************/
+/****************************************************************************/
 /*!
-    @brief  Stops the LED drawing, sends the LEDs one more time to synchronize
-            the strip.
-*/
-/******************************************************************************/
+ * @brief   Stops the LED drawing, sends the LEDs one more time to synchronize
+ *          the strip.
+ */
+/****************************************************************************/
 function stopDrawing() {
     if (drawingInterval) {
         clearInterval(drawingInterval);
@@ -591,14 +595,14 @@ function stopDrawing() {
     }
 }
 
-/******************************************************************************/
+/****************************************************************************/
 /*!
-    @brief  Toggles the mouse context menu.
-    @param  element             Element to show
-    @param  show                Show state to set
-*/
-/******************************************************************************/
-function toggleMouseContextMenu(element, show=undefined) {
+ * @brief   Toggles the mouse context menu.
+ * @param   element                 Element to show
+ * @param   show                    Show state to set
+ */
+/****************************************************************************/
+function toggleMouseContextMenu(element, show = undefined) {
     if (show != undefined) {
         mouseContextMenuVisible = show;
     } else {
@@ -607,33 +611,34 @@ function toggleMouseContextMenu(element, show=undefined) {
 
     if (!mouseContextMenuVisible) {
         element.style.display = "none";
+
         return;
     }
-    
+
     element.style.display = "block";
 
-    if (element == segmentMouseMenuElem) {
-        
-    }
-};
+    if (element == segmentMouseMenuElem) {}
+}
+;
 
-/******************************************************************************/
+/****************************************************************************/
 /*!
-    @brief  Toggles the segment mouse context menu.
-    @param  show                Show state to set
-*/
-/******************************************************************************/
-function toggleSegmentMouseContextMenu(show=undefined) {
+ * @brief   Toggles the segment mouse context menu.
+ * @param   show                    Show state to set
+ */
+/****************************************************************************/
+function toggleSegmentMouseContextMenu(show = undefined) {
     toggleMouseContextMenu(segmentMouseMenuElem, show);
-};
+}
+;
 
-/******************************************************************************/
+/****************************************************************************/
 /*!
-    @brief  Sets the mouse context menu to the specified position.
-    @param  top                 Top position
-    @param  left                Left position
-*/
-/******************************************************************************/
+ * @brief   Sets the mouse context menu to the specified position.
+ * @param   top                     Top position
+ * @param   left                    Left position
+ */
+/****************************************************************************/
 const setMouseContextMenuPosition = ({ top, left }) => {
     segmentMouseMenuElem.style.left = `${left}px`;
     segmentMouseMenuElem.style.top = `${top}px`;
@@ -641,11 +646,11 @@ const setMouseContextMenuPosition = ({ top, left }) => {
 //#endregion
 
 //#region Load functions
-/******************************************************************************/
+/****************************************************************************/
 /*!
-    @brief  Loads the text of elements in the selected language.
-*/
-/******************************************************************************/
+ * @brief   Loads the text of elements in the selected language.
+ */
+/****************************************************************************/
 function loadText() {
     colorSegmentTitleElem.textContent = TEXT_COLOR_SEGMENT;
     drawingToolsTitleElem.textContent = TEXT_DRAWING_TOOLS;
@@ -655,11 +660,11 @@ function loadText() {
     clearColorsBtnElem.textContent = TEXT_CLEAR;
 }
 
-/******************************************************************************/
+/****************************************************************************/
 /*!
-    @brief  Loads the ledstrip database configuration in the UI.
-*/
-/******************************************************************************/
+ * @brief   Loads the ledstrip database configuration in the UI.
+ */
+/****************************************************************************/
 function loadLeds() {
     let bound = determineStripCanvasBounds(strip);
     canvasElem.width = bound.highestX - bound.lowestX + CANVAS_PADDING;
@@ -668,25 +673,26 @@ function loadLeds() {
     for (let i = 0; i < strip.segments.length; i++) {
         if (i == 0) {
             points.push({
-                x: strip.segments[i].x1-bound.lowestX+(CANVAS_PADDING/2),
-                y: strip.segments[i].y1-bound.lowestY+(CANVAS_PADDING/2),
+                x: strip.segments[i].x1 - bound.lowestX + CANVAS_PADDING / 2,
+                y: strip.segments[i].y1 - bound.lowestY + CANVAS_PADDING / 2,
                 type: strip.segments[i].type,
                 index: points.length,
                 segment: i
-            })
+            });
         }
         points.push({
-            x: strip.segments[i].x2-bound.lowestX+(CANVAS_PADDING/2),
-            y: strip.segments[i].y2-bound.lowestY+(CANVAS_PADDING/2),
+            x: strip.segments[i].x2 - bound.lowestX + CANVAS_PADDING / 2,
+            y: strip.segments[i].y2 - bound.lowestY + CANVAS_PADDING / 2,
             type: SEGMENT_TYPE_LED,
             index: points.length,
-            segment: i+1
-        })
+            segment: i + 1
+        });
 
         if (i + 1 < strip.segments.length) {
-            points[points.length-1].type = strip.segments[i + 1].type
+            points[points.length - 1].type = strip.segments[i + 1].type;
         }
     }
+
     strip.segments = getSegments(points);
     calculateLeds();
 }

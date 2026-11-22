@@ -1,7 +1,7 @@
 /******************************************************************************/
 /*
  * File:    styles_tiles_mobile.css
- * Version: 0.9.0
+ * Version: 0.10.0
  * Author:  Luke de Munk
  * 
  * Brief:   Additional styles for mobile version.
@@ -10,24 +10,22 @@
  *          https://github.com/LukedeMunk/zyrax-home-main-controller
  */
 /******************************************************************************/
-section {
-    grid-template-rows: repeat(1, 200px) !important;
-    grid-template-columns: repeat(1, 300px) !important;
-}
-
-/*.tile {
-    height: 60px;
-    width: 120px;
-}*/
-
-.flex-grid {
-    grid-template-rows: unset;
-}
-
 .dashboard-workspace {
-    width: 94%;
+    /* Leave the floating dashboard navigation clear of the tile controls. */
+    width: auto;
+    margin-inline: 10px 78px;
 }
 
+.dashboard-configuration-panel {
+    flex-direction: column;
+    align-items: stretch;
+}
+.dashboard-configuration-actions button {
+    width: 100%;
+    min-width: 0;
+    margin: 0;
+    white-space: normal;
+}
 .dashboard-configuration-actions {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -40,4 +38,14 @@ section {
 
 .dashboard-grid .tile:hover {
     transform: none;
+}
+
+@media (max-width: 430px) {
+    .flex-grid:not(.dashboard-grid) {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .flex-grid:not(.dashboard-grid) > .tile {
+        grid-column: 1 / -1;
+    }
 }

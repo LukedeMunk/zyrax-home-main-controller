@@ -110,6 +110,8 @@ MAX_LEDSTRIP_BRIGHTNESS = 255
 MAX_NUMBER_OF_LEDS = 250
 
 DEFAULT_FIRMWARE_VERSION = "v0.0.0"
+DEFAULT_LEDSTRIP_API_VERSION = "v1"
+DEFAULT_BRIDGE_API_VERSION = "v1"
 COMPATIBLE_LEDSTRIP_FIRMWARE_VERSIONS = ["v0.0.2", "v0.9.0"]
 DEFAULT_IP_ADDRESS = "0.0.0.0"
 
@@ -533,20 +535,38 @@ API_URL_GET_WEATHER_FORECAST = API_URL_PREFIX + API_URL_APPLICATION_PREFIX + "/g
 API_URL_REBOOT_APPLICATION = API_URL_PREFIX + API_URL_APPLICATION_PREFIX + "/reboot"
 API_URL_CHECK_CONNECTION_STATUS = API_URL_PREFIX + API_URL_APPLICATION_PREFIX + "/check_connection"
 
-#region Client endpoints
-CMD_SET_POWER = "/set_power"
-CMD_SET_BRIGHTNESS = "/set_brightness"
-CMD_SET_MODE = "/set_mode"
-CMD_CONFIG_MODE = "/configure_mode"
-CMD_SET_POWER_ANIMATION = "/set_power_animation"
-CMD_REBOOT = "/reboot"
-CMD_UPDATE_FIRMWARE = "/update_firmware"
-CMD_SET_CONFIGURATION = "/set_configuration"
-CMD_GET_STATES = "/get_states"
-CMD_GET_MODE_CONFIGURATIONS = "/get_mode_configurations"
-CMD_GET_CONFIGURATION = "/get_configuration"
-CMD_DRAW_LEDS = "/draw_leds"
-#endregion
+#region HTTP commands
+#LED commands
+LED_COMMAND_SET_POWER = "set_power"
+LED_COMMAND_SET_BRIGHTNESS = "set_brightness"
+LED_COMMAND_SET_MODE = "set_mode"
+LED_COMMAND_CONFIG_MODE = "configure_mode"
+LED_COMMAND_SET_POWER_ANIMATION = "set_power_animation"
+LED_COMMAND_REBOOT = "reboot"
+LED_COMMAND_UPDATE_FIRMWARE = "update_firmware"
+LED_COMMAND_SET_CONFIGURATION = "set_configuration"
+LED_COMMAND_GET_STATES = "get_states"
+LED_COMMAND_GET_MODE_CONFIGURATIONS = "get_mode_configurations"
+LED_COMMAND_GET_CONFIGURATION = "get_configuration"
+LED_COMMAND_DRAW_LEDS = "draw_leds"
+
+#Hub commands
+HUB_COMMAND_GET_STATES = "get_status"
+HUB_COMMAND_GET_CONFIGURATION = "get_configuration"
+HUB_COMMAND_SET_CONFIGURATION = "set_configuration"
+HUB_COMMAND_REBOOT = "reboot"
+HUB_COMMAND_UPDATE_FIRMWARE = "update_firmware"
+HUB_COMMAND_TRANSMIT_CODE = "transmit_code"
+HUB_COMMAND_GET_CODES = "get_codes"
+HUB_COMMAND_UPDATE_RF_DEVICE = "update_rf_device"
+HUB_COMMAND_START_LEARNING = "start_learning"
+HUB_COMMAND_GET_LEARNING_STATUS = "get_learning_status"
+HUB_COMMAND_CANCEL_LEARNING = "cancel_learning"
+HUB_COMMAND_SAVE_LEARNING_RESULT = "save_learning_result"
+HUB_COMMAND_START_DEVICE_LEARNING = "start_device_learning"
+HUB_COMMAND_GET_DEVICE_LEARNING_STATUS = "get_device_learning_status"
+HUB_COMMAND_CANCEL_DEVICE_LEARNING = "cancel_device_learning"
+HUB_COMMAND_SAVE_DEVICE_LEARNING_RESULT = "save_device_learning_result"
 #endregion
 
 #region Regex strings

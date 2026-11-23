@@ -182,6 +182,11 @@ class BridgeHost(db.Model):
     __tablename__ = "BridgeHost"
     device_id = db.Column(db.Integer, db.ForeignKey("Device.id", ondelete="CASCADE"), primary_key=True)
     hostname = db.Column(db.String(253), nullable=False, unique=True)
+    ip_address = db.Column(db.String(20), nullable=False, default=c.DEFAULT_IP_ADDRESS)
+    port = db.Column(db.Integer, nullable=False, default=80)
+    api_version = db.Column(db.String(20), nullable=False, default=c.DEFAULT_BRIDGE_API_VERSION)
+    firmware_version = db.Column(db.String(20), nullable=False, default=c.DEFAULT_FIRMWARE_VERSION)
+    connection_status = db.Column(db.Boolean, nullable=False, default=False)
 
 
 class BridgeCode(db.Model):

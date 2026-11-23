@@ -15,6 +15,7 @@ from flask import Blueprint, request, session
 from werkzeug.exceptions import BadRequest
 
 import configuration as c
+import database_utility as db_util
 from automation.domain import Capability, Command
 from Bridge import Bridge
 from DeviceManager import DeviceManager
@@ -73,7 +74,7 @@ def learn_bridge_code(operation):
     
     medium = "rf" if device.type == c.DEVICE_TYPE_RF_DEVICE else "ir"
     signals = model.get(f"{medium}_code_types") or []
-    client = Bridge(host.hostname)
+    client = Bridge(db_util.get_device(bridge_id))
     key = f"bridge_learning_{bridge_id}"
 
     try:
@@ -157,7 +158,11 @@ def _start_bridge_learning(client, device, bridge_id, key, medium, signals):
             model_id=device.model_id, name=device.name, code_types=json.dumps(code_types)
         )
 
-    result = client.request("POST", path + "s", fields)
+    if is_reception:
+        command = c.HUB_COMMAND_START_DEVICE_LEARNING
+    else:
+        command = c.HUB_COMMAND_START_LEARNING
+    result = client.request("POST", command, fields)
     slot_type = slot["type"] if is_single_slot else None
     session[key] = [device.id, result["session_id"], code_id, name, path, slot_type, is_transmit]
     return result
@@ -190,11 +195,20 @@ def _continue_bridge_learning(client, device, bridge_id, key, medium, signals, o
         session.pop(key, None)
         return {}
 
-    result = client.request("GET", learning.path)
+    is_device_learning = learning.path.startswith("device-")
+    if is_device_learning:
+        status_command = c.HUB_COMMAND_GET_DEVICE_LEARNING_STATUS
+    else:
+        status_command = c.HUB_COMMAND_GET_LEARNING_STATUS
+    result = client.request("GET", status_command)
     is_current_session = learning.session_id == result["session_id"]
     if operation == "cancel":
         if is_current_session:
-            client.request("DELETE", learning.path)
+            if is_device_learning:
+                command = c.HUB_COMMAND_CANCEL_DEVICE_LEARNING
+            else:
+                command = c.HUB_COMMAND_CANCEL_LEARNING
+            client.request("POST", command)
         session.pop(key, None)
         return {}
 
@@ -226,7 +240,7 @@ def _continue_bridge_learning(client, device, bridge_id, key, medium, signals, o
 #
 ################################################################################
 def _save_received_codes(client, bridge_id, learning, medium, signals, codes):
-    client.request("POST", learning.path + "/save")
+    client.request("POST", c.HUB_COMMAND_SAVE_DEVICE_LEARNING_RESULT)
     if signals:
         previous = BridgeCode.query.filter_by(
             device_id=learning.device_id, bridge_id=bridge_id, medium="rf"
@@ -252,7 +266,7 @@ def _save_received_codes(client, bridge_id, learning, medium, signals, codes):
 #
 ################################################################################
 def _save_single_code(client, bridge_id, learning, medium, result):
-    client.request("POST", learning.path + "/save", {"id": learning.code_id})
+    client.request("POST", c.HUB_COMMAND_SAVE_LEARNING_RESULT, {"id": learning.code_id})
     if learning.slot_type is not None:
         previous = BridgeCode.query.filter_by(
             device_id=learning.device_id, bridge_id=bridge_id, medium=medium
@@ -285,21 +299,21 @@ def _save_single_code(client, bridge_id, learning, medium, result):
 def _save_tap_switch(client, device, bridge_id, key, learning, slot):
     code_id = learning.code_id
     if not learning.transmit_saved:
-        result = client.request("GET", "learning-session")
+        result = client.request("GET", c.HUB_COMMAND_GET_LEARNING_STATUS)
         if learning.session_id != result["session_id"] or result["state"] != "ready":
             raise ValueError(c.TEXT_BRIDGE_LEARNING_NOT_READY)
         
-        client.request("POST", "learning-session/save", {"id": code_id})
+        client.request("POST", c.HUB_COMMAND_SAVE_LEARNING_RESULT, {"id": code_id})
         session[key] = list(learning._replace(transmit_saved=True))
 
-    codes = client.request("GET", "codes?include_pulses=true")
+    codes = client.request("GET", c.HUB_COMMAND_GET_CODES, {"include_pulses": "true"})
     saved = next((code for code in codes if code["id"] == code_id), None)
 
     if saved is None:
         raise RuntimeError(c.TEXT_BRIDGE_CODE_NOT_FOUND)
     frame = saved["frame"]
 
-    client.request("POST", "update-rf-device", {
+    client.request("POST", c.HUB_COMMAND_UPDATE_RF_DEVICE, {
         "id": str(device.id), "name": device.name, "model_id": device.model_id,
         "codes": json.dumps([{"name": slot["name"], "type": slot["type"], "frame": frame}])
     })
@@ -344,7 +358,7 @@ def manage_bridge_button(operation):
     else:
         collection = "devices" if code.medium == "rf" and code_id.startswith("b_") else "codes"
         try:
-            Bridge(host.hostname).request("DELETE", f"{collection}/{code_id}")
+            Bridge(db_util.get_device(bridge_id)).request("DELETE", f"{collection}/{code_id}")
         except RuntimeError as error:
             return generate_json_http_response(c.HTTP_CODE_CONFLICT, str(error), True)
         db.session.delete(code)
@@ -390,8 +404,7 @@ def bridge_status():
 
     if host is not None:
         try:
-            Bridge(host.hostname).request("GET", "status")
-            online = True
+            online = Bridge(db_util.get_device(bridge_id)).download_states()
         except RuntimeError:
             pass
         

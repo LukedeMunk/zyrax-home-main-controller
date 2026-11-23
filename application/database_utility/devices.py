@@ -73,7 +73,10 @@ def add_device(config_dict):
             config_dict["id"] = device.id
 
             if config_dict.get("bridge_hostname"):
-                db.session.add(BridgeHost(device_id=device.id, hostname=config_dict["bridge_hostname"]))
+                db.session.add(BridgeHost(
+                    device_id=device.id, hostname=config_dict["bridge_hostname"],
+                    api_version=config_dict.get("api_version", c.DEFAULT_BRIDGE_API_VERSION)
+                ))
 
             if device.type == c.DEVICE_TYPE_LEDSTRIP:
                 _add_ledstrip(config_dict)
@@ -141,8 +144,8 @@ def update_device(id, config_dict):
                 {"name": device.name}, synchronize_session=False
             )
 
-        if "bridge_hostname" in config_dict:
-            db.session.merge(BridgeHost(device_id=id, hostname=config_dict["bridge_hostname"]))
+        if device.role == "bridge":
+            _update_bridge(id, config_dict)
 
         if device.type == c.DEVICE_TYPE_RF_DEVICE:
             device.parent_device_id = None
@@ -281,6 +284,8 @@ def get_devices(type=None):
         elif device["type"] == c.DEVICE_TYPE_IP_CAMERA:
             camera = _get_camera(id=device["id"])
             device.update(camera)
+        elif device["role"] == "bridge":
+            device.update(get_bridge(device["id"]))
         
         device_list.append(device)
 
@@ -307,9 +312,49 @@ def get_device(id):
     elif device["type"] == c.DEVICE_TYPE_IP_CAMERA:
         camera = _get_camera(id=device["id"])
         device.update(camera)
+    elif device["role"] == "bridge":
+        device.update(get_bridge(device["id"]))
         
     return device
 #endregion
+
+
+################################################################################
+#
+#   @brief  Returns saved bridge settings and API metadata for a device.
+#   @param  id                  Bridge device ID
+#   @return dict               Bridge fields, excluding the duplicate device ID
+#
+################################################################################
+def get_bridge(id):
+    with app.app_context():
+        bridge = db.session.get(BridgeHost, id)
+        if bridge is None:
+            return {}
+        configuration = core.row_to_dictionary(bridge)
+        configuration.pop("device_id", None)
+
+        return configuration
+
+
+################################################################################
+#
+#   @brief  Updates existing bridge settings without replacing saved metadata.
+#   @param  id                  Bridge device ID
+#   @param  config_dict         Changed device fields or reported metadata
+#
+################################################################################
+def _update_bridge(id, config_dict):
+    bridge = db.session.get(BridgeHost, id)
+    if bridge is None:
+        return
+
+    if "bridge_hostname" in config_dict:
+        bridge.hostname = config_dict["bridge_hostname"]
+    for field in ("api_version", "firmware_version", "ip_address", "port", "connection_status"):
+        if field in config_dict:
+            setattr(bridge, field, config_dict[field])
+
 
 #region Ledstrip functionality
 ################################################################################

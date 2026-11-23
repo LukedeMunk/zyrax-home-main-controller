@@ -35,7 +35,7 @@ weather_client = WeatherServiceClient(
 #   @brief  Endpoint to get the weather information.
 #
 ################################################################################
-@data_bp.route("/get_profiles", methods=["GET"])
+@data_bp.route(c.API_URL_GET_PROFILES, methods=["GET"])
 @minimum_role_required()
 def get_profiles():
     return generate_json_http_response(c.HTTP_CODE_OK, {"profiles": db_util.get_profiles(session["account_id"])})
@@ -45,7 +45,7 @@ def get_profiles():
 #   @brief  Endpoint to get the weather information.
 #
 ################################################################################
-@data_bp.route("/get_profile_picture", methods=["GET"])
+@data_bp.route(c.API_URL_GET_PROFILE_PICTURE, methods=["GET"])
 def get_profile_picture():
     profile_id = None
     
@@ -75,7 +75,7 @@ def get_profile_picture():
 #   @brief  Endpoint to get the weather information.
 #
 ################################################################################
-@data_bp.route("/get_default_profile_picture", methods=["GET"])
+@data_bp.route(c.API_URL_GET_PROFILE_PICTURE, methods=["GET"])
 def get_default_profile_picture():
     return send_file(c.DEFAULT_PROFILE_PICTURE_PATH)
 
@@ -84,7 +84,7 @@ def get_default_profile_picture():
 #   @brief  Endpoint to get the weather information.
 #
 ################################################################################
-@data_bp.route("/get_weather", methods=["GET"])
+@data_bp.route(c.API_URL_GET_WEATHER_FORECAST, methods=["GET"])
 @minimum_role_required()
 def get_weather():
     return generate_json_http_response(c.HTTP_CODE_OK, {"weather" : weather_client.get_weather_forecast(True)})
@@ -158,7 +158,7 @@ def get_sensors():
 #   @brief  Endpoint to receive unconfigured connected devices.
 #
 ################################################################################
-@data_bp.route("/get_unconfigured_devices", methods=["GET"])
+@data_bp.route(c.API_URL_GET_UNCONFIGURED_DEVICES, methods=["GET"])
 @minimum_role_required()
 def get_unconfigured_devices():
     return dm.get_unconfigured_devices()
@@ -168,7 +168,7 @@ def get_unconfigured_devices():
 #   @brief  Endpoint to receive network devices.
 #
 ################################################################################
-@data_bp.route("/get_network_devices", methods=["GET"])
+@data_bp.route(c.API_URL_GET_NETWORK_DEVICES , methods=["GET"])
 @minimum_role_required()
 def get_network_devices():
     return dm.get_network_devices(True, True)

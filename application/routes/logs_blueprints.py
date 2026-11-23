@@ -25,7 +25,7 @@ logs_bp = Blueprint("logs_blueprints", __name__)
 #   @brief  Marks logs as read and deletes them.
 #
 ################################################################################
-@logs_bp.route("/mark_logs_read", methods=["POST"])
+@logs_bp.route(c.API_URL_MARK_LOGS_READ, methods=["POST"])
 @minimum_role_required()
 def mark_logs_read():
     reset_logs()

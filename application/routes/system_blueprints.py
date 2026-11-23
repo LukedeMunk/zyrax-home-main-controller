@@ -9,6 +9,8 @@
 #           https://github.com/LukedeMunk/zyrax-home-main-controller
 #
 ################################################################################
+import json
+
 from flask import Blueprint, request                                    #Import flask blueprints and requests
 from threading import Lock
 from time import monotonic_ns
@@ -38,6 +40,7 @@ bridge_event_lock = Lock()
 def rf():
     if request.method == "POST":
         return receive_bridge_event("rf")
+    
     code = request.args.get("code", type=int)
     if code is None or not 1 <= code <= 0xFFFFFF:
         return generate_json_http_response(
@@ -80,11 +83,13 @@ def bridge_request_connection():
 #
 #   @brief  Routes a firmware event to the registered device and automation bus.
 #   @param  expected_medium     Optional required signal medium
+#   @param  payload             Optional decoded event from the Hub form endpoint
 #   @return Response            Bridge queue acknowledgement
 #
 ################################################################################
-def receive_bridge_event(expected_medium):
-    payload = request.get_json(silent=True)
+def receive_bridge_event(expected_medium, payload=None):
+    if payload is None:
+        payload = request.get_json(silent=True)
     frame = payload.get("data") if isinstance(payload, dict) else None
     if not isinstance(frame, dict):
         return generate_json_http_response(c.HTTP_CODE_BAD_REQUEST, "Invalid bridge event.", True)
@@ -171,7 +176,7 @@ def receive_bridge_event(expected_medium):
 #   @brief  Used in UI to check the connection with the server.
 #
 ################################################################################
-@system_bp.route("/check_connection", methods=["GET"])
+@system_bp.route(c.API_URL_CHECK_CONNECTION_STATUS, methods=["GET"])
 def check_connection():
     return generate_json_http_response(c.HTTP_CODE_OK)
     
@@ -182,13 +187,13 @@ def check_connection():
 #           the unconfigured devices.
 #
 ################################################################################
-@system_bp.route("/ledstrip_request_connection", methods=["POST"])
-def ledstrip_request_connection():
+@system_bp.route(c.API_URL_DEVICE_CONNECTION_REQUEST, methods=["POST"])
+def device_request_connection():
     parsed_params = urlparse(request.data)
     parsed_params = parse_qs(parsed_params.path)
     
     hostname = parsed_params[b"hostname"][0].decode()
-    ledstrip = dm.get_ledstrip_by_hostname(hostname)
+    ledstrip = dm.get_ledstrip_by_hostname(hostname)#TODO create get_device_by_hostname
 
     if ledstrip is None:
         dm.add_unconfigured_device_to_list(request.remote_addr, hostname)
@@ -204,7 +209,7 @@ def ledstrip_request_connection():
 #           the ledstrip.
 #
 ################################################################################
-@system_bp.route("/set_ledstrip_sensor_state", methods=["POST"])
+@system_bp.route(c.API_URL_SET_LEDSTRIP_SENSOR_STATE, methods=["POST"])
 def set_ledstrip_sensor_state():
     ledstrip = dm.get_ledstrip_by_ip(request.remote_addr)
 
@@ -213,10 +218,10 @@ def set_ledstrip_sensor_state():
         return generate_json_http_response(c.HTTP_CODE_BAD_REQUEST)
     
     logi("Ledstrip sensor state changed")
-    parsed_params = urlparse(request.data)
-    parsed_params = parse_qs(parsed_params.path)
-    
-    state = int(parsed_params[b"state"][0].decode())
+    try:
+        state = int(request.form.get("state"))
+    except (TypeError, ValueError):
+        return generate_json_http_response(c.HTTP_CODE_BAD_REQUEST, "Provide an integer state.", True)
     
     dm.set_ledstrip_sensor_state(ledstrip.id, state)
 
@@ -228,13 +233,34 @@ def set_ledstrip_sensor_state():
 #           ledstrip.
 #
 ################################################################################
-@system_bp.route("/set_ota_state", methods=["POST"])
+@system_bp.route(c.API_URL_SET_OTA_STATE, methods=["POST"])
 def set_ota_state():
     parsed_params = urlparse(request.data)
     parsed_params = parse_qs(parsed_params.path)
     
     id = int(parsed_params[b"id"][0].decode())
     state = int(parsed_params[b"state"][0].decode())
-    dm.set_ledstrip_ota_state(id, state)
+    dm.set_ledstrip_ota_state(id, state)#Todo set_device_ota_state
 
     return generate_json_http_response(c.HTTP_CODE_OK)
+
+
+################################################################################
+#
+#   @brief  Receives a queued Hub signal through form fields.
+#   @return Response            Idempotent acknowledgement or event validation error
+#
+################################################################################
+@system_bp.route(c.API_URL_HUB_SIGNAL_RECEIVED, methods=["POST"])
+def hub_signal_received():
+    try:
+        frame = json.loads(request.form.get("data", ""))
+    except (TypeError, ValueError):
+        return generate_json_http_response(c.HTTP_CODE_BAD_REQUEST, "Invalid Hub event data.", True)
+
+    payload = {
+        "event_id": request.form.get("event_id"),
+        "bridge_id": request.form.get("id"),
+        "data": frame
+    }
+    return receive_bridge_event(None, payload)

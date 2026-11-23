@@ -26,7 +26,7 @@ ota_bp = Blueprint("ota_blueprints", __name__)
 #   @brief  Endpoint for uploading OTA firmware files.
 #
 ################################################################################
-@ota_bp.route("/upload_ota_file", methods=["POST"])
+@ota_bp.route(c.API_URL_UPLOAD_FIRMWARE_FILE, methods=["POST"])
 @minimum_role_required()
 def upload_ota_file():
     file = request.files["otaFile"]
@@ -38,7 +38,7 @@ def upload_ota_file():
     #    return generate_json_http_response(HTTP_CODE_BAD_REQUEST, c.TEXT_CONFIGURATION_FILE_UNSUPPORTED)
 
     #filename = secure_filename(file.filename)
-    file.save(os.path.join(c.OTA_FILE_DIRECTORY_PATH, file.filename))
+    file.save(os.path.join(c.OTA_FILE_DIRECTORY_PATH, file.filename))#Todo firmware file
 
     logi("Uploaded ota file")
 
@@ -51,10 +51,10 @@ def upload_ota_file():
 #   @brief  Endpoint to receive the ledstrip OTA progress.
 #
 ################################################################################
-@ota_bp.route("/get_ledstrip_ota_progress", methods=["GET"])
+@ota_bp.route(c.API_URL_GET_OTA_PROGRESS, methods=["GET"])
 @minimum_role_required()
 def get_ledstrip_ota_progress():
-    progress = dm.get_ledstrip_ota_progress()
+    progress = dm.get_ledstrip_ota_progress()#TOdo get_device_ota_progress
 
     return {"progress" : progress}
     
@@ -63,10 +63,10 @@ def get_ledstrip_ota_progress():
 #   @brief  Endpoint to download the specified OTA file.
 #
 ################################################################################
-@ota_bp.route("/get_ota_file", methods=["GET"])
+@ota_bp.route(c.API_URL_DOWNLOAD_FIRMWARE_FILE, methods=["GET"])
 def get_ota_file():
     version = request.args.get("version")
-    filename = version.replace(".", "_") + ".bin"
+    filename = version.replace(".", "_") + ".bin"#TODO device type
     path = os.path.join(c.OTA_FILE_DIRECTORY_PATH, filename)
 
     if not os.path.exists(path):

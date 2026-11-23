@@ -87,10 +87,10 @@ def before_http_requests():
     if request.path.startswith("/static"):
         return
     
-    if request.path.startswith("/add_account"):
+    if request.path.startswith(c.API_URL_ADD_ACCOUNT):
         return
     
-    if request.path.startswith("/get_default_profile_picture"):
+    if request.path.startswith(c.API_URL_GET_PROFILE_PICTURE):
         return
     
     return initial_setup()

@@ -26,7 +26,7 @@ alarm_bp = Blueprint("alarm_blueprints", __name__)
 #   @brief  Updates the alarm.
 #
 ################################################################################
-@alarm_bp.route("/update_alarm", methods=["POST"])
+@alarm_bp.route(c.API_URL_UPDATE_ALARM, methods=["POST"])
 @minimum_role_required()
 def update_alarm():
     alarm_dict = {}
@@ -49,7 +49,7 @@ def update_alarm():
 #   @brief  Adds a deactivation device to the alarm.
 #
 ################################################################################
-@alarm_bp.route("/add_deactivation_device", methods=["POST"])
+@alarm_bp.route(c.API_URL_ADD_DEACTIVATION_DEVICE, methods=["POST"])
 @minimum_role_required()
 def add_deactivation_device():
     alarm_dict = {
@@ -69,7 +69,7 @@ def add_deactivation_device():
 #   @brief  Updates the specified alarm deactivation device.
 #
 ################################################################################
-@alarm_bp.route("/update_deactivation_device", methods=["POST"])
+@alarm_bp.route(c.API_URL_UPDATE_DEACTIVATION_DEVICE, methods=["POST"])
 @minimum_role_required()
 def update_deactivation_device():
     id = int(request.form.get("id"))
@@ -91,7 +91,7 @@ def update_deactivation_device():
 #   @brief  Deletes the specified alarm deactivation device.
 #
 ################################################################################
-@alarm_bp.route("/delete_deactivation_device", methods=["POST"])
+@alarm_bp.route(c.API_URL_DELETE_DEACTIVATION_DEVICE, methods=["POST"])
 @minimum_role_required()
 def delete_deactivation_device():
     id = int(request.form.get("id"))
@@ -105,7 +105,7 @@ def delete_deactivation_device():
 #   @brief  Adds the specified trigger device to the alarm.
 #
 ################################################################################
-@alarm_bp.route("/add_alarm_trigger_device", methods=["POST"])
+@alarm_bp.route(c.API_URL_ADD_ALARM_TRIGGER_DEVICE, methods=["POST"])
 @minimum_role_required()
 def add_alarm_trigger_device():
     id = int(request.form.get("id"))
@@ -119,7 +119,7 @@ def add_alarm_trigger_device():
 #   @brief  Deletes the specified alarm trigger device.
 #
 ################################################################################
-@alarm_bp.route("/delete_alarm_trigger_device", methods=["POST"])
+@alarm_bp.route(c.API_URL_DELETE_ALARM_TRIGGER_DEVICE, methods=["POST"])
 @minimum_role_required()
 def delete_alarm_trigger_device():
     id = int(request.form.get("id"))

@@ -12,6 +12,7 @@ from typing import NamedTuple, Optional
 from uuid import uuid4
 
 from flask import Blueprint, request, session
+from werkzeug.exceptions import BadRequest
 
 import configuration as c
 from automation.domain import Capability, Command
@@ -41,15 +42,21 @@ class _BridgeLearningSession(NamedTuple):
 ################################################################################
 #
 #   @brief  Proxies a device learning session on the selected bridge.
-#   @param  bridge_id            Registered bridge ID
-#   @param  device_id            Target device ID
+#   @param  operation            Start, status, save or cancel learning
 #   @return Response            Learning state or saved code
 #
 ################################################################################
-@bridge_bp.route("/api/bridges/<int:bridge_id>/learn/<int:device_id>",
-                 methods=["GET", "POST", "DELETE", "PUT"])
+@bridge_bp.route(c.API_URL_START_HUB_LEARNING_SESSION, methods=["POST"],
+                 defaults={"operation": "start"})
+@bridge_bp.route(c.API_URL_GET_HUB_LEARNING_STATUS, methods=["GET"],
+                 defaults={"operation": "status"})
+@bridge_bp.route(c.API_URL_SAVE_HUB_LEARNING_RESULT, methods=["POST"],
+                 defaults={"operation": "save"})
+@bridge_bp.route(c.API_URL_CANCEL_HUB_LEARNING_SESSION, methods=["POST"],
+                 defaults={"operation": "cancel"})
 @minimum_role_required()
-def learn_bridge_code(bridge_id, device_id):
+def learn_bridge_code(operation):
+    bridge_id, device_id = _get_hub_identifiers(include_device=True)
     host = db.session.get(BridgeHost, bridge_id)
     device = db.session.get(Device, device_id)
 
@@ -70,10 +77,10 @@ def learn_bridge_code(bridge_id, device_id):
     key = f"bridge_learning_{bridge_id}"
 
     try:
-        if request.method == "POST":
+        if operation == "start":
             result = _start_bridge_learning(client, device, bridge_id, key, medium, signals)
         else:
-            result = _continue_bridge_learning(client, device, bridge_id, key, medium, signals)
+            result = _continue_bridge_learning(client, device, bridge_id, key, medium, signals, operation)
     except ValueError as error:
         return generate_json_http_response(c.HTTP_CODE_BAD_REQUEST, str(error), True)
     except (RuntimeError, KeyError) as error:
@@ -95,9 +102,14 @@ def learn_bridge_code(bridge_id, device_id):
 #
 ################################################################################
 def _start_bridge_learning(client, device, bridge_id, key, medium, signals):
-    payload = request.get_json(silent=True)
-    if not isinstance(payload, dict):
-        raise ValueError("Provide learning configuration.")
+    payload = request.form.to_dict()
+    for flag in ("transmit", "receive"):
+        if flag in payload:
+            if payload[flag] not in ("0", "1"):
+                raise ValueError(f"Provide {flag} as 0 or 1.")
+            payload[flag] = payload[flag] == "1"
+    if "slot" in payload:
+        payload["slot"] = int(payload["slot"])
 
     is_tap_switch = device.model_id == c.RF_SWITCH_MODEL_ID_TAP
     can_set_power = medium == "rf" and device.category in (
@@ -160,26 +172,27 @@ def _start_bridge_learning(client, device, bridge_id, key, medium, signals):
 #   @param  key                  Learning session key
 #   @param  medium               RF or IR
 #   @param  signals              Fixed signal slots defined by the model
+#   @param  operation            Status, save or cancel action
 #   @return dict                 Firmware state or empty acknowledgement
 #
 ################################################################################
-def _continue_bridge_learning(client, device, bridge_id, key, medium, signals):
+def _continue_bridge_learning(client, device, bridge_id, key, medium, signals, operation):
     current = session.get(key)
     if not current or current[0] != device.id:
-        if request.method == "DELETE":
+        if operation == "cancel":
             return {}
         raise ValueError("Start a learning session for this device.")
 
     learning = _BridgeLearningSession(*current)
     is_tap_switch = device.model_id == c.RF_SWITCH_MODEL_ID_TAP
-    if is_tap_switch and request.method == "PUT":
+    if is_tap_switch and operation == "save":
         _save_tap_switch(client, device, bridge_id, key, learning, signals[0])
         session.pop(key, None)
         return {}
 
     result = client.request("GET", learning.path)
     is_current_session = learning.session_id == result["session_id"]
-    if request.method == "DELETE":
+    if operation == "cancel":
         if is_current_session:
             client.request("DELETE", learning.path)
         session.pop(key, None)
@@ -187,7 +200,7 @@ def _continue_bridge_learning(client, device, bridge_id, key, medium, signals):
 
     if not is_current_session:
         raise ValueError("This learning session has ended.")
-    if request.method != "PUT":
+    if operation != "save":
         return result
 
     if result["state"] != "ready":
@@ -286,7 +299,7 @@ def _save_tap_switch(client, device, bridge_id, key, learning, slot):
         raise RuntimeError(c.TEXT_BRIDGE_CODE_NOT_FOUND)
     frame = saved["frame"]
 
-    client.request("POST", "devices", {
+    client.request("POST", "update-rf-device", {
         "id": str(device.id), "name": device.name, "model_id": device.model_id,
         "codes": json.dumps([{"name": slot["name"], "type": slot["type"], "frame": frame}])
     })
@@ -303,16 +316,18 @@ def _save_tap_switch(client, device, bridge_id, key, learning, slot):
 ################################################################################
 #
 #   @brief  Renames or deletes a freely learned remote button.
-#   @param  bridge_id            Bridge that owns the button
-#   @param  device_id            Remote control ID
-#   @param  code_id              Stable learned button ID
+#   @param  operation            Rename or delete a custom button
 #   @return Response            Update acknowledgement or error
 #
 ################################################################################
-@bridge_bp.route("/api/bridges/<int:bridge_id>/devices/<int:device_id>/codes/<code_id>",
-                 methods=["PATCH", "DELETE"])
+@bridge_bp.route(c.API_URL_RENAME_CUSTOM_CODE, methods=["POST"],
+                 defaults={"operation": "rename"})
+@bridge_bp.route(c.API_URL_DELETE_CUSTOM_CODE, methods=["POST"],
+                 defaults={"operation": "delete"})
 @minimum_role_required()
-def manage_bridge_button(bridge_id, device_id, code_id):
+def manage_bridge_button(operation):
+    bridge_id, device_id = _get_hub_identifiers(include_device=True)
+    code_id = request.form.get("code_id")
     device = db.session.get(Device, device_id)
     host = db.session.get(BridgeHost, bridge_id)
     code = db.session.get(BridgeCode, (bridge_id, device_id, code_id))
@@ -321,9 +336,8 @@ def manage_bridge_button(bridge_id, device_id, code_id):
     if host is None or code is None or model is None or model.get("buttons") is None:
         return generate_json_http_response(c.HTTP_CODE_NOT_FOUND, c.TEXT_BRIDGE_CODE_NOT_FOUND, True)
 
-    if request.method == "PATCH":
-        payload = request.get_json(silent=True)
-        name = payload.get("name") if isinstance(payload, dict) else None
+    if operation == "rename":
+        name = request.form.get("name")
         if not isinstance(name, str) or not 1 <= len(name.strip()) <= 50:
             return generate_json_http_response(c.HTTP_CODE_BAD_REQUEST, c.TEXT_BRIDGE_CODE_NAME, True)
         code.name = name.strip()
@@ -342,14 +356,14 @@ def manage_bridge_button(bridge_id, device_id, code_id):
 ################################################################################
 #
 #   @brief  Requests transmission of a saved bridge code.
-#   @param  bridge_id            Bridge that owns the code
-#   @param  code_id              Firmware code ID
 #   @return Response            Transmitting bridge or a failure message
 #
 ################################################################################
-@bridge_bp.route("/api/bridges/<int:bridge_id>/transmit/<code_id>", methods=["POST"])
+@bridge_bp.route(c.API_URL_TRANSMIT_CODE, methods=["POST"])
 @minimum_role_required()
-def transmit_bridge_code(bridge_id, code_id):
+def transmit_bridge_code():
+    bridge_id, _ = _get_hub_identifiers()
+    code_id = request.form.get("code_id")
     code = BridgeCode.query.filter_by(bridge_id=bridge_id, code_id=code_id, code_type=None).first()
     if code is None:
         return generate_json_http_response(c.HTTP_CODE_NOT_FOUND, c.TEXT_BRIDGE_CODE_NOT_FOUND, True)
@@ -364,13 +378,13 @@ def transmit_bridge_code(bridge_id, code_id):
 ################################################################################
 #
 #   @brief  Probes the configured bridge asynchronously from the catalog.
-#   @param  bridge_id            Configured bridge device ID
 #   @return Response            Current reachability
 #
 ################################################################################
-@bridge_bp.route("/api/bridges/<int:bridge_id>/status")
+@bridge_bp.route(c.API_URL_GET_HUB_STATUS, methods=["GET"])
 @minimum_role_required()
-def bridge_status(bridge_id):
+def bridge_status():
+    bridge_id, _ = _get_hub_identifiers()
     host = db.session.get(BridgeHost, bridge_id)
     online = False
 
@@ -382,3 +396,21 @@ def bridge_status(bridge_id):
             pass
         
     return generate_json_http_response(c.HTTP_CODE_OK, {"online": online}, True)
+
+
+################################################################################
+#
+#   @brief  Reads Hub and optional target IDs from query parameters or form data.
+#   @param  include_device       Whether a target device identifier is required
+#   @return tuple               Integer Hub ID and optional device ID
+#
+################################################################################
+def _get_hub_identifiers(include_device=False):
+    fields = request.args if request.method == "GET" else request.form
+    try:
+        id = int(fields.get("id"))
+        device_id = int(fields.get("device_id")) if include_device else None
+    except (TypeError, ValueError) as error:
+        raise BadRequest("Provide integer id and device_id values as required.") from error
+
+    return id, device_id

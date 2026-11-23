@@ -38,7 +38,7 @@ weather_client = WeatherServiceClient(
 #   @return                     HTML file and parameters to load
 #
 ################################################################################
-@template_bp.route("/login", methods=["GET"])
+@template_bp.route(c.API_URL_LOGIN, methods=["GET"])
 def login_get(message=""):
     #Check whether is already logged in, send user profiles
     if "account_id" in session:

@@ -25,7 +25,7 @@ automation_bp = Blueprint("automation_blueprints", __name__)
 #   @brief  Adds an automation to the database.
 #
 ################################################################################
-@automation_bp.route("/add_automation", methods=["POST"])
+@automation_bp.route(c.API_URL_ADD_AUTOMATION, methods=["POST"])
 def add_automation():
     if "account_id" not in session:
         return generate_json_http_response(c.HTTP_CODE_UNAUTHORIZED)
@@ -50,26 +50,47 @@ def add_automation():
 
     return generate_json_http_response(c.HTTP_CODE_OK, response)
 
+
 ################################################################################
 #
-#   @brief  Updates the specified automation.
+#   @brief  Updates an automation definition or only its enabled state.
+#   @return Response            Updated automations or a validation error
 #
 ################################################################################
-@automation_bp.route("/update_automation", methods=["POST"])
+@automation_bp.route(c.API_URL_UPDATE_AUTOMATION, methods=["POST"])
 def update_automation():
     if "account_id" not in session:
         return generate_json_http_response(c.HTTP_CODE_UNAUTHORIZED)
-    
-    request_data = request.json
-    if not is_valid_automation_request(request_data):
-        return generate_json_http_response(
-            c.HTTP_CODE_BAD_REQUEST,
-            "UI_TEXT_INVALID_AUTOMATION_CONFIGURATION"
-        )
-    
-    automation_dict = generate_automation_dict_from_request(request_data)
 
-    result = dm.update_automation(int(request_data.get("id")), automation_dict)
+    request_data = request.get_json(silent=True) if request.is_json else request.form.to_dict()
+    if not isinstance(request_data, dict):
+        return generate_json_http_response(
+            c.HTTP_CODE_BAD_REQUEST, "UI_TEXT_INVALID_AUTOMATION_CONFIGURATION"
+        )
+
+    try:
+        automation_id = int(request_data.get("id"))
+    except (TypeError, ValueError):
+        return generate_json_http_response(c.HTTP_CODE_BAD_REQUEST, "UI_TEXT_INVALID_AUTOMATION_ID")
+
+    if "enabled" in request_data:
+        enabled = request_data["enabled"]
+        if type(enabled) not in (bool, int, str) or enabled not in (True, False, "0", "1"):
+            return generate_json_http_response(
+                c.HTTP_CODE_BAD_REQUEST, "UI_TEXT_INVALID_AUTOMATION_CONFIGURATION"
+            )
+        request_data["enabled"] = enabled in (True, "1")
+
+    if set(request_data) == {"id", "enabled"}:
+        automation_dict = {"enabled": request_data["enabled"]}
+    else:
+        if not is_valid_automation_request(request_data):
+            return generate_json_http_response(
+                c.HTTP_CODE_BAD_REQUEST, "UI_TEXT_INVALID_AUTOMATION_CONFIGURATION"
+            )
+        automation_dict = generate_automation_dict_from_request(request_data)
+
+    result = dm.update_automation(automation_id, automation_dict)
     if not result[0]:
         return generate_json_http_response(c.HTTP_CODE_BAD_REQUEST, result[1])
     
@@ -84,7 +105,7 @@ def update_automation():
 #   @brief  Deletes the specified automation from the database.
 #
 ################################################################################
-@automation_bp.route("/delete_automation", methods=["POST"])
+@automation_bp.route(c.API_URL_DELETE_AUTOMATION, methods=["POST"])
 def delete_automation():
     if "account_id" not in session:
         return generate_json_http_response(c.HTTP_CODE_UNAUTHORIZED)
@@ -99,29 +120,10 @@ def delete_automation():
 
 ################################################################################
 #
-#   @brief  Enables or disables the specified automation.
-#
-################################################################################
-@automation_bp.route("/set_automation_enabled", methods=["POST"])
-def set_automation_enabled():
-    if "account_id" not in session:
-        return generate_json_http_response(c.HTTP_CODE_UNAUTHORIZED)
-    
-    id = int(request.form.get("id"))
-    enabled = int(request.form.get("enabled"))
-    
-    result = dm.set_automation_enabled(id, enabled)
-    if not result[0]:
-        return generate_json_http_response(c.HTTP_CODE_BAD_REQUEST, result[1])
-
-    return generate_json_http_response(c.HTTP_CODE_OK)
-
-################################################################################
-#
 #   @brief  Manually runs the specified automation through the run service.
 #
 ################################################################################
-@automation_bp.route("/run_automation", methods=["POST"])
+@automation_bp.route(c.API_URL_RUN_AUTOMATION, methods=["POST"])
 def run_automation():
     if "account_id" not in session:
         return generate_json_http_response(c.HTTP_CODE_UNAUTHORIZED)
@@ -167,7 +169,7 @@ def run_automation():
 #   @brief  Returns recent automation execution history.
 #
 ################################################################################
-@automation_bp.route("/get_automation_runs", methods=["GET"])
+@automation_bp.route(c.API_URL_GET_AUTOMATION_RUNS, methods=["GET"])
 def get_automation_runs():
     if "account_id" not in session:
         return generate_json_http_response(c.HTTP_CODE_UNAUTHORIZED)

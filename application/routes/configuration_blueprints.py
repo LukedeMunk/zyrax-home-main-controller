@@ -69,7 +69,7 @@ def update_rpi_rf_module():
 #   @brief  Updates the application configuration.
 #
 ################################################################################
-@configuration_bp.route("/update_weather_configuration", methods=["POST"])
+@configuration_bp.route(c.API_URL_UPDATE_WEATHER_CONFIGURATION, methods=["POST"])
 @minimum_role_required()
 def update_weather_configuration():
     weather_location_changed = False
@@ -104,9 +104,9 @@ def update_weather_configuration():
 #   @brief  Updates the application configuration.
 #
 ################################################################################
-@configuration_bp.route("/update_telegram_configuration", methods=["POST"])
+@configuration_bp.route(c.API_URL_UPDATE_TELEGRAM_CONFIGURATION, methods=["POST"])
 @minimum_role_required()
-def update_telegram_configuration():    
+def update_telegram_configuration():
     c.dynamic_config.telegram_service_enabled = int(request.form.get("telegram_service_enabled"))
     c.dynamic_config.telegram_bot_token = request.form.get("telegram_bot_token")
 
@@ -117,12 +117,23 @@ def update_telegram_configuration():
 
 ################################################################################
 #
+#   @brief  Updates the application configuration.
+#
+################################################################################
+@configuration_bp.route(c.API_URL_REBOOT_APPLICATION, methods=["POST"])
+@minimum_role_required()
+def reboot_application():
+    #TODO to be implemented
+    return generate_json_http_response(c.HTTP_CODE_OK)
+
+################################################################################
+#
 #   @brief  Resets the application configuration file.
 #
 ################################################################################
-@configuration_bp.route("/reset_configuration", methods=["POST"])
+@configuration_bp.route(c.API_URL_RESET_CONFIGURATION, methods=["POST"])
 @minimum_role_required()
-def reset_configuration():    
+def reset_configuration():
     c.dynamic_config.reset()
         
     @after_this_request

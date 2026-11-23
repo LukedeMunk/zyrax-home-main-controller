@@ -26,7 +26,7 @@ group_bp = Blueprint("group_blueprints", __name__)
 #   @brief  Adds a group to the database.
 #
 ################################################################################
-@group_bp.route("/add_group", methods=["POST"])
+@group_bp.route(c.API_URL_ADD_GROUP, methods=["POST"])
 @minimum_role_required()
 def add_group():
     request_data = request.json
@@ -53,7 +53,7 @@ def add_group():
 #   @brief  Updates the specified group.
 #
 ################################################################################
-@group_bp.route("/update_group", methods=["POST"])
+@group_bp.route(c.API_URL_UPDATE_GROUP, methods=["POST"])
 @minimum_role_required()
 def update_group():
     id = int(request.json.get("id"))
@@ -83,7 +83,7 @@ def update_group():
 #   @brief  Deletes the specified group from the database.
 #
 ################################################################################
-@group_bp.route("/delete_group", methods=["POST"])
+@group_bp.route(c.API_URL_DELETE_GROUP, methods=["POST"])
 @minimum_role_required()
 def delete_group():
     id = int(request.form.get("id"))

@@ -278,6 +278,7 @@ class LedstripDB(db.Model):
     connection_status = db.Column(db.Boolean, nullable=False, default=False)
     power = db.Column(db.Boolean, nullable=False, default=True)
     firmware_version = db.Column(db.String(20), nullable=False, default=c.DEFAULT_FIRMWARE_VERSION)
+    api_version = db.Column(db.String(20), nullable=False, default=c.DEFAULT_LEDSTRIP_API_VERSION)
     sd_card_inserted = db.Column(db.Boolean, nullable=False, default=False)
     number_of_leds = db.Column(db.Integer, nullable=False, default=0)
     #driver = db.Column(db.Integer, nullable=False, default=c.LEDSTRIP_MODEL_WS2801)

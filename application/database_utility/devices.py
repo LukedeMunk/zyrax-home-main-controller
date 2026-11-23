@@ -325,6 +325,7 @@ def _add_ledstrip(config_dict):
         id=config_dict["id"],
         icon_low_state=config_dict["icon_low_state"],
         hostname=config_dict["hostname"],
+        api_version=config_dict.get("api_version", c.DEFAULT_LEDSTRIP_API_VERSION),
         has_sensor=config_dict["has_sensor"],
         number_of_leds=config_dict["number_of_leds"]
     ))
@@ -377,6 +378,9 @@ def _update_ledstrip(id, config_dict):
 
     if "firmware_version" in config_dict:
         ledstrip.firmware_version = config_dict["firmware_version"]
+
+    if "api_version" in config_dict:
+        ledstrip.api_version = config_dict["api_version"]
 
     if "sd_card_inserted" in config_dict:
         ledstrip.sd_card_inserted = config_dict["sd_card_inserted"]

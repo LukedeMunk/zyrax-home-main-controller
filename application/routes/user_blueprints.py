@@ -9,7 +9,7 @@
 #           https://github.com/LukedeMunk/zyrax-home-main-controller
 #
 ################################################################################
-from flask import Blueprint, request, session                                   #Import flask blueprints and requests
+from flask import Blueprint, redirect, request, session                         #Import flask blueprints and requests
 import configuration as c                                                       #Import application configuration variables
 from logger import logi, logw, loge                                             #Import logging functions
 
@@ -17,7 +17,6 @@ import os                                                                       
 import database_utility as db_util                                              #Import utility for database functionality
 from werkzeug.utils import secure_filename
 import uuid
-from routes.template_blueprints import login_get
 from utilities.authentication import minimum_role_required
 from utilities.response import generate_json_http_response
 
@@ -336,7 +335,8 @@ def login_post():
 
 ################################################################################
 #
-#   @brief  Logs out a user.
+#   @brief  Clears the session and redirects to the login UI.
+#   @return Response           Redirect to /login
 #
 ################################################################################
 @user_bp.route(c.API_URL_LOGOUT, methods=["GET"])
@@ -346,7 +346,7 @@ def logout():
 
     session.clear()                                                             #Clear all session variables
     
-    return login_get()
+    return redirect("/login")
 
 ################################################################################
 #

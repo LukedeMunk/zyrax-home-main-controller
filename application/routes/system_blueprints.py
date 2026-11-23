@@ -13,9 +13,8 @@ import json
 
 from flask import Blueprint, request                                    #Import flask blueprints and requests
 from threading import Lock
-from time import monotonic_ns
 from uuid import NAMESPACE_URL, uuid5
-from server_manager import db, BridgeCode, DomainEvent, last_received_rf_codes
+from server_manager import db, BridgeCode, DomainEvent
 import database_utility as db_util
 from automation.domain import Event, EventType
 import configuration as c                                                       #Import application configuration variables
@@ -30,66 +29,15 @@ dm = DeviceManager()
 system_bp = Blueprint("system_blueprints", __name__)
 bridge_event_lock = Lock()
 
-################################################################################
-#
-#   @brief  Accepts a code reported by an RF receiver on the network.
-#   @return str | Response      JSON acknowledgement or validation error
-#
-################################################################################
-@system_bp.route("/rf", methods=["GET", "POST"])
-def rf():
-    if request.method == "POST":
-        return receive_bridge_event("rf")
-    
-    code = request.args.get("code", type=int)
-    if code is None or not 1 <= code <= 0xFFFFFF:
-        return generate_json_http_response(
-            c.HTTP_CODE_BAD_REQUEST, c.TEXT_DEVICE_RF_CODE_INVALID, use_http_status=True
-        )
-    receiver = request.args.get("bridge_id", request.remote_addr)
-    if not receiver or len(receiver) > 100:
-        return generate_json_http_response(
-            c.HTTP_CODE_BAD_REQUEST, c.TEXT_DEVICE_RF_RECEIVER_INVALID, use_http_status=True
-        )
-    last_received_rf_codes[monotonic_ns()] = code
-    dm.process_rf_signal(code, source_id="bridge:" + receiver)
-    return generate_json_http_response(c.HTTP_CODE_OK)
-
-
-################################################################################
-#
-#   @brief  Accepts IR callbacks and the firmware's shared event endpoint.
-#   @return Response            Bridge queue acknowledgement
-#
-################################################################################
-@system_bp.route("/ir", methods=["POST"])
-@system_bp.route("/api/v1/bridge-events", methods=["POST"])
-def bridge_event():
-    return receive_bridge_event("ir" if request.path == "/ir" else None)
-
-
-################################################################################
-#
-#   @brief  Acknowledges the firmware's startup handshake.
-#   @return str                 JSON acknowledgement
-#
-################################################################################
-@system_bp.route("/bridge_request_connection", methods=["POST"])
-def bridge_request_connection():
-    return generate_json_http_response(c.HTTP_CODE_OK)
-
 
 ################################################################################
 #
 #   @brief  Routes a firmware event to the registered device and automation bus.
-#   @param  expected_medium     Optional required signal medium
-#   @param  payload             Optional decoded event from the Hub form endpoint
+#   @param  payload             Normalized event from the Hub form endpoint
 #   @return Response            Bridge queue acknowledgement
 #
 ################################################################################
-def receive_bridge_event(expected_medium, payload=None):
-    if payload is None:
-        payload = request.get_json(silent=True)
+def receive_bridge_event(payload):
     frame = payload.get("data") if isinstance(payload, dict) else None
     if not isinstance(frame, dict):
         return generate_json_http_response(c.HTTP_CODE_BAD_REQUEST, "Invalid bridge event.", True)
@@ -99,8 +47,6 @@ def receive_bridge_event(expected_medium, payload=None):
     if request.headers.get("Idempotency-Key", event_id) != event_id:
         return generate_json_http_response(c.HTTP_CODE_BAD_REQUEST, "Invalid idempotency key.", True)
     medium = frame.get("medium")
-    if expected_medium and medium != expected_medium:
-        return generate_json_http_response(c.HTTP_CODE_BAD_REQUEST, "Invalid signal medium.", True)
 
     identifier = str(uuid5(NAMESPACE_URL, f"zyrax-bridge/{source}/{event_id}"))
     with bridge_event_lock:
@@ -182,25 +128,38 @@ def check_connection():
     
 ################################################################################
 #
-#   @brief  Requested by ESP controllers. When a controller is configured, it
-#           synchronizes the controller. Else the controller will be added to
-#           the unconfigured devices.
+#   @brief  Accepts LED and bridge startup connections or records unknown devices.
+#   @return str | Response      Connection acknowledgement or validation error
 #
 ################################################################################
 @system_bp.route(c.API_URL_DEVICE_CONNECTION_REQUEST, methods=["POST"])
 def device_request_connection():
-    parsed_params = urlparse(request.data)
-    parsed_params = parse_qs(parsed_params.path)
-    
-    hostname = parsed_params[b"hostname"][0].decode()
-    ledstrip = dm.get_ledstrip_by_hostname(hostname)#TODO create get_device_by_hostname
+    hostname = request.form.get("hostname")
+    if hostname is None:
+        fields = parse_qs(request.get_data(as_text=True))
+        hostname = fields.get("hostname", [None])[0]
+    if not isinstance(hostname, str) or not 1 <= len(hostname.strip()) <= 253:
+        return generate_json_http_response(c.HTTP_CODE_BAD_REQUEST, "Invalid hostname.", True)
 
-    if ledstrip is None:
-        dm.add_unconfigured_device_to_list(request.remote_addr, hostname)
-        logi("Ledstrip requested connection, but is not found")
+    hostname = hostname.strip()
+    ledstrip = dm.get_ledstrip_by_hostname(hostname)
+    if ledstrip is not None:
+        dm.synchronize_ledstrip(ledstrip.id)
         return generate_json_http_response(c.HTTP_CODE_OK)
-    
-    dm.synchronize_ledstrip(ledstrip.id)
+
+    for bridge in dm.get_devices_dict(type=c.DEVICE_TYPE_BRIDGE):
+        address = str(bridge.get("hostname", "")).lower()
+        if address in (hostname.lower(), hostname.lower() + ".home", request.remote_addr):
+            success, message = db_util.update_device(bridge["id"], {
+                "ip_address": request.remote_addr, "connection_status": True
+            })
+            if not success:
+                return generate_json_http_response(c.HTTP_CODE_INTERNAL_SERVER_ERROR, message, True)
+            return generate_json_http_response(c.HTTP_CODE_OK)
+
+    dm.add_unconfigured_device_to_list(request.remote_addr, hostname)
+    logi("Unconfigured device requested connection: " + hostname)
+
     return generate_json_http_response(c.HTTP_CODE_OK)
 
 ################################################################################
@@ -263,4 +222,4 @@ def hub_signal_received():
         "bridge_id": request.form.get("id"),
         "data": frame
     }
-    return receive_bridge_event(None, payload)
+    return receive_bridge_event(payload)

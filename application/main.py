@@ -110,6 +110,7 @@ if __name__ == "__main__":
     sm.check_microservices()
     sm.check_database()
     sm.register_blueprints()                                                    #Register the HTTP routes
+    
     if behind_nginx:
         sm.app.wsgi_app = ProxyFix(sm.app.wsgi_app, x_for=1, x_proto=1)
         sm.app.config["SESSION_COOKIE_SECURE"] = True

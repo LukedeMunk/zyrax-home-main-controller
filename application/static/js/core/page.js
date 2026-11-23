@@ -12,7 +12,7 @@
 /****************************************************************************/
 
 import {
-    API_URL_GET_PROFILE_PICTURE, API_URL_LOGIN, API_URL_LOGOUT, API_URL_UPDATE_ALARM
+    API_URL_GET_PROFILE_PICTURE, API_URL_LOGOUT, API_URL_UPDATE_ALARM
 } from "../domain/endpoints.js";
 import {
     BannerManager, FloatingNavigationBar, PopupManager
@@ -62,7 +62,7 @@ export function mountPage(section) {
     const banners = new BannerManager(document.querySelector('[data-ref="notifications"]')).mount();
     const http = new HttpClient({
         onUnauthorized() {
-            if (section !== "login" && section !== "setup") location.assign(API_URL_LOGIN);
+            if (section !== "login" && section !== "setup") location.assign("/login");
         }
     });
     const components = [popup, banners];
@@ -74,7 +74,7 @@ export function mountPage(section) {
     );
 
     if (section !== "login" && section !== "setup") {
-        if (!profileStorage().getItem("profileId")) location.assign(API_URL_LOGIN);
+        if (!profileStorage().getItem("profileId")) location.assign("/login");
 
         const root = document.querySelector('[data-ref="main-navigation"]');
         const items = [[

@@ -819,9 +819,10 @@ def _get_camera(id):
     return core.row_to_dictionary(camera)
 #endregion
 
+
 ################################################################################
 #
-#   @brief  Validates a registration or a catalog edit.
+#   @brief  Validates device registrations, catalog edits and LED settings.
 #   @param  payload             Submitted device fields
 #   @param  device              Existing device, or None for registration
 #   @return dict                Validated device configuration
@@ -859,6 +860,16 @@ def validate_device(payload, device):
         if device.type == c.DEVICE_TYPE_LEDSTRIP and parent_id is not None:
             raise ValueError(c.TEXT_DEVICE_LEDSTRIP_DIRECT)
         config.update(_validate_catalog_icons(payload, device.type))
+
+        hardware_settings = {"hostname", "has_sensor", "sensor_inverted"}
+        if device.type == c.DEVICE_TYPE_LEDSTRIP and hardware_settings.intersection(payload):
+            settings = get_ledstrip(device.id)
+            settings.update(payload)
+            config.update(_validate_ledstrip_registration(settings))
+            if "sensor_inverted" in payload:
+                if type(payload["sensor_inverted"]) is not bool:
+                    raise ValueError(c.TEXT_DEVICE_CONTACT_INVALID)
+                config["sensor_inverted"] = payload["sensor_inverted"]
         return config
 
     if role == "bridge":

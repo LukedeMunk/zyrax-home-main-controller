@@ -12,6 +12,10 @@
 /****************************************************************************/
 
 import {
+    API_URL_RESET_CONFIGURATION, API_URL_UPDATE_TELEGRAM_CONFIGURATION,
+    API_URL_UPDATE_WEATHER_CONFIGURATION
+} from "../domain/endpoints.js";
+import {
     TEXT_API_KEYS, TEXT_APPLICATION_CONFIGURATION_RESETTED_SUCCESSFULLY, TEXT_CANCEL,
     TEXT_CHANGES_SAVED_SUCCESSFULLY, TEXT_DELETE, TEXT_ERROR, TEXT_KEY_NOT_VALID,
     TEXT_Q_ARE_YOU_SURE, TEXT_Q_DELETE_APPLICATION_CONFIGURATION, TEXT_SUCCESS
@@ -94,7 +98,12 @@ async function submitConfiguration() {
     let data = { weather_api_key: weatherApiKey, telegram_bot_token: telegramBotToken };
 
     try {
-        await submitForm(http, "/update_application_configuration", data, signal);
+        await submitForm(http, API_URL_UPDATE_WEATHER_CONFIGURATION, {
+            weather_api_key: data.weather_api_key
+        }, signal);
+        await submitForm(http, API_URL_UPDATE_TELEGRAM_CONFIGURATION, {
+            telegram_bot_token: data.telegram_bot_token
+        }, signal);
     } catch (error) {
         errorMessageConfigurationFieldElem.style.display = "inline-block";
         errorMessageConfigurationFieldElem.textContent = error.message;
@@ -134,7 +143,7 @@ async function resetConfiguration() {
     if (!choice) return;
 
     try {
-        await submitForm(http, "/reset_configuration", {}, signal);
+        await submitForm(http, API_URL_RESET_CONFIGURATION, {}, signal);
     } catch (error) {
         banners.show({ title: TEXT_ERROR, message: error.message, type: "error" });
 

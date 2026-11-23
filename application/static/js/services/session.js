@@ -11,6 +11,9 @@
  */
 /****************************************************************************/
 
+import {
+    API_URL_LOGIN, API_URL_PICK_PROFILE
+} from "../domain/endpoints.js";
 import { submitForm } from "./forms.js";
 
 /****************************************************************************/
@@ -24,7 +27,7 @@ import { submitForm } from "./forms.js";
  */
 /****************************************************************************/
 export function signIn(http, email, password, signal) {
-    return submitForm(http, "/login", { email, password }, signal);
+    return submitForm(http, API_URL_LOGIN, { email, password }, signal);
 }
 
 /****************************************************************************/
@@ -37,5 +40,5 @@ export function signIn(http, email, password, signal) {
  */
 /****************************************************************************/
 export function pickProfile(http, id, signal) {
-    return submitForm(http, "/pick_profile", { id }, signal);
+    return submitForm(http, API_URL_PICK_PROFILE, { id }, signal);
 }

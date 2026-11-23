@@ -270,7 +270,6 @@ def control_rf_devices_page():
 def control_leds_page():
     id = int(request.args.get("id"))
     ledstrip = dm.get_device_dict(id=id, update_states=True)
-    ledstrip["color"] = dm.get_ledstrip_color(id)
     title = "Control " + ledstrip["name"]
 
     print(ledstrip)

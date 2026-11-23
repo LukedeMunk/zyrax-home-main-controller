@@ -11,6 +11,15 @@
  */
 /****************************************************************************/
 
+import {
+    API_URL_ADD_DASHBOARD_CONFIGURATION, API_URL_ADD_DASHBOARD_TILE,
+    API_URL_DELETE_DASHBOARD_CONFIGURATION, API_URL_DELETE_DASHBOARD_TILE,
+    API_URL_GET_WEATHER_FORECAST, API_URL_LEDSTRIP_SET_BRIGHTNESS,
+    API_URL_RESET_DASHBOARD_TILE_ORDER, API_URL_RUN_AUTOMATION, API_URL_SET_DEVICE_POWER,
+    API_URL_SET_GROUP_POWER, API_URL_UPDATE_ALARM, API_URL_UPDATE_DASHBOARD_CONFIGURATION,
+    API_URL_UPDATE_DASHBOARD_TILE, API_URL_UPDATE_WEATHER_CONFIGURATION
+} from "../domain/endpoints.js";
+import { readDevices } from "./devices.js";
 import { submitForm } from "./forms.js";
 
 /****************************************************************************/
@@ -44,21 +53,8 @@ export function dashboardService(http, signal) {
     });
 
     return {
-        /****************************************************************************/
-        /*!
-         * @brief   Loads current device states for the dashboard.
-         * @returns Controller response or completion result.
-         */
-        /****************************************************************************/
-        devices: () => get("/get_devices"),
-
-        /****************************************************************************/
-        /*!
-         * @brief   Loads the current weather report.
-         * @returns Controller response or completion result.
-         */
-        /****************************************************************************/
-        weather: () => get("/get_weather"),
+        devices: () => readDevices(http, undefined, signal),
+        weather: () => get(API_URL_GET_WEATHER_FORECAST),
 
         /****************************************************************************/
         /*!
@@ -67,7 +63,7 @@ export function dashboardService(http, signal) {
          * @returns Controller response or completion result.
          */
         /****************************************************************************/
-        setLocation: weather_location => post("/update_weather_configuration", {
+        setLocation: weather_location => post(API_URL_UPDATE_WEATHER_CONFIGURATION, {
             weather_location
         }),
 
@@ -81,8 +77,8 @@ export function dashboardService(http, signal) {
          */
         /****************************************************************************/
         save: (id, name, icon) => post(id === -1
-            ? "/add_dashboard_configuration"
-            : "/update_dashboard_configuration", { id, name, icon }),
+            ? API_URL_ADD_DASHBOARD_CONFIGURATION
+            : API_URL_UPDATE_DASHBOARD_CONFIGURATION, { id, name, icon }),
 
         /****************************************************************************/
         /*!
@@ -91,7 +87,7 @@ export function dashboardService(http, signal) {
          * @returns Controller response or completion result.
          */
         /****************************************************************************/
-        remove: id => post("/delete_dashboard_configuration", { id }),
+        remove: id => post(API_URL_DELETE_DASHBOARD_CONFIGURATION, { id }),
 
         /****************************************************************************/
         /*!
@@ -100,7 +96,7 @@ export function dashboardService(http, signal) {
          * @returns Controller response or completion result.
          */
         /****************************************************************************/
-        reset: id => post("/reset_dashboard_tile_order", { id }),
+        reset: id => post(API_URL_RESET_DASHBOARD_TILE_ORDER, { id }),
 
         /****************************************************************************/
         /*!
@@ -109,7 +105,7 @@ export function dashboardService(http, signal) {
          * @returns Controller response or completion result.
          */
         /****************************************************************************/
-        addTile: fields => post("/add_dashboard_tile", fields),
+        addTile: fields => post(API_URL_ADD_DASHBOARD_TILE, fields),
 
         /****************************************************************************/
         /*!
@@ -118,7 +114,7 @@ export function dashboardService(http, signal) {
          * @returns Controller response or completion result.
          */
         /****************************************************************************/
-        moveTile: fields => post("/update_dashboard_tile", fields),
+        moveTile: fields => post(API_URL_UPDATE_DASHBOARD_TILE, fields),
 
         /****************************************************************************/
         /*!
@@ -127,7 +123,7 @@ export function dashboardService(http, signal) {
          * @returns Controller response or completion result.
          */
         /****************************************************************************/
-        removeTile: id => post("/delete_dashboard_tile", { id }),
+        removeTile: id => post(API_URL_DELETE_DASHBOARD_TILE, { id }),
 
         /****************************************************************************/
         /*!
@@ -138,7 +134,7 @@ export function dashboardService(http, signal) {
          * @returns Controller response or completion result.
          */
         /****************************************************************************/
-        setPower: (id, power, group) => post(group ? "/set_group_power" : "/set_device_power", {
+        setPower: (id, power, group) => post(group ? API_URL_SET_GROUP_POWER : API_URL_SET_DEVICE_POWER, {
             id,
             power: Number(power)
         }),
@@ -152,9 +148,9 @@ export function dashboardService(http, signal) {
          * @returns Controller response or completion result.
          */
         /****************************************************************************/
-        setBrightness: (id, brightness, group) => post(group
-            ? "/set_ledstrip_group_brightness"
-            : "/set_ledstrip_brightness", { id, brightness }),
+        setBrightness: (id, brightness, group) => post(API_URL_LEDSTRIP_SET_BRIGHTNESS, {
+            id, brightness, target_type: group ? "group" : "device"
+        }),
 
         /****************************************************************************/
         /*!
@@ -163,7 +159,7 @@ export function dashboardService(http, signal) {
          * @returns Controller response or completion result.
          */
         /****************************************************************************/
-        arm: armed => post("/update_alarm", { armed: Number(armed) }),
+        arm: armed => post(API_URL_UPDATE_ALARM, { armed: Number(armed) }),
 
         /****************************************************************************/
         /*!
@@ -173,7 +169,7 @@ export function dashboardService(http, signal) {
          */
         /****************************************************************************/
         async run(id) {
-            const result = await http.post("/run_automation", { id, source: "dashboard" }, {
+            const result = await http.post(API_URL_RUN_AUTOMATION, { id, source: "dashboard" }, {
                 signal
             });
             if (result.status_code !== 200 || result.message?.status === "failed") {

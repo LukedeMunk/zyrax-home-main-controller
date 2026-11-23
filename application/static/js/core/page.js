@@ -12,6 +12,9 @@
 /****************************************************************************/
 
 import {
+    API_URL_GET_PROFILE_PICTURE, API_URL_LOGIN, API_URL_LOGOUT, API_URL_UPDATE_ALARM
+} from "../domain/endpoints.js";
+import {
     BannerManager, FloatingNavigationBar, PopupManager
 } from "../../vendor/templates/js/ui_components/index.js";
 import { HttpClient } from "../../vendor/templates/js/core/http-client.js";
@@ -27,8 +30,7 @@ const themes = ["dark", "light", "dark-green", "light-green"];
  */
 /****************************************************************************/
 export function applyTheme(value) {
-    const theme =
-        themes[value] ?? themes[matchMedia("(prefers-color-scheme: dark)").matches ? 0 : 1];
+    const theme = themes[value] ?? themes[matchMedia("(prefers-color-scheme: dark)").matches ? 0 : 1];
     document.documentElement.classList.remove(...themes);
     document.documentElement.classList.add(theme);
     sessionStorage.setItem("theme", String(themes.indexOf(theme)));
@@ -60,16 +62,19 @@ export function mountPage(section) {
     const banners = new BannerManager(document.querySelector('[data-ref="notifications"]')).mount();
     const http = new HttpClient({
         onUnauthorized() {
-            if (section !== "login" && section !== "setup") location.assign("./login");
+            if (section !== "login" && section !== "setup") location.assign(API_URL_LOGIN);
         }
     });
     const components = [popup, banners];
 
     applyTheme(sessionStorage.getItem("theme") ?? undefined);
     document.body.classList.add("loaded");
+    document.documentElement.style.setProperty(
+        "--profile-picture-url", `url("${API_URL_GET_PROFILE_PICTURE}")`
+    );
 
     if (section !== "login" && section !== "setup") {
-        if (!profileStorage().getItem("profileId")) location.assign("./login");
+        if (!profileStorage().getItem("profileId")) location.assign(API_URL_LOGIN);
 
         const root = document.querySelector('[data-ref="main-navigation"]');
         const items = [[
@@ -114,7 +119,7 @@ export function mountPage(section) {
                 localStorage.removeItem("profileId");
                 sessionStorage.removeItem("profileId");
                 sessionStorage.removeItem("loggedIn");
-                location.assign("./logout");
+                location.assign(API_URL_LOGOUT);
             }
         }, { signal });
     }
@@ -135,7 +140,7 @@ export function mountPage(section) {
                 /****************************************************************************/
                 async onAction() {
                     try {
-                        await submitForm(http, "/update_alarm", { activated: 0 }, signal);
+                        await submitForm(http, API_URL_UPDATE_ALARM, { activated: 0 }, signal);
                         banners.show({
                             title: labels.TEXT_SUCCESS,
                             message: labels.TEXT_ALARM_DEACTIVATED_SUCCESSFULLY,

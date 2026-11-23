@@ -12,6 +12,10 @@
 /****************************************************************************/
 
 import {
+    API_URL_ADD_PROFILE, API_URL_DELETE_PROFILE, API_URL_GET_PROFILE_PICTURE, API_URL_LOGOUT,
+    API_URL_UPDATE_PASSWORD, API_URL_UPDATE_PROFILE
+} from "../domain/endpoints.js";
+import {
     TEXT_CANCEL, TEXT_CHANGES_SAVED_SUCCESSFULLY, TEXT_DELETE, TEXT_ERROR, TEXT_FIELD_NO_SYMBOLS,
     TEXT_FIELD_REQUIRED, TEXT_FIELD_UNIQUE, TEXT_FILE_NOT_SUPPORTED, TEXT_LOGOUT,
     TEXT_MANAGE_ACCOUNT, TEXT_MANAGE_PROFILE, TEXT_MANAGE_PROFILES, TEXT_NO_FILE_SELECTED,
@@ -93,7 +97,7 @@ sections.addEventListener("ui:action", ({ detail }) => {
         localStorage.removeItem("profileId");
         sessionStorage.removeItem("profileId");
         sessionStorage.removeItem("loggedIn");
-        location.assign("./logout");
+        location.assign(API_URL_LOGOUT);
     } else scrollToSection(detail.action + "Container", signal);
 }, { signal });
 
@@ -150,7 +154,7 @@ id("changePasswordBtn").addEventListener("click", () => {
 passwordRoot.addEventListener("ui:submit", async ({ detail }) => {
     try {
         const { currentPassword, newPassword } = detail.values;
-        const warning = await submitForm(http, "/update_password", {
+        const warning = await submitForm(http, API_URL_UPDATE_PASSWORD, {
             current_password: currentPassword,
             password: newPassword
         }, signal);
@@ -185,7 +189,7 @@ id("deleteProfileBtn").addEventListener("click", async () => {
     }))) return;
 
     try {
-        await submitForm(http, "/delete_profile", { id: selectedId }, signal);
+        await submitForm(http, API_URL_DELETE_PROFILE, { id: selectedId }, signal);
         profiles.splice(profiles.indexOf(profile), 1);
         if (selectedId === profileId) {
             await pickProfile(http, profiles[0].id, signal);
@@ -260,10 +264,10 @@ function loadProfile(key, scroll = true) {
     newPicture = null;
     id("profilePictureUpload").value = "";
     id("profilePicturePreview").src = profile
-        ? "/get_profile_picture?id=" + profile.id
+        ? API_URL_GET_PROFILE_PICTURE + "?id=" + profile.id
         + "&t="
         + Date.now()
-        : "/get_default_profile_picture";
+        : API_URL_GET_PROFILE_PICTURE + "?default=1";
     id("profileNameTxt").value = profile?.name ?? "";
     id("profileLanguageSelect").value = profile?.language ?? 0;
     id("profileUiThemeSelect").value = profile?.ui_theme ?? themes[0]?.id;
@@ -302,7 +306,7 @@ async function saveProfile() {
 
     try {
         const saved =
-            await submitForm(http, adding ? "/add_profile" : "/update_profile", data, signal);
+            await submitForm(http, adding ? API_URL_ADD_PROFILE : API_URL_UPDATE_PROFILE, data, signal);
         if (adding) {
             data.id = saved.id;
             profiles.push(data);

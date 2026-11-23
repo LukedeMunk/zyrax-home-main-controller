@@ -11,6 +11,11 @@
  */
 /****************************************************************************/
 
+import {
+    API_URL_GET_NETWORK_DEVICES
+} from "../domain/endpoints.js";
+import { readDevices } from "./devices.js";
+
 /****************************************************************************/
 /*!
  * @brief   Loads registered sensor devices for the alarm page.
@@ -20,9 +25,7 @@
  */
 /****************************************************************************/
 export function listSensors(http, signal) {
-    return http.get("/get_sensors", undefined, {
-        signal: AbortSignal.any([signal, AbortSignal.timeout(4000)])
-    });
+    return readDevices(http, { type: "sensor" }, signal);
 }
 
 /****************************************************************************/
@@ -34,5 +37,5 @@ export function listSensors(http, signal) {
  */
 /****************************************************************************/
 export function listNetworkDevices(http, signal) {
-    return http.get("/get_network_devices", undefined, { signal });
+    return http.get(API_URL_GET_NETWORK_DEVICES, undefined, { signal });
 }

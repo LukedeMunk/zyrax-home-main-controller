@@ -11,6 +11,9 @@
  */
 /****************************************************************************/
 
+import {
+    API_URL_GET_PROFILE_PICTURE
+} from "../domain/endpoints.js";
 import { Component } from "../../vendor/templates/js/core/component.js";
 import { TEXT_ADD_PROFILE } from "../domain/language_pack_english.js";
 
@@ -45,8 +48,8 @@ export class ProfilePicker extends Component {
             const image = document.createElement("img");
             image.alt = profile.name;
             image.src = profile.id === -1
-                ? "/get_default_profile_picture"
-                : "/get_profile_picture?" + new URLSearchParams({ id: profile.id, t: Date.now() });
+                ? API_URL_GET_PROFILE_PICTURE + "?default=1"
+                : API_URL_GET_PROFILE_PICTURE + "?" + new URLSearchParams({ id: profile.id, t: Date.now() });
             choice.append(image);
 
             this.listen(choice, "click", () => this.emit("select", { id: profile.id }));

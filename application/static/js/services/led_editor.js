@@ -4,7 +4,7 @@
  * Author:  Luke de Munk
  * Version: 0.10.0
  *
- * Brief:   Sends LED drawing and addressing commands as JSON.
+ * Brief:   Sends LED drawing and addressing arrays in form-encoded commands.
  *
  *          More information:
  *          https://github.com/LukedeMunk/zyrax-home-main-controller
@@ -21,6 +21,9 @@
  */
 /****************************************************************************/
 export async function saveDrawing(http, path, data, signal) {
-    const result = await http.post(path, data, { signal });
+    const fields = { ...data, leds: JSON.stringify(data.leds) };
+    if (data.segments !== undefined) fields.segments = JSON.stringify(data.segments);
+
+    const result = await http.post(path, fields, { formEncoded: true, signal });
     if (result?.status_code !== 200) throw new Error(result?.message ?? "Invalid response");
 }

@@ -39,47 +39,6 @@ def handle_ledstrip_routing_error(error):
 #region Administrative ledstrip functionality
 ################################################################################
 #
-#   @brief  Updates the specified ledstrip.
-#
-################################################################################
-@ledstrip_bp.route("/update_ledstrip", methods=["POST"])
-@minimum_role_required()
-def update_ledstrip():
-    id = int(request.form.get("id"))
-    
-    config = {}
-    
-    if request.form.get("name") is not None:
-        config["name"] = request.form.get("name")
-    if request.form.get("hostname") is not None:
-        config["hostname"] = request.form.get("hostname")
-    if request.form.get("icon") is not None:
-        config["icon"] = request.form.get("icon")
-    if request.form.get("icon_low_state") is not None:
-        config["icon_low_state"] = request.form.get("icon_low_state")
-    if request.form.get("ip_address") is not None:
-        config["ip_address"] = request.form.get("ip_address")
-    if request.form.get("model_id") is not None:
-        config["model_id"] = int(request.form.get("model_id"))
-
-    if request.form.get("has_sensor") is not None:
-        config["has_sensor"] = int(request.form.get("has_sensor"))
-    if request.form.get("sensor_inverted") is not None:
-        config["sensor_inverted"] = int(request.form.get("sensor_inverted"))
-    if request.form.get("sensor_model") is not None:
-        config["sensor_model"] = int(request.form.get("sensor_model"))
-
-    result = dm.update_ledstrip(id, config)
-    if not result[0]:
-        return generate_json_http_response(c.HTTP_CODE_BAD_REQUEST, result[1])
-
-    response = {
-        "devices": dm.get_devices_dict()
-    }
-    return generate_json_http_response(c.HTTP_CODE_OK, response)
-
-################################################################################
-#
 #   @brief  Updates the LED addressing of the specified ledstrip.
 #
 ################################################################################
@@ -118,20 +77,6 @@ def draw_realtime_leds():
     id, _ = _get_ledstrip_target(allow_group=False)
     leds = _read_ledstrip_array("leds")
     dm.realtime_ledstrip_coloring(id, leds)
-
-    return generate_json_http_response(c.HTTP_CODE_OK)
-
-################################################################################
-#
-#   @brief  Updates the color of a strip or group selected by target_type.
-#
-################################################################################
-@ledstrip_bp.route(c.API_URL_COLOR_LEDSTRIP, methods=["POST"])
-@minimum_role_required()
-def set_ledstrip_color():
-    id, is_group = _get_ledstrip_target()
-    action = dm.set_ledstrip_group_color if is_group else dm.set_ledstrip_color
-    action(id, request.form.get("color"))
 
     return generate_json_http_response(c.HTTP_CODE_OK)
 

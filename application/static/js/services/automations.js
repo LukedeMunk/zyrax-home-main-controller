@@ -11,6 +11,9 @@
  */
 /****************************************************************************/
 
+import {
+    API_URL_ADD_AUTOMATION, API_URL_DELETE_AUTOMATION, API_URL_UPDATE_AUTOMATION
+} from "../domain/endpoints.js";
 import { submitForm } from "./forms.js";
 
 /****************************************************************************/
@@ -24,7 +27,7 @@ import { submitForm } from "./forms.js";
  */
 /****************************************************************************/
 export async function saveAutomation(http, id, data, signal) {
-    const result = await http.post(id === -1 ? "/add_automation" : "/update_automation", data, {
+    const result = await http.post(id === -1 ? API_URL_ADD_AUTOMATION : API_URL_UPDATE_AUTOMATION, data, {
         signal
     });
     if (result.status_code !== 200) throw new Error(result.message);
@@ -42,7 +45,7 @@ export async function saveAutomation(http, id, data, signal) {
  */
 /****************************************************************************/
 export function removeAutomation(http, id, signal) {
-    return submitForm(http, "/delete_automation", { id }, signal);
+    return submitForm(http, API_URL_DELETE_AUTOMATION, { id }, signal);
 }
 
 /****************************************************************************/
@@ -56,5 +59,5 @@ export function removeAutomation(http, id, signal) {
  */
 /****************************************************************************/
 export function setEnabled(http, id, enabled, signal) {
-    return submitForm(http, "/set_automation_enabled", { id, enabled: Number(enabled) }, signal);
+    return submitForm(http, API_URL_UPDATE_AUTOMATION, { id, enabled: Number(enabled) }, signal);
 }

@@ -40,13 +40,17 @@ weather_client = WeatherServiceClient(
 def get_profiles():
     return generate_json_http_response(c.HTTP_CODE_OK, {"profiles": db_util.get_profiles(session["account_id"])})
 
+
 ################################################################################
 #
-#   @brief  Endpoint to get the weather information.
+#   @brief  Returns a profile picture or the explicitly requested default image.
 #
 ################################################################################
 @data_bp.route(c.API_URL_GET_PROFILE_PICTURE, methods=["GET"])
 def get_profile_picture():
+    if request.args.get("default") == "1":
+        return send_file(c.DEFAULT_PROFILE_PICTURE_PATH)
+
     profile_id = None
     
     if "id" in request.args:
@@ -70,14 +74,16 @@ def get_profile_picture():
 
     return _send_uncached_file(path)
 
+
 ################################################################################
 #
-#   @brief  Endpoint to get the weather information.
+#   @brief  Returns the default profile image for legacy image requests.
 #
 ################################################################################
-@data_bp.route(c.API_URL_GET_PROFILE_PICTURE, methods=["GET"])
+@data_bp.route("/get_default_profile_picture", methods=["GET"])
 def get_default_profile_picture():
     return send_file(c.DEFAULT_PROFILE_PICTURE_PATH)
+
 
 ################################################################################
 #
@@ -102,56 +108,6 @@ def get_last_received_rf_codes():
         code_list.append(code)
 
     return generate_json_http_response(c.HTTP_CODE_OK, {"rf_codes" : [code_list]})
-
-################################################################################
-#
-#   @brief  Endpoint to get the devices within the system.
-#
-################################################################################
-@data_bp.route("/get_devices", methods=["GET"])
-@minimum_role_required()
-def get_devices():
-    if request.args.get("id") is not None:
-        id = int(request.args.get("id"))
-        device = dm.get_device_dict(id=id)
-        return device
-
-    devices = dm.get_devices_dict()
-    return devices
-
-################################################################################
-#
-#   @brief  Endpoint to get the ledstrips within the system.
-#
-################################################################################
-@data_bp.route("/get_ledstrips", methods=["GET"])
-@minimum_role_required()
-def get_ledstrips():
-    if request.args.get("id") != None:
-        id = int(request.args.get("id"))
-        ledstrip = dm.get_ledstrip_dict(id=id)
-        ledstrip["color"] = dm.get_ledstrip_color(id)
-        return ledstrip
-    
-    ledstrips = dm.get_devices_dict(type=c.DEVICE_TYPE_LEDSTRIP)
-    for ledstrip in ledstrips:
-        ledstrip["color"] = dm.get_ledstrip_color(ledstrip["id"])
-
-    return ledstrips
-
-################################################################################
-#
-#   @brief  Endpoint to get the sensors within the system.
-#
-################################################################################
-@data_bp.route("/get_sensors", methods=["GET"])
-@minimum_role_required()
-def get_sensors():
-    if request.args.get("id") != None:
-        id = int(request.args.get("id"))
-        return dm.get_device_dict(id=id)
-
-    return dm.get_devices_dict(type=c.DEVICE_TYPE_RF_DEVICE)
 
 ################################################################################
 #

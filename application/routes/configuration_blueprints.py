@@ -99,21 +99,26 @@ def update_weather_configuration():
 
     return generate_json_http_response(c.HTTP_CODE_OK, {"weather_location" : c.dynamic_config.weather_location})
 
+
 ################################################################################
 #
-#   @brief  Updates the application configuration.
+#   @brief  Updates provided Telegram settings while preserving omitted values.
+#   @return Response           Current Telegram service state
 #
 ################################################################################
 @configuration_bp.route(c.API_URL_UPDATE_TELEGRAM_CONFIGURATION, methods=["POST"])
 @minimum_role_required()
 def update_telegram_configuration():
-    c.dynamic_config.telegram_service_enabled = int(request.form.get("telegram_service_enabled"))
-    c.dynamic_config.telegram_bot_token = request.form.get("telegram_bot_token")
+    if "telegram_service_enabled" in request.form:
+        c.dynamic_config.telegram_service_enabled = int(request.form.get("telegram_service_enabled"))
+    if "telegram_bot_token" in request.form:
+        c.dynamic_config.telegram_bot_token = request.form.get("telegram_bot_token")
 
     if not telegram_client.reload_configuration()[0]:
         loge("Bot token updated, but Telegram service unavailable")
     
     return generate_json_http_response(c.HTTP_CODE_OK, {"telegram_state" : telegram_client.get_service_state()})
+
 
 ################################################################################
 #

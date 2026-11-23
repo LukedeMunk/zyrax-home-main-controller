@@ -11,6 +11,9 @@
  */
 /****************************************************************************/
 
+import {
+    API_URL_ADD_DEVICE, API_URL_PREFIX, API_URL_UPDATE_DEVICE
+} from "../domain/endpoints.js";
 import { TEXT_CATALOG_INVALID_CONTROLLER_RESPONSE } from "../domain/language_pack_english.js";
 
 /****************************************************************************/
@@ -32,13 +35,21 @@ export function catalogService(http, signal) {
      */
     /****************************************************************************/
     return async function request(path, method = "GET", payload) {
-        const result = await http.request(path, { method, body: payload, signal });
+        const isGet = method === "GET";
+        const formEncoded = !isGet && path !== API_URL_ADD_DEVICE && path !== API_URL_UPDATE_DEVICE;
+        const result = await http.request(path, {
+            method, signal, formEncoded,
+            query: isGet ? payload : undefined,
+            body: isGet ? undefined : payload
+        });
         if (result == null) return;
         if (typeof result !== "object") throw new Error(TEXT_CATALOG_INVALID_CONTROLLER_RESPONSE);
 
-        return path.startsWith("/api/devices")
-            || path.startsWith("/api/bridges/")
-            ? result.message
-            : result;
+        if (result.status_code !== undefined && ![200, 201].includes(result.status_code)) {
+            throw new Error(result.message);
+        }
+
+        return path.startsWith(API_URL_PREFIX) && result.status_code !== undefined
+            ? result.message : result;
     };
 }

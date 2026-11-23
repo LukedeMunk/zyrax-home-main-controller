@@ -417,17 +417,6 @@ class DeviceManager:
 
     ################################################################################
     #
-    #   @brief  Returns the color of the specified ledstrip.
-    #   @param  id                  Device ID
-    #   @return string              Color in HEX format
-    #
-    ################################################################################
-    def get_ledstrip_color(self, id):
-        parameter = db_util.get_ledstrip_mode_configuration(c.LEDSTRIP_MODE_ID_COLOR, id)["parameters"][0]
-        return parameter["value1"]
-
-    ################################################################################
-    #
     #   @brief  Sends the drawn LEDs in the UI to the specified ledstrip.
     #   @param  id                  Device ID
     #   @param  leds                List of colors for the ledstrip

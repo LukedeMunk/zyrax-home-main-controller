@@ -283,7 +283,7 @@ async function changeProfile(id, scrollDown = false) {
         profileStorage().setItem("profileId", id);
         applyTheme(userProfiles.find(profile => String(profile.id) === String(id)).ui_theme);
         if (scrollDown) scrollToSection("emptyContainer", signal);
-        delay(() => location.assign("./"), 700);
+        delay(() => location.assign("/"), 700);
     } catch (error) {
         if (!signal.aborted) banners.show({
             title: TEXT_SERVER_ERROR,

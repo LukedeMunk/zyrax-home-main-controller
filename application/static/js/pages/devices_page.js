@@ -11,6 +11,13 @@
  */
 /****************************************************************************/
 
+import {
+    API_URL_ADD_DEVICE, API_URL_CANCEL_HUB_LEARNING_SESSION, API_URL_DELETE_CUSTOM_CODE,
+    API_URL_DELETE_DEVICE, API_URL_GET_DEVICES, API_URL_GET_HUB_LEARNING_STATUS,
+    API_URL_GET_HUB_STATUS, API_URL_GET_UNCONFIGURED_DEVICES, API_URL_RENAME_CUSTOM_CODE,
+    API_URL_SAVE_HUB_LEARNING_RESULT, API_URL_START_HUB_LEARNING_SESSION, API_URL_TRANSMIT_CODE,
+    API_URL_UPDATE_DEVICE
+} from "../domain/endpoints.js";
 import { button } from "../../vendor/templates/js/core/dom.js";
 import {
     TEXT_BRIDGE_CAPTURED, TEXT_BRIDGE_CODE_NAME, TEXT_BRIDGE_LEARN, TEXT_BRIDGE_MISSING,
@@ -190,7 +197,7 @@ function initializeCatalog() {
 /****************************************************************************/
 async function refreshCatalog() {
     try {
-        catalogDevices = await catalogRequest("/api/devices");
+        catalogDevices = await catalogRequest(API_URL_GET_DEVICES);
         isCatalogOnline = true;
 
         for (const bridge of catalogDevices.filter(item => item.role === "bridge")) {
@@ -959,11 +966,8 @@ function configureCatalogDevice(draft, back) {
         let saved;
 
         try {
-            saved = await catalogRequest("/api/devices" + (device
-                ? "/" + device.id
-                : ""), device
-                ? "PATCH"
-                : "POST", payload);
+            saved = await catalogRequest(device ? API_URL_UPDATE_DEVICE : API_URL_ADD_DEVICE,
+                "POST", device ? { ...payload, id: device.id } : payload);
         } catch (error) {
             errorElem.textContent = error.message;
             saveBtnElem.disabled = false;
@@ -1052,7 +1056,7 @@ function addCatalogLanFields(formElem, draft) {
         resultsElem.replaceChildren();
 
         try {
-            const devices = await catalogRequest("/get_unconfigured_devices");
+            const devices = await catalogRequest(API_URL_GET_UNCONFIGURED_DEVICES);
 
             /****************************************************************************/
             /*!
@@ -1119,7 +1123,7 @@ async function deleteCatalogDevice(device, errorElem) {
     if (!window.confirm(TEXT_CATALOG_CONFIRM_DELETE.replace("{name}", () => device.name))) return;
 
     try {
-        await catalogRequest("/api/devices/" + device.id, "DELETE");
+        await catalogRequest(API_URL_DELETE_DEVICE, "POST", { id: device.id });
         catalogWizard.close();
         await refreshCatalog();
     } catch (error) {
@@ -1139,9 +1143,7 @@ async function deleteCatalogDevice(device, errorElem) {
 /****************************************************************************/
 function catalogBridgeCodeRow(device, code, isFreeButton, statusElem) {
     const bridge = catalogDevices.find(item => item.id === code.bridge_id);
-    const base = "/api/bridges/" + code.bridge_id;
-    const codeId = encodeURIComponent(code.id);
-    const endpoint = base + "/devices/" + device.id + "/codes/" + codeId;
+    const fields = { id: code.bridge_id, device_id: device.id, code_id: code.id };
     const rowElem = catalogElement("div", "catalog-code-row");
     const titleElem = catalogElement(
         "small", "", [code.name, bridge?.name].filter(Boolean).join(TEXT_CATALOG_SEPARATOR)
@@ -1177,7 +1179,7 @@ function catalogBridgeCodeRow(device, code, isFreeButton, statusElem) {
          */
         /****************************************************************************/
         actionsElem.append(catalogButton(TEXT_BRIDGE_TRANSMIT, () => runAction(async () => {
-            await catalogRequest(base + "/transmit/" + codeId, "POST");
+            await catalogRequest(API_URL_TRANSMIT_CODE, "POST", fields);
             statusElem.textContent = [TEXT_BRIDGE_SENT, bridge?.name].filter(Boolean).join(" ");
         })));
     }
@@ -1192,7 +1194,7 @@ function catalogBridgeCodeRow(device, code, isFreeButton, statusElem) {
             const name = window.prompt(TEXT_BRIDGE_CODE_NAME, code.name)?.trim();
             if (!name || name === code.name) return;
 
-            await catalogRequest(endpoint, "PATCH", { name });
+            await catalogRequest(API_URL_RENAME_CUSTOM_CODE, "POST", { ...fields, name });
             code.name = name;
             titleElem.textContent =
                 [name, bridge?.name].filter(Boolean)
@@ -1208,7 +1210,7 @@ function catalogBridgeCodeRow(device, code, isFreeButton, statusElem) {
             if (!window.confirm(TEXT_CATALOG_CONFIRM_DELETE.replace("{name}", () =>
                 code.name))) return;
 
-            await catalogRequest(endpoint, "DELETE");
+            await catalogRequest(API_URL_DELETE_CUSTOM_CODE, "POST", fields);
             device.bridge_codes = device.bridge_codes.filter(item => item !== code);
             rowElem.remove();
         }), "catalog-code-delete");
@@ -1272,7 +1274,7 @@ function learnOnCatalogBridge(device) {
 
     progressElem.hidden = true;
 
-    let url;
+    let learningTarget;
     let timer;
     let capture = 0;
     let isClosed = false;
@@ -1290,8 +1292,8 @@ function learnOnCatalogBridge(device) {
         cancelBtnElem.disabled = true;
 
         try {
-            await catalogRequest(url, "PUT");
-            url = undefined;
+            await catalogRequest(API_URL_SAVE_HUB_LEARNING_RESULT, "POST", learningTarget);
+            learningTarget = undefined;
             catalogWizardDialogElem.removeEventListener("close", onClose);
             catalogWizardDialogElem.removeEventListener("cancel", onCancel);
             if (isClosed) return;
@@ -1330,21 +1332,22 @@ function learnOnCatalogBridge(device) {
         cancelBtnElem.disabled = true;
 
         const selected = bridgeElem.lastElementChild.value;
-        const endpoint = "/api/bridges/" + selected + "/learn/" + device.id;
+        const target = { id: selected, device_id: device.id };
 
         try {
-            await catalogRequest(endpoint, "POST", {
+            await catalogRequest(API_URL_START_HUB_LEARNING_SESSION, "POST", {
+                ...target,
                 name: nameElem.lastElementChild.value,
-                receive: canChooseDirection && directionElem.lastElementChild.value === "receive",
-                transmit: isPowerDevice && directionElem.lastElementChild.value === "transmit",
+                receive: Number(canChooseDirection && directionElem.lastElementChild.value === "receive"),
+                transmit: Number(isPowerDevice && directionElem.lastElementChild.value === "transmit"),
                 slot: Number(slotsElem.lastElementChild.value)
             });
             if (isClosed) {
-                await catalogRequest(endpoint, "DELETE");
+                await catalogRequest(API_URL_CANCEL_HUB_LEARNING_SESSION, "POST", target);
 
                 return;
             }
-            url = endpoint;
+            learningTarget = target;
             retryBtnElem.disabled = false;
             await poll();
         } catch (error) {
@@ -1386,10 +1389,10 @@ function learnOnCatalogBridge(device) {
     async function cancelLearning() {
         clearTimeout(timer);
         capture++;
-        if (!url) return true;
+        if (!learningTarget) return true;
 
-        const endpoint = url;
-        url = undefined;
+        const target = learningTarget;
+        learningTarget = undefined;
 
         const wasReady = !saveBtnElem.disabled;
         saveBtnElem.disabled = true;
@@ -1397,7 +1400,7 @@ function learnOnCatalogBridge(device) {
         cancelBtnElem.disabled = true;
 
         try {
-            await catalogRequest(endpoint, "DELETE");
+            await catalogRequest(API_URL_CANCEL_HUB_LEARNING_SESSION, "POST", target);
             progressElem.hidden = true;
             detailsElem.textContent = "";
             statusElem.textContent = "";
@@ -1405,7 +1408,7 @@ function learnOnCatalogBridge(device) {
 
             return true;
         } catch (error) {
-            url = endpoint;
+            learningTarget = target;
             statusElem.textContent = error.message;
             retryBtnElem.disabled = false;
             saveBtnElem.disabled = !wasReady;
@@ -1422,12 +1425,12 @@ function learnOnCatalogBridge(device) {
      */
     /****************************************************************************/
     async function poll() {
-        const endpoint = url;
+        const target = learningTarget;
         const currentCapture = capture;
-        if (!endpoint) return;
+        if (!target) return;
 
         try {
-            const result = await catalogRequest(endpoint);
+            const result = await catalogRequest(API_URL_GET_HUB_LEARNING_STATUS, "GET", target);
             if (isClosed || capture !== currentCapture) return;
 
             statusElem.textContent = result.message || result.state;
@@ -1498,14 +1501,14 @@ function learnOnCatalogBridge(device) {
     function onClose() {
         isClosed = true;
         clearTimeout(timer);
-        if (url && !isSaving)
+        if (learningTarget && !isSaving)
 
             /****************************************************************************/
             /*!
              * @brief   Leaves learning cancellation failures without additional UI feedback.
              */
             /****************************************************************************/
-            catalogRequest(url, "DELETE").catch(() => {});
+            catalogRequest(API_URL_CANCEL_HUB_LEARNING_SESSION, "POST", learningTarget).catch(() => {});
         catalogWizardDialogElem.removeEventListener("cancel", onCancel);
     }
 
@@ -1548,7 +1551,7 @@ function learnOnCatalogBridge(device) {
 /****************************************************************************/
 async function refreshCatalogBridgeStatus(bridge) {
     try {
-        const status = await catalogRequest("/api/bridges/" + bridge.id + "/status");
+        const status = await catalogRequest(API_URL_GET_HUB_STATUS, "GET", { id: bridge.id });
         bridge.connection_status = status.online;
     } catch {
         bridge.connection_status = false;

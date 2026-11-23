@@ -74,17 +74,6 @@ def get_profile_picture():
 
     return _send_uncached_file(path)
 
-
-################################################################################
-#
-#   @brief  Returns the default profile image for legacy image requests.
-#
-################################################################################
-@data_bp.route("/get_default_profile_picture", methods=["GET"])
-def get_default_profile_picture():
-    return send_file(c.DEFAULT_PROFILE_PICTURE_PATH)
-
-
 ################################################################################
 #
 #   @brief  Endpoint to get the weather information.

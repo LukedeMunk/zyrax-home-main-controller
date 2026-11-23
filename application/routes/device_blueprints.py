@@ -240,3 +240,22 @@ def delete_device():
             )
         
         return "", c.HTTP_CODE_NO_CONTENT
+
+
+################################################################################
+#
+#   @brief  Returns connection status for an LED strip or bridge.
+#   @return str                JSON envelope containing connection_status
+#
+################################################################################
+@device_bp.route(c.API_URL_CHECK_DEVICE_CONNECTION_STATUS, methods=["GET"])
+@minimum_role_required()
+def check_device_connection_status():
+    try:
+        id = int(request.args.get("id"))
+    except (TypeError, ValueError):
+        return generate_json_http_response(c.HTTP_CODE_BAD_REQUEST, "Invalid device ID.")
+
+    status = dm.check_device_connection_status(id)
+
+    return generate_json_http_response(c.HTTP_CODE_OK, {"connection_status": status})

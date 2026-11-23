@@ -27,7 +27,7 @@ from automation import (AdapterRegistry, AutomationEngine,
                         AutomationRunService, Event, EventDispatcher, EventType)
 from automation.adapter_registry import AdapterRoutingError
 from automation.domain import Capability, Command
-from Bridge import BridgeCommandAdapter
+from Bridge import Bridge, BridgeCommandAdapter
 from automation.device_adapters import DeviceCommandAdapter, RfInputAdapter
 
 class DeviceManager:
@@ -488,6 +488,23 @@ class DeviceManager:
             db_util.get_group(id=group_id), Capability.MODE_CONFIGURE,
             {"mode": mode_id, "configuration": config_list}
         )
+
+    ################################################################################
+    #
+    #   @brief  Checks connectivity for a registered LED strip or bridge.
+    #   @param  id                  Device ID
+    #   @return bool                True when the supported device is reachable
+    #
+    ################################################################################
+    def check_device_connection_status(self, id):
+        if self._get_ledstrip(id) is not None:
+            return self.check_ledstrip_connection_status(id)
+
+        device = next((item for item in self.devices if item["id"] == id), None)
+        if device is not None and device.get("role") == "bridge":
+            return Bridge(db_util.get_device(id)).check_connection_status()
+
+        return False
 
     ################################################################################
     #

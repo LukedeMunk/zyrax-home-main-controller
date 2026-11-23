@@ -160,19 +160,6 @@ def set_ledstrip_power_animation():
     action(id, power_animation)
 
     return generate_json_http_response(c.HTTP_CODE_OK)
-
-################################################################################
-#
-#   @brief  Checks and sends ledstrip connection status to the front-end.
-#
-################################################################################
-@ledstrip_bp.route("/check_ledstrip_connection_status", methods=["GET"])
-@minimum_role_required()
-def check_ledstrip_connection_status():
-    id = int(request.args.get("id"))
-    status = dm.check_ledstrip_connection_status(id)
-
-    return generate_json_http_response(c.HTTP_CODE_OK, {"connection_status" : status})
 #endregion
 
 #region Utilities

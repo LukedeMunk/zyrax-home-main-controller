@@ -1234,28 +1234,35 @@ class DeviceManager:
         self.ledstrips = []                                                         #Reset list
         self.cameras = []                                                           #Reset list
 
-        # The temporary receiver connected directly to the Raspberry Pi is
-        # configured independently from an RF/IR hub. Recalculate both
-        # capability flags on every reload so removing a hub cannot leave
-        # stale True values behind.
-        rf_hub_present = False
-        
         #Create a list of sensor objects
         for device in self.devices:
             if device["type"] == c.DEVICE_TYPE_LEDSTRIP:
                 self.ledstrips.append(Ledstrip(device))
             if device["type"] == c.DEVICE_TYPE_IP_CAMERA:
                 self.cameras.append(IpCamera(device))
-            if device["type"] == c.DEVICE_TYPE_RF_HUB:
-                rf_hub_present = True
-
-        c.RF_RECEIVER_PRESENT = (
-            bool(c.dynamic_config.rpi_rf_enabled) or rf_hub_present
-        )
-        c.RF_TRANSMITTER_PRESENT = rf_hub_present
+        self.refresh_rf_hub_availability()
 
         if hasattr(self, "rf_input_adapter"):
             self.rf_input_adapter.refresh()
+
+    ################################################################################
+    #
+    #   @brief  Checks registered hubs for an available RF transceiver.
+    #
+    ################################################################################
+    def refresh_rf_hub_availability(self):
+        devices = self.devices
+        available = False
+        for device in devices:
+            if device.get("role") != "hub" or not device.get("hostname"):
+                continue
+            success, capabilities = Hub(device).send_command(c.HUB_COMMAND_GET_CAPABILITIES)
+            if success and isinstance(capabilities, dict) and capabilities.get("rf") is True:
+                available = True
+                break
+
+        if devices is self.devices:
+            c.HUB_RF_RECEIVER_AVAILABLE = available
 #endregion
 
 #region Utilities functionalty

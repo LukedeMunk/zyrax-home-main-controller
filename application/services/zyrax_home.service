@@ -21,13 +21,8 @@ Environment="ZYRAX_BEHIND_NGINX=1"
 Environment="XDG_CONFIG_HOME=/var/lib/ZyraX_Home/data"
 Environment="XDG_CACHE_HOME=/var/lib/ZyraX_Home/data"
 Environment="XDG_DATA_HOME=/var/lib/ZyraX_Home/data"
-Environment="LG_WD=/var/lib/ZyraX_Home/data/.zyrax_temp"
-
-# GPIO permission
-AmbientCapabilities=CAP_SYS_RAWIO
-CapabilityBoundingSet=CAP_SYS_RAWIO
-
 # Security hardening
+CapabilityBoundingSet=
 NoNewPrivileges=true
 ProtectSystem=strict
 ProtectHome=true

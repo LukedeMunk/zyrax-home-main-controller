@@ -102,7 +102,6 @@ if [[ "$full_install" =~ ^[Yy]$ ]]; then
     apt-get update
     apt-get install -y \
         build-essential \
-        liblgpio-dev \
         nginx \
         openssl \
         python3-dev \
@@ -153,7 +152,6 @@ install -d -m 755 "$SYSTEM_PATH" "$INSTALL_PATH"
 install -d -o "$SERVICE_USER" -g "$SERVICE_USER" -m 750 \
     "$RUNTIME_PATH" \
     "$DATA_PATH" \
-    "$DATA_PATH/.zyrax_temp" \
     "$DATA_PATH/ota" \
     "$DATA_PATH/profile_pictures"
 
@@ -184,10 +182,6 @@ fi
 "$VENV_PATH/bin/python3" -m pip install -r "$INSTALL_PATH/requirements.txt"
 "$VENV_PATH/bin/python3" -m pip install keyrings.cryptfile
 
-if [[ "$full_install" =~ ^[Yy]$ ]]; then
-    "$VENV_PATH/bin/python3" -m pip install --no-binary=:all: lgpio
-    "$VENV_PATH/bin/python3" -m pip install rpi-lgpio
-fi
 
 echo "Configuring non-interactive encrypted keyring storage"
 if [ ! -f "$KEYRING_ENV_FILE" ]; then

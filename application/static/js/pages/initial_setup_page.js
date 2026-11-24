@@ -26,9 +26,8 @@ import { uploadProfilePicture } from "../services/profiles.js";
 import { EMAIL_RE, PASSWORD_RE, SYMBOL_CRITICAL_RE } from "../domain/validation.js";
 
 const { http, banners, signal, delay } = mountPage("setup");
-const { languages, rfEnabled } = readPageData();
+const { languages } = readPageData();
 const userProfiles = [];
-let rpiRfEnabled = rfEnabled;
 let weatherServiceEnabled, telegramServiceEnabled, weatherApiKey, telegramBotToken;
 
 //#region Elements
@@ -99,7 +98,7 @@ let selectedProfilePictureFile = null;
 //#endregion
 
 
-mountModuleSettings(document, { http, signal, banners }, { rpiRfEnabled });
+mountModuleSettings(document, { http, signal, banners }, {});
 
 /* Account flow */
 if (accountEmailTxtElem != null) {

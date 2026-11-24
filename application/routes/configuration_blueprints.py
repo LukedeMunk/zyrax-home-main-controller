@@ -33,42 +33,6 @@ telegram_client = TelegramServiceClient()
 #   @brief  Updates the application configuration.
 #
 ################################################################################
-@configuration_bp.route("/update_rpi_rf_module", methods=["POST"])
-@minimum_role_required()
-def update_rpi_rf_module():
-    requested_value = request.form.get("rpi_rf_receiver_enabled")
-
-    if requested_value not in ("0", "1"):
-        return generate_json_http_response(c.HTTP_CODE_BAD_REQUEST, "Invalid Raspberry Pi RF receiver setting")
-
-    rpi_rf_enabled = requested_value == "1"
-
-    if rpi_rf_enabled and not c.PRODUCTION_MODE:
-        loge("Cannot enable RF device. Not currently available for Windows")
-        return generate_json_http_response(c.HTTP_CODE_BAD_REQUEST, "Cannot enable RF device. Not currently available for Windows")
-
-    c.dynamic_config.rpi_rf_enabled = rpi_rf_enabled
-    c.RF_RECEIVER_PRESENT = (rpi_rf_enabled or c.RF_TRANSMITTER_PRESENT)
-
-    if rpi_rf_enabled:
-        logi("Enabled RF device. Restarting")
-        @after_this_request
-        def shutdown(response):
-            Timer(0.1, lambda: os._exit(0)).start()
-            return response
-
-        message = "Enabled RF device. Restarting"
-    else:
-        logi("Disabled RF device")
-        message = "Disabled RF device"
-
-    return generate_json_http_response(c.HTTP_CODE_OK, message)
-
-################################################################################
-#
-#   @brief  Updates the application configuration.
-#
-################################################################################
 @configuration_bp.route(c.API_URL_UPDATE_WEATHER_CONFIGURATION, methods=["POST"])
 @minimum_role_required()
 def update_weather_configuration():

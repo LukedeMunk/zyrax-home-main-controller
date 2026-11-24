@@ -19,7 +19,7 @@ import {
     TEXT_DISCONNECTED_CONNECTING, TEXT_EDIT_DASHBOARD, TEXT_ERROR, TEXT_FIELD_REQUIRED,
     TEXT_ITEM_ADDED_SUCCESSFULLY, TEXT_ITEM_DELETED_SUCCESSFULLY,
     TEXT_LED_ADDRESSING_NOT_CONFIGURED, TEXT_MANAGE_DASHBOARD, TEXT_NOT_CONNECTED,
-    TEXT_NO_DASHBOARDS, TEXT_NO_RF_RECEIVER_PRESENT, TEXT_Q_ARE_YOU_SURE, TEXT_Q_DELETE_DASHBOARD,
+    TEXT_NO_DASHBOARDS, TEXT_NO_RF_HUB_AVAILABLE, TEXT_Q_ARE_YOU_SURE, TEXT_Q_DELETE_DASHBOARD,
     TEXT_Q_DELETE_TILE, TEXT_READY_TO_RUN, TEXT_RENAME_DASHBOARD, TEXT_RESET_DASHBOARD,
     TEXT_SUCCESS, VAR_TEXT_LED_ADDRESSING_NOT_CONFIGURED_CLICK_TO_CONFIGURE,
     VAR_TEXT_WEATHER_LOCATION_CHANGED_SUCCESSFULLY
@@ -53,7 +53,7 @@ const DEVICE_TYPE_RF_DEVICE = 1;
 const { http, banners, popup, signal, delay, components } = mountPage("dashboard");
 const data = readPageData();
 const api = dashboardService(http, signal);
-const { alarm, groups, automations, receiver } = data;
+const { alarm, groups, automations, hubRfReceiverAvailable } = data;
 let devices = data.devices;
 let weather = data.weather;
 let weatherLocation = data.location;
@@ -402,10 +402,10 @@ function generateDeviceTile(tile) {
 
     if (device?.type === DEVICE_TYPE_RF_DEVICE) {
         let icon = { icon: device.icon };
-        if (!receiver) {
+        if (!hubRfReceiverAvailable) {
             icon = {
                 icon: "fa-duotone fa-solid fa-circle-exclamation",
-                title: TEXT_NO_RF_RECEIVER_PRESENT
+                title: TEXT_NO_RF_HUB_AVAILABLE
             };
         }
         
@@ -452,10 +452,10 @@ function generateGroupTile(tile) {
 
     if (group?.type === DEVICE_TYPE_RF_DEVICE) {
         let icon = { icon: group.icon };
-        if (!receiver) {
+        if (!hubRfReceiverAvailable) {
             icon = {
                 icon: "fa-duotone fa-solid fa-circle-exclamation",
-                title: TEXT_NO_RF_RECEIVER_PRESENT
+                title: TEXT_NO_RF_HUB_AVAILABLE
             };
         }
 
@@ -630,10 +630,10 @@ function updateDeviceTileStates(tile, showErrorMessages = false) {
     }
 
     if (device?.type == DEVICE_TYPE_RF_DEVICE) {
-        if (!receiver) {
+        if (!hubRfReceiverAvailable) {
             const icon = {
                 icon: "fa-duotone fa-solid fa-circle-exclamation",
-                title: TEXT_NO_RF_RECEIVER_PRESENT
+                title: TEXT_NO_RF_HUB_AVAILABLE
             };
             tileObject.setIcon(icon);
 

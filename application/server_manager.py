@@ -23,7 +23,6 @@ from cryptography.fernet import Fernet
 from logger import logi, logw, loge                                             #Import logging functions
 from TelegramServiceClient import *
 from WeatherServiceClient import *
-from expiringdict import ExpiringDict                                           #To keep track of RF codes
 
 from sqlalchemy import event, inspect                                           #Inspect DB engine
 from sqlalchemy.engine import Engine
@@ -41,15 +40,6 @@ def enable_sqlite_foreign_keys(database_connection, connection_record):
     cursor = database_connection.cursor()
     cursor.execute("PRAGMA foreign_keys=ON")
     cursor.close()
-
-if c.PRODUCTION_MODE:
-    import RPi.GPIO as GPIO                                                     #For RF purposes
-    from rpi_rf import RFDevice                                                 #For RF purposes
-    GPIO.setwarnings(False)
-
-rf_device = None
-last_received_rf_codes = ExpiringDict(max_age_seconds=30, max_len=50)           #For showing received RF codes in the UI
-last_received_rf_codes[0] = 0
 
 telegram_service_state = None#Can be removed?
 weather_service_state = None#Can be removed?
@@ -759,28 +749,3 @@ def check_microservices():
 
         if weather_service_state != SERVICE_STATE_RUNNING:
             logw("Weather service unavailable")
-
-################################################################################
-#
-#   @brief  Initializes the RF receiver
-#
-################################################################################
-def initialize_rf_receiver():
-    global rf_device
-    rf_device = None
-
-    if not c.dynamic_config.rpi_rf_enabled:
-        logw("RF receiver disabled")
-        return
-
-    if not c.PRODUCTION_MODE:
-        loge("Cannot enable RF receiver. Not available for Windows or development mode")
-        return
-
-    try:
-        rf_device = RFDevice(c.RF_PIN_BCM, rx_tolerance=150)
-        rf_device.enable_rx()
-        logi("RF receiver enabled")
-    except Exception as e:
-        loge("Cannot enable RF receiver: " + str(e))
-        rf_device = None

@@ -39,7 +39,6 @@ REQUIRED_KEYS = {
     "weather_service_enabled",
     "weather_location",
     "telegram_service_enabled",
-    "rpi_rf_enabled"
 }
 
 ################################################################################
@@ -110,7 +109,6 @@ class ConfigurationManager:
         self.data["weather_service_enabled"] = False
         self.data["weather_location"] = ""
         self.data["telegram_service_enabled"] = False
-        self.data["rpi_rf_enabled"] = False
 
         self.save()
         return
@@ -209,7 +207,6 @@ class ConfigurationManager:
                 "weather_service_enabled": False,
                 "weather_location": "",
                 "telegram_service_enabled": False,
-                "rpi_rf_enabled": False,
             }
 
             self.save()
@@ -280,6 +277,7 @@ class ConfigurationManager:
         
         with open(self.file_path, "r", encoding="utf-8") as file:
             self.data = json.load(file)
+            self.data.pop("rpi_rf_enabled", None)
             
         self.data["database_encryption_key"] = keyring.get_password(self.application_name, "database_encryption_key")
         self.data["flask_encryption_key"] = keyring.get_password(self.application_name, "flask_encryption_key")

@@ -5,7 +5,7 @@
 {% endblock %}
 
 {% block content %}
-<script id="pageData" type="application/json">{{ dict(logs=logs, weatherServiceEnabled=weather_service_enabled, telegramServiceEnabled=telegram_service_enabled, weatherApiKey=weather_api_key, telegramBotToken=telegram_bot_token, rpiRfEnabled=rpi_rf_receiver_enabled) | tojson }}</script>
+<script id="pageData" type="application/json">{{ dict(logs=logs, weatherServiceEnabled=weather_service_enabled, telegramServiceEnabled=telegram_service_enabled, weatherApiKey=weather_api_key, telegramBotToken=telegram_bot_token) | tojson }}</script>
 
 <link rel="stylesheet" href="{{ url_for('static', filename='css/styles_tiles.css') }}">
 
@@ -104,15 +104,6 @@
                     </div>
                 </fieldset>
 
-                <fieldset style="margin-top: 0px; width: 20%; flex: auto; min-width: 250px; max-width: 300px;">
-                    <legend id="rpiRfModuleTitle">Raspberry Pi RF receiver enabled</legend>
-                    <div class="centered-flex" style="margin: 10px 0px;">
-                        <label class="switch" style="margin: 15px;">
-                            <input id="rpiRfModuleEnabledCb" type="checkbox" data-action="submitRpiRfModuleEnabled">
-                            <span class="slider round"></span>
-                        </label>
-                    </div>
-                </fieldset>
             </div>
         </fieldset>
     </div>

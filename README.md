@@ -107,11 +107,9 @@ These instructions provide an overview for setting up and running the ZyraX Home
 
 > Note: While the application is compatible with Windows, a Linux environment is recommended for optimal performance.
 
-### 3.1 Connect RF receiver to Raspberry Pi OS (optional)
+### 3.1 RF reception
 
-Use the schematic to connect the RF receiver to the Raspberry Pi, to be able to connect RF sensors to the system.
-
-![schematic](documentation/hardware/schematic_v0_1.png)
+Register an RF-capable hub on the Devices page to receive RF sensor signals.
 
 ### 3.2 Make Raspberry Pi OS ready
 
@@ -170,7 +168,6 @@ At the configuration page -> Add device -> Choose device or choose `My accessory
 
 Several documentation files describe this project and system. The list of these files is provided below.
 
-- [Circuit diagram](documentation/hardware/schematic_v0_1.png)
 - [Entity Relation Diagram](documentation/software/ERD_v0_9_0_Beta.png)
 - [Full platform overview](documentation/software/overview_v0.1.png)
 - [ZyraX Home | Documentation](https://zyraxhome.munkservices.com/documentation)
@@ -181,7 +178,6 @@ Several documentation files describe this project and system. The list of these 
 
 | **Bug**    | **Version**    | **Planned Fix Version**     |
 |------------|----------------|-----------------------------|
-| Server becomes unavailable (HTTP code `502`) for a minute after enabling RF receiver | v0.9.0 | v1.0.0 |
 | RF remote control loads only 1 code | v0.9.0 | v1.0.0 |
 | LED strip IP not displayed at configuration screen | v0.9.0 | v1.0.0 |
 | LED strip model ID not saved during update | v0.9.0 | v1.0.0 |

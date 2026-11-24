@@ -35,19 +35,16 @@ export function mountModuleSettings(root, { http, signal, banners }, settings) {
         telegramServiceEnabled,
         weatherApiKey,
         telegramBotToken,
-        rpiRfEnabled
     } = settings;
     const weatherServiceEnabledCbElem = root.querySelector("#weatherServiceEnabledCb");
     const telegramServiceEnabledCbElem = root.querySelector("#telegramServiceEnabledCb");
     const weatherApiKeyTxtElem = root.querySelector("#weatherApiKeyTxt");
     const telegramBotTokenTxtElem = root.querySelector("#telegramBotTokenTxt");
-    const rpiRfModuleEnabledCbElem = root.querySelector("#rpiRfModuleEnabledCb");
     const errorMessageModuleConfigurationFieldElem =
         root.querySelector("#errorMessageModuleConfigurationField");
 
     weatherServiceEnabledCbElem.checked = Boolean(weatherServiceEnabled);
     telegramServiceEnabledCbElem.checked = Boolean(telegramServiceEnabled);
-    rpiRfModuleEnabledCbElem.checked = Boolean(rpiRfEnabled);
 
     for (const [field, enabled, value] of [[
         weatherApiKeyTxtElem, weatherServiceEnabled, weatherApiKey
@@ -65,7 +62,6 @@ export function mountModuleSettings(root, { http, signal, banners }, settings) {
     telegramBotTokenTxtElem.addEventListener("change", submitTelegramModuleConfiguration, {
         signal
     });
-    rpiRfModuleEnabledCbElem.addEventListener("click", submitRpiRfModuleEnabled, { signal });
 
     /****************************************************************************/
     /*!
@@ -168,37 +164,6 @@ export function mountModuleSettings(root, { http, signal, banners }, settings) {
             return;
         }
 
-        banners.show({
-            title: TEXT_SUCCESS,
-            message: TEXT_CHANGES_SAVED_SUCCESSFULLY,
-            type: "success"
-        });
-    }
-
-    /****************************************************************************/
-    /*!
-     * @brief   Saves the Raspberry Pi RF receiver state and restores it on failure.
-     */
-    /****************************************************************************/
-    async function submitRpiRfModuleEnabled() {
-        const requestedRpiRfEnabled = rpiRfModuleEnabledCbElem.checked;
-
-        let data = { rpi_rf_receiver_enabled: +requestedRpiRfEnabled };
-
-        try {
-            await submitForm(http, "/update_rpi_rf_module", data, signal);
-        } catch (error) {
-            if (signal.aborted) return;
-
-            errorMessageModuleConfigurationFieldElem.style.display = "inline-block";
-            errorMessageModuleConfigurationFieldElem.textContent = error.message;
-
-            rpiRfModuleEnabledCbElem.checked = rpiRfEnabled;
-
-            return;
-        }
-
-        rpiRfEnabled = requestedRpiRfEnabled;
         banners.show({
             title: TEXT_SUCCESS,
             message: TEXT_CHANGES_SAVED_SUCCESSFULLY,

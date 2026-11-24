@@ -6,7 +6,7 @@
 
 {% block content %}
 
-<script id="pageData" type="application/json">{{ dict(alarm=alarm, devices=devices, groups=groups, automations=automations, dashboards=dashboard_configurations, weather=weather, location=weather_location, receiver=RF_RECEIVER_PRESENT) | tojson }}</script>
+<script id="pageData" type="application/json">{{ dict(alarm=alarm, devices=devices, groups=groups, automations=automations, dashboards=dashboard_configurations, weather=weather, location=weather_location, hubRfReceiverAvailable=HUB_RF_RECEIVER_AVAILABLE) | tojson }}</script>
 
 <style>
     body {

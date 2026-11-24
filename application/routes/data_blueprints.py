@@ -12,7 +12,6 @@
 from flask import Blueprint, request, send_file, session                        #Import flask blueprints and requests
 import configuration as c                                                       #Import application configuration variables
 from DeviceManager import DeviceManager                                         #Import device manager
-from server_manager import last_received_rf_codes
 from logger import logi, logw, loge                                             #Import logging functions
 from WeatherServiceClient import WeatherServiceClient
 import database_utility as db_util
@@ -83,20 +82,6 @@ def get_profile_picture():
 @minimum_role_required()
 def get_weather():
     return generate_json_http_response(c.HTTP_CODE_OK, {"weather" : weather_client.get_weather_forecast(True)})
-
-################################################################################
-#
-#   @brief  Endpoint to get the last received RF codes from RF devices.
-#
-################################################################################
-@data_bp.route("/get_last_received_rf_codes", methods=["GET"])
-@minimum_role_required()
-def get_last_received_rf_codes():
-    code_list = []
-    for code in last_received_rf_codes.values():
-        code_list.append(code)
-
-    return generate_json_http_response(c.HTTP_CODE_OK, {"rf_codes" : [code_list]})
 
 ################################################################################
 #

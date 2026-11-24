@@ -60,7 +60,7 @@ def login_get(message=""):
 def account_page():
     return render_template("account.html", title="",
                             CURRENT_APPLICATION_VERSION=c.CURRENT_APPLICATION_VERSION,
-                            RF_RECEIVER_PRESENT=c.RF_RECEIVER_PRESENT,
+                            HUB_RF_RECEIVER_AVAILABLE=c.HUB_RF_RECEIVER_AVAILABLE,
                             RF_TRANSMITTER_PRESENT=c.RF_TRANSMITTER_PRESENT,
                             alarm_activated=db_util.get_alarm()["activated"],
                             user_profiles=db_util.get_profiles(session["account_id"]),
@@ -83,7 +83,7 @@ def dashboard_page():
 
     return render_template("dashboard.html", title="",
                             CURRENT_APPLICATION_VERSION=c.CURRENT_APPLICATION_VERSION,
-                            RF_RECEIVER_PRESENT=c.RF_RECEIVER_PRESENT,
+                            HUB_RF_RECEIVER_AVAILABLE=c.HUB_RF_RECEIVER_AVAILABLE,
                             RF_TRANSMITTER_PRESENT=c.RF_TRANSMITTER_PRESENT,
                             alarm_activated=db_util.get_alarm()["activated"],
                             user_profiles=db_util.get_profiles(session["account_id"]),
@@ -106,11 +106,10 @@ def dashboard_page():
 def initial_setup():
     return render_template("initial_setup.html", title="",
                             CURRENT_APPLICATION_VERSION=c.CURRENT_APPLICATION_VERSION,
-                            RF_RECEIVER_PRESENT=c.RF_RECEIVER_PRESENT,
+                            HUB_RF_RECEIVER_AVAILABLE=c.HUB_RF_RECEIVER_AVAILABLE,
                             RF_TRANSMITTER_PRESENT=c.RF_TRANSMITTER_PRESENT,
                             alarm_activated=db_util.get_alarm()["activated"],
                             user_profiles=[],
-                            rpi_rf_receiver_enabled=c.dynamic_config.rpi_rf_enabled,
                             SUPPORTED_UI_LANGUAGES=c.SUPPORTED_UI_LANGUAGES)
 
 ################################################################################
@@ -123,7 +122,7 @@ def initial_setup():
 def configuration_page():
     return render_template("configuration.html", title="Configuration",
                             CURRENT_APPLICATION_VERSION=c.CURRENT_APPLICATION_VERSION,
-                            RF_RECEIVER_PRESENT=c.RF_RECEIVER_PRESENT,
+                            HUB_RF_RECEIVER_AVAILABLE=c.HUB_RF_RECEIVER_AVAILABLE,
                             RF_TRANSMITTER_PRESENT=c.RF_TRANSMITTER_PRESENT,
                             alarm_activated=db_util.get_alarm()["activated"],
                             user_profiles=db_util.get_profiles(session["account_id"]),
@@ -139,7 +138,6 @@ def configuration_page():
                             weather_service_enabled=c.dynamic_config.weather_service_enabled,
                             weather_api_key=c.dynamic_config.weather_api_key,
                             telegram_service_enabled=c.dynamic_config.telegram_service_enabled,
-                            rpi_rf_receiver_enabled=c.dynamic_config.rpi_rf_enabled,
                             telegram_bot_token=c.dynamic_config.telegram_bot_token)
 
 ################################################################################
@@ -154,7 +152,7 @@ def configure_led_addressing_page():
 
     return render_template("configure_led_addressing.html", title="Configure LED addressing",
                             CURRENT_APPLICATION_VERSION=c.CURRENT_APPLICATION_VERSION,
-                            RF_RECEIVER_PRESENT=c.RF_RECEIVER_PRESENT,
+                            HUB_RF_RECEIVER_AVAILABLE=c.HUB_RF_RECEIVER_AVAILABLE,
                             RF_TRANSMITTER_PRESENT=c.RF_TRANSMITTER_PRESENT,
                             alarm_activated=db_util.get_alarm()["activated"],
                             user_profiles=db_util.get_profiles(session["account_id"]),
@@ -173,7 +171,7 @@ def realtime_led_coloring_page():
 
     return render_template("realtime_led_coloring.html", title="Real-time LED coloring",
                             CURRENT_APPLICATION_VERSION=c.CURRENT_APPLICATION_VERSION,
-                            RF_RECEIVER_PRESENT=c.RF_RECEIVER_PRESENT,
+                            HUB_RF_RECEIVER_AVAILABLE=c.HUB_RF_RECEIVER_AVAILABLE,
                             RF_TRANSMITTER_PRESENT=c.RF_TRANSMITTER_PRESENT,
                             alarm_activated=db_util.get_alarm()["activated"],
                             user_profiles=db_util.get_profiles(session["account_id"]),
@@ -191,7 +189,7 @@ def devices_page():
     return render_template(
         "devices.html", title=c.TEXT_DEVICE_CATALOG_TITLE, groups=db_util.get_groups(),
         CURRENT_APPLICATION_VERSION=c.CURRENT_APPLICATION_VERSION,
-        RF_RECEIVER_PRESENT=c.RF_RECEIVER_PRESENT,
+        HUB_RF_RECEIVER_AVAILABLE=c.HUB_RF_RECEIVER_AVAILABLE,
         RF_TRANSMITTER_PRESENT=c.RF_TRANSMITTER_PRESENT,
         alarm_activated=db_util.get_alarm()["activated"],
         user_profiles=db_util.get_profiles(session["account_id"]),
@@ -213,7 +211,7 @@ def devices_page():
 def automations_page():
     return render_template("automations.html", title="Automations",
                             CURRENT_APPLICATION_VERSION=c.CURRENT_APPLICATION_VERSION,
-                            RF_RECEIVER_PRESENT=c.RF_RECEIVER_PRESENT,
+                            HUB_RF_RECEIVER_AVAILABLE=c.HUB_RF_RECEIVER_AVAILABLE,
                             RF_TRANSMITTER_PRESENT=c.RF_TRANSMITTER_PRESENT,
                             alarm_activated=db_util.get_alarm()["activated"],
                             user_profiles=db_util.get_profiles(session["account_id"]),
@@ -235,7 +233,7 @@ def automations_page():
 def alarm_page():
     return render_template("alarm.html", title="Alarm",
                             CURRENT_APPLICATION_VERSION=c.CURRENT_APPLICATION_VERSION,
-                            RF_RECEIVER_PRESENT=c.RF_RECEIVER_PRESENT,
+                            HUB_RF_RECEIVER_AVAILABLE=c.HUB_RF_RECEIVER_AVAILABLE,
                             RF_TRANSMITTER_PRESENT=c.RF_TRANSMITTER_PRESENT,
                             alarm_activated=db_util.get_alarm()["activated"],
                             user_profiles=db_util.get_profiles(session["account_id"]),
@@ -253,7 +251,7 @@ def alarm_page():
 def control_rf_devices_page():
     return render_template("rf_devices.html", title="Sensors",
                             CURRENT_APPLICATION_VERSION=c.CURRENT_APPLICATION_VERSION,
-                            RF_RECEIVER_PRESENT=c.RF_RECEIVER_PRESENT,
+                            HUB_RF_RECEIVER_AVAILABLE=c.HUB_RF_RECEIVER_AVAILABLE,
                             RF_TRANSMITTER_PRESENT=c.RF_TRANSMITTER_PRESENT,
                             alarm_activated=db_util.get_alarm()["activated"],
                             user_profiles=db_util.get_profiles(session["account_id"]),
@@ -276,7 +274,7 @@ def control_leds_page():
     
     return render_template("control_ledstrip.html", title=title,
                             CURRENT_APPLICATION_VERSION=c.CURRENT_APPLICATION_VERSION,
-                            RF_RECEIVER_PRESENT=c.RF_RECEIVER_PRESENT,
+                            HUB_RF_RECEIVER_AVAILABLE=c.HUB_RF_RECEIVER_AVAILABLE,
                             RF_TRANSMITTER_PRESENT=c.RF_TRANSMITTER_PRESENT,
                             alarm_activated=db_util.get_alarm()["activated"],
                             user_profiles=db_util.get_profiles(session["account_id"]),
@@ -304,7 +302,7 @@ def control_led_groups_page():
 
     return render_template("control_ledstrip.html", title=title,
                             CURRENT_APPLICATION_VERSION=c.CURRENT_APPLICATION_VERSION,
-                            RF_RECEIVER_PRESENT=c.RF_RECEIVER_PRESENT,
+                            HUB_RF_RECEIVER_AVAILABLE=c.HUB_RF_RECEIVER_AVAILABLE,
                             RF_TRANSMITTER_PRESENT=c.RF_TRANSMITTER_PRESENT,
                             alarm_activated=db_util.get_alarm()["activated"],
                             user_profiles=db_util.get_profiles(session["account_id"]),

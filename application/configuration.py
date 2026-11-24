@@ -28,13 +28,11 @@ if os.name == "nt":
 KEYRING_KEY = None
 
 #Pins
-RF_PIN_BCM = 27                                                                 #BCM mode so GPIO27 (pin 13). RF reciever
 
 APPLICATION_NAME = "ZyraX_Home"
 DEFAULT_PASSWORD = "ZyraXHomeUser123!"
 
-RF_RECEIVER_PRESENT = False
-RF_TRANSMITTER_PRESENT = False
+HUB_RF_RECEIVER_AVAILABLE = False
 
 #Credential names
 TELEGRAM_SERVICE_NAME = "Telegram_microservice"
@@ -551,6 +549,7 @@ LED_COMMAND_GET_CONFIGURATION = "get_configuration"
 LED_COMMAND_DRAW_LEDS = "draw_leds"
 
 #Hub commands
+HUB_COMMAND_GET_CAPABILITIES = "get_capabilities"
 HUB_COMMAND_GET_STATES = "get_status"
 HUB_COMMAND_GET_CONFIGURATION = "get_configuration"
 HUB_COMMAND_SET_CONFIGURATION = "set_configuration"

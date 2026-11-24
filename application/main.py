@@ -15,7 +15,7 @@ import configuration as c                                                       
 from logger import logi, logw, loge                                             #Import logging functions
 from DeviceManager import DeviceManager                                         #Import device manager
 import server_manager as sm
-from apscheduler.schedulers.background import BackgroundScheduler               #For checking RF codes and timed automations
+from apscheduler.schedulers.background import BackgroundScheduler               #For scheduled controller tasks
 import database_utility as db_util                                              #Import utility for database functionality
 from routes.template_blueprints import initial_setup
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -23,46 +23,9 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 from threading import Thread                                                    #For threading
 import os                                                                       #For file handling
 
-rf_timestamp = 0
-rf_code_timestamps = {}
 dm = DeviceManager()
 
 #region Interval functionality
-################################################################################
-#
-#   @brief  Interval function. Checks received RF codes and processes them.
-#
-################################################################################
-def check_received_rf_codes():
-    global rf_timestamp
-    global rf_code_timestamps
-    
-    if not c.dynamic_config.rpi_rf_enabled:
-        return
-    
-    if sm.rf_device is None:
-        return
-
-    received_timestamp = sm.rf_device.rx_code_timestamp
-    received_code = sm.rf_device.rx_code
-
-    # The RF receiver has no timestamp or code until the first signal arrives.
-    if received_timestamp is None or received_code is None:
-        return
-    
-    if received_timestamp == rf_timestamp:
-        return
-    
-    rf_timestamp = received_timestamp
-    last_code_timestamp = rf_code_timestamps.get(received_code)
-    if last_code_timestamp is not None and received_timestamp - last_code_timestamp < 250000:
-        logi(f"[RF] Debounced code={received_code} timestamp_us={received_timestamp}")
-        return                                                                  #Debounce code for 250ms
-
-    rf_code_timestamps[received_code] = received_timestamp
-    sm.last_received_rf_codes[received_timestamp] = received_code
-    dm.process_rf_signal(received_code, source_id="rpi")
-
 ################################################################################
 #
 #   @brief  Interval function. Checks the timed automations.
@@ -130,13 +93,12 @@ if __name__ == "__main__":
     if configuration_mode:
         logi(c.TEXT_SERVER_STARTED_IN_CONFIGURATION_MODE)
     else:
-        sm.initialize_rf_receiver()
 
         dm.initialize()
         scheduler = BackgroundScheduler()
         scheduler.add_job(check_time, "interval", seconds=5)
-        scheduler.add_job(check_received_rf_codes, "interval", seconds=0.5)
         
+        scheduler.add_job(dm.refresh_rf_hub_availability, "interval", minutes=30)
         scheduler.start()
         
         logi(c.TEXT_SERVER_STARTED)

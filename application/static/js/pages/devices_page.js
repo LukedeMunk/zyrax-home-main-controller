@@ -32,26 +32,26 @@ import {
     TEXT_CATALOG_HUB_SUBTITLE, TEXT_CATALOG_BUTTON, TEXT_CATALOG_CAMERA, TEXT_CATALOG_CANCEL,
     TEXT_CATALOG_CAPABILITIES_AND_ENTITIES, TEXT_CATALOG_CATEGORIES,
     TEXT_CATALOG_CHOOSE_DEVICE_CONNECTION, TEXT_CATALOG_CHOOSE_DEVICE_LOCATION,
-    TEXT_CATALOG_CHOOSE_MODEL, TEXT_CATALOG_CHOOSE_RECEIVED_SIGNAL, TEXT_CATALOG_CLOSE,
+    TEXT_CATALOG_CHOOSE_MODEL, TEXT_CATALOG_CLOSE,
     TEXT_CATALOG_COLOR, TEXT_CATALOG_CONFIRM_DELETE, TEXT_CATALOG_CONNECTED_DEVICES,
     TEXT_CATALOG_CONNECTING, TEXT_CATALOG_CONNECTION, TEXT_CATALOG_CONTACT, TEXT_CATALOG_CONTROLLER,
     TEXT_CATALOG_DELETE, TEXT_CATALOG_DEVICES, TEXT_CATALOG_DEVICE_ADDED,
     TEXT_CATALOG_DEVICE_LOAD_FAILED, TEXT_CATALOG_DEVICE_MANAGEMENT, TEXT_CATALOG_DEVICE_SETTINGS,
     TEXT_CATALOG_DIRECT_VIA_CONTROLLER, TEXT_CATALOG_DISCOVERY_METHODS, TEXT_CATALOG_DOORBELL,
-    TEXT_CATALOG_EFFECTS, TEXT_CATALOG_EMPTY_VALUE, TEXT_CATALOG_FETCH_RECEIVED_RF_SIGNALS,
+    TEXT_CATALOG_EFFECTS, TEXT_CATALOG_EMPTY_VALUE,
     TEXT_CATALOG_FILTER_BY_CONNECTION, TEXT_CATALOG_FILTER_BY_ROOM, TEXT_CATALOG_HAS_CONTACT_SENSOR,
-    TEXT_CATALOG_HOME_SUBTITLE, TEXT_CATALOG_HOSTNAME, TEXT_CATALOG_LEARN_SIGNAL,
+    TEXT_CATALOG_HOME_SUBTITLE, TEXT_CATALOG_HOSTNAME,
     TEXT_CATALOG_LED_COUNT, TEXT_CATALOG_LIGHTING, TEXT_CATALOG_MOTION, TEXT_CATALOG_MY_HOME,
     TEXT_CATALOG_NAME, TEXT_CATALOG_NEXT, TEXT_CATALOG_NEXT_ARROW, TEXT_CATALOG_NOT_IMPLEMENTED,
     TEXT_CATALOG_NO_CONNECTED_DEVICES, TEXT_CATALOG_NO_DEVICES_FOUND,
     TEXT_CATALOG_NO_DOORBELL_MODELS, TEXT_CATALOG_NO_LAN_DEVICES_FOUND,
-    TEXT_CATALOG_NO_RF_SIGNALS_RECEIVED, TEXT_CATALOG_OFF, TEXT_CATALOG_OFFLINE, TEXT_CATALOG_ON,
+    TEXT_CATALOG_OFF, TEXT_CATALOG_OFFLINE, TEXT_CATALOG_ON,
     TEXT_CATALOG_ONLINE, TEXT_CATALOG_OR_CHOOSE_DEVICE, TEXT_CATALOG_OTHER, TEXT_CATALOG_PAIR,
     TEXT_CATALOG_POWER, TEXT_CATALOG_POWER_OUTLET, TEXT_CATALOG_READY_TO_USE,
-    TEXT_CATALOG_REGISTERED, TEXT_CATALOG_REMOTE_CONTROL, TEXT_CATALOG_RF_CODE_REQUIREMENTS,
+    TEXT_CATALOG_REGISTERED, TEXT_CATALOG_REMOTE_CONTROL,
     TEXT_CATALOG_ROOM, TEXT_CATALOG_ROOMS, TEXT_CATALOG_SAVE, TEXT_CATALOG_SAVED,
     TEXT_CATALOG_SAVING, TEXT_CATALOG_SEARCH_BY_NAME_OR_ROOM, TEXT_CATALOG_SEARCH_DEVICES,
-    TEXT_CATALOG_SEARCH_NEARBY_DEVICES, TEXT_CATALOG_SELECT_OR_ENTER_RF_CODE, TEXT_CATALOG_SENSOR,
+    TEXT_CATALOG_SEARCH_NEARBY_DEVICES, TEXT_CATALOG_SENSOR,
     TEXT_CATALOG_SEPARATOR, TEXT_CATALOG_SHOW_DISCOVERED_LAN_DEVICES, TEXT_CATALOG_STEP_1_OF_3,
     TEXT_CATALOG_STEP_2_OF_3, TEXT_CATALOG_STEP_3_OF_3, TEXT_CATALOG_SWITCH,
     TEXT_CATALOG_TURN_ON_DEVICE_TO_BEGIN, TEXT_CATALOG_UNREACHABLE, TEXT_CATALOG_VIA,
@@ -614,7 +614,7 @@ function chooseCatalogModel(models, back) {
             choicesElem.append(catalogChoice(model.name, model.icon, () => {
                 const previous = () => chooseCatalogModel(models, back);
                 if (model.type === CATALOG_RF_TYPE && model.rf_code_types?.length) {
-                    learnCatalogSignals({ role: "device", model }, previous);
+                    configureCatalogDevice({ role: "device", model, learnOnHub: true }, previous);
                 } else {
                     configureCatalogDevice({ role: "device", model }, previous);
                 }
@@ -635,119 +635,6 @@ function catalogParents() {
     return [["", TEXT_CATALOG_DIRECT_VIA_CONTROLLER], ...catalogDevices.filter(device =>
         device.role === "hub").map(device =>
         [device.id, device.name])];
-}
-
-/****************************************************************************/
-/*!
- * @brief   Lets the user enter or select real RF signals from the controller.
- * @param   draft                   Registration data
- * @param   back                    Previous step callback
- */
-/****************************************************************************/
-function learnCatalogSignals(draft, back) {
-    const signals = draft.model.rf_code_types;
-    const formElem = catalogElement("div", "catalog-fields");
-    const errorElem = catalogElement("p", "catalog-error");
-
-    errorElem.setAttribute("role", "alert");
-
-    /****************************************************************************/
-    /*!
-     * @brief   Creates an RF code input for a required model signal.
-     * @param   signal                  Abort signal owned by the current page.
-     * @param   index                   Position in the displayed sequence.
-     * @returns Created component, element or operation result.
-     */
-    /****************************************************************************/
-    const inputs = signals.map((signal, index) => {
-        const fieldElem = catalogField(
-            "catalogRf" + index + "Txt", signal.name, "number", draft.rfCodes?.[index] ?? ""
-        );
-        formElem.append(fieldElem);
-
-        return fieldElem.lastElementChild;
-    });
-    const recentElem = catalogElement("div", "catalog-fields");
-
-    /****************************************************************************/
-    /*!
-     * @brief   Loads received RF codes and offers them as learning choices.
-     */
-    /****************************************************************************/
-    const refreshBtnElem = catalogButton(TEXT_CATALOG_FETCH_RECEIVED_RF_SIGNALS, async () => {
-        try {
-            const result = await catalogRequest("/get_last_received_rf_codes");
-            const codes = [...new Set(result.message.rf_codes[0].filter(code => code > 0))];
-            const options = [["", TEXT_CATALOG_CHOOSE_RECEIVED_SIGNAL], ...codes.map(code =>
-                [code, String(code)])];
-
-            /****************************************************************************/
-            /*!
-             * @brief   Creates a received signal selector linked to its RF code input.
-             * @param   inputElem               Native input linked to the generated control.
-             * @param   index                   Position in the displayed sequence.
-             * @returns Created component, element or operation result.
-             */
-            /****************************************************************************/
-            recentElem.replaceChildren(...inputs.map((inputElem, index) => {
-                const fieldElem = catalogField(
-                    "catalogSignal" + index + "Select", signals[index].name, "select", "", options
-                );
-
-                /****************************************************************************/
-                /*!
-                 * @brief   Updates the dependent controls after the selection changes.
-                 * @param   event                   Event reported by the bound control.
-                 */
-                /****************************************************************************/
-                fieldElem.lastElementChild.onchange = event => {
-                    if (event.target.value) inputElem.value = event.target.value;
-                };
-
-                return fieldElem;
-            }));
-            errorElem.textContent = codes.length ? "" : TEXT_CATALOG_NO_RF_SIGNALS_RECEIVED;
-        } catch (error) {
-            errorElem.textContent = error.message;
-        }
-    });
-
-    /****************************************************************************/
-    /*!
-     * @brief   Builds the RF signal learning form and its hub fallback action.
-     * @param   bodyElem                Wizard body receiving the generated controls.
-     */
-    /****************************************************************************/
-    catalogWizard.show(TEXT_CATALOG_STEP_2_OF_3, TEXT_CATALOG_LEARN_SIGNAL, bodyElem => {
-        const orbElem = catalogIcon(draft.model.icon);
-        orbElem.classList.add("catalog-orb");
-        bodyElem.append(
-            orbElem, catalogElement("p", "", TEXT_CATALOG_SELECT_OR_ENTER_RF_CODE), refreshBtnElem,
-            recentElem, formElem, errorElem
-        );
-        if (catalogDevices.some(item => item.role === "hub" && item.hostname)) {
-            /****************************************************************************/
-            /*!
-             * @brief   Continues configuration with learning delegated to a hub.
-             */
-            /****************************************************************************/
-            bodyElem.append(catalogButton(TEXT_HUB_LEARN, () => {
-                draft.learnOnHub = true;
-                configureCatalogDevice(draft, () => learnCatalogSignals(draft, back));
-            }));
-        }
-    }, [catalogButton(TEXT_CATALOG_BACK, back), catalogButton(TEXT_CATALOG_NEXT, () => {
-        const codes = inputs.map(inputElem => Number(inputElem.value));
-        if (codes.some(code => !Number.isInteger(code) || code < 1 || code > 16777215)
-            || new Set(codes).size !== codes.length) {
-            errorElem.textContent = TEXT_CATALOG_RF_CODE_REQUIREMENTS;
-
-            return;
-        }
-        draft.learnOnHub = false;
-        draft.rfCodes = codes;
-        configureCatalogDevice(draft, () => learnCatalogSignals(draft, back));
-    }, "catalog-primary")]);
 }
 
 /****************************************************************************/
@@ -979,7 +866,7 @@ function configureCatalogDevice(draft, back) {
         if (!device) Object.assign(payload, {
             role,
             model_id: model?.model_id,
-            rf_codes: draft.rfCodes
+            rf_codes: draft.learnOnHub ? [] : undefined
         });
 
         if (role === "hub") payload.hostname = values.get("catalogHubHostnameTxt");

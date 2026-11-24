@@ -122,6 +122,11 @@ body.devices-page {
     background: var(--button-background-1-hover);
 }
 .catalog-dialog .catalog-delete { background: var(--delete-button-background-1); }
+
+.catalog-dialog .catalog-delete:hover:not(:disabled) {
+    background: var(--delete-button-background-1-hover);
+}
+
 .catalog-summary {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));

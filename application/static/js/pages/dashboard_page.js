@@ -335,7 +335,6 @@ function createDashboardTile(tile) {
             id: "automation" + tile.id,
             title: automation.name,
             subtitle1: TEXT_READY_TO_RUN,
-            subtitle2: automation.action,
             icons: [{ icon: "fa-duotone fa-solid fa-bolt" }],
             tile: tile,
             tapToRun: true,
@@ -981,7 +980,6 @@ function createPreviews(type, id) {
         props = {
             title: item.name,
             subtitle1: TEXT_READY_TO_RUN,
-            subtitle2: item.action,
             icons: [{ icon: "fa-duotone fa-solid fa-bolt" }],
             tapToRun: true
         };

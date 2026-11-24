@@ -72,6 +72,7 @@ import {
 import {
     TEXT_CONFIGURE_LED_ADDRESSING, TEXT_PAIR_AND_CONFIGURE_ADDRESSING
 } from "../domain/language_pack_english.js";
+import { ConfirmationDialog } from "../ui_components/ConfirmationDialog.js";
 import { WizardDialog } from "../ui_components/WizardDialog.js";
 import { ICONS_M } from "../domain/icons.js";
 
@@ -131,7 +132,8 @@ const stack = new ModalStack();
 const fields = createDefaultFieldRegistry();
 const catalogWizard = new WizardDialog(catalogWizardDialogElem, { stack }).mount();
 
-components.push(stack, catalogWizard);
+const deviceConfirmation = new ConfirmationDialog();
+components.push(stack, catalogWizard, deviceConfirmation);
 
 const picker = document.getElementById("catalogIconPicker");
 const grid = picker.querySelector(".icon-grid");
@@ -1057,7 +1059,14 @@ function finishCatalogWizard(name, stripId) {
  */
 /****************************************************************************/
 async function deleteCatalogDevice(device, errorElem) {
-    if (!window.confirm(TEXT_CATALOG_CONFIRM_DELETE.replace("{name}", () => device.name))) return;
+    const confirmed = await deviceConfirmation.confirm({
+        title: TEXT_CATALOG_DELETE,
+        message: TEXT_CATALOG_CONFIRM_DELETE.replace("{name}", () => device.name),
+        type: "error",
+        confirmLabel: TEXT_CATALOG_DELETE,
+        cancelLabel: TEXT_CATALOG_CANCEL
+    });
+    if (!confirmed) return;
 
     try {
         await catalogRequest(API_URL_DELETE_DEVICE, "POST", { id: device.id });
@@ -1569,7 +1578,7 @@ function editCatalogGroup(group = null) {
         }
     }
 
-    if (group) actions.push(catalogButton(TEXT_CATALOG_DELETE, () => submitGroup(true)));
+    if (group) actions.push(catalogButton(TEXT_CATALOG_DELETE, () => submitGroup(true), "catalog-delete"));
     actions.push(catalogButton(TEXT_CATALOG_SAVE, () => submitGroup(false), "catalog-primary"));
     catalogWizard.show(TEXT_CATALOG_GROUPS, group ? TEXT_CATALOG_EDIT_GROUP : TEXT_CATALOG_ADD_GROUP,
         bodyElem => {
@@ -1629,7 +1638,7 @@ function editCatalogLocation(room = null) {
         }
     }
 
-    if (room) actions.push(catalogButton(TEXT_CATALOG_DELETE, () => submitLocation("delete")));
+    if (room) actions.push(catalogButton(TEXT_CATALOG_DELETE, () => submitLocation("delete"), "catalog-delete"));
     actions.push(catalogButton(TEXT_CATALOG_SAVE, () => submitLocation(room ? "update" : "add"),
         "catalog-primary"));
 

@@ -82,7 +82,7 @@ import {
 import { AUTOMATION_UI_ACTION_ADD_TRIGGER } from "../domain/automation_draft.js";
 import { Component } from "../../vendor/templates/js/core/component.js";
 import { AnimationController } from "../../vendor/templates/js/core/animation.js";
-import { PopupManager } from "../../vendor/templates/js/ui_components/index.js";
+import { ConfirmationDialog } from "./ConfirmationDialog.js";
 import { decorateCatalogChoice } from "./catalog_view.js";
 import { SYMBOL_CRITICAL_RE } from "../domain/validation.js";
 
@@ -134,9 +134,8 @@ export class AutomationModal extends Component {
             this.requestClose();
         });
 
-        const popupRoot = this.element("div");
-        this.confirmation = new PopupManager(popupRoot).mount();
-        this.dialog.append(close, this.titleElem, this.messageElem, this.wizardElement, popupRoot);
+        this.confirmation = new ConfirmationDialog();
+        this.dialog.append(close, this.titleElem, this.messageElem, this.wizardElement);
         this.root.replaceChildren(this.dialog);
 
         this.listen(this.wizardElement, "click", event => this.onClick(event));
@@ -1305,6 +1304,7 @@ export class AutomationModal extends Component {
             }
 
             const deleteButton = this.button(TEXT_DELETE, AUTOMATION_UI_ACTION_DELETE);
+            deleteButton.classList.add("button-error");
             footer.appendChild(deleteButton);
         }
 

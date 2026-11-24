@@ -28,27 +28,33 @@ import { mountPage, readPageData } from "../core/page.js";
 import { submitForm } from "../services/forms.js";
 import { uploadOtaFile } from "../services/firmware.js";
 import { mountModuleSettings } from "../ui_components/module_settings.js";
-import { LoadingBannerManager, Overlay } from "../../vendor/templates/js/ui_components/index.js";
+import { LoadingBannerManager, Overlay, StandardTable } from "../../vendor/templates/js/ui_components/index.js";
 
 const { http, banners, popup, components, signal } = mountPage("configuration");
 const settings = readPageData();
-let { logs } = settings;
+const { logs } = settings;
 const version = document.getElementById("shellData").dataset.version;
-const logTableHeaderElem = document.getElementById("logTableHeader");
-const logTableElem = document.getElementById("logTable");
+const markLogsBtnElem = document.getElementById("markLogsBtn");
 const otaPackageFileUploadElem = document.getElementById("otaPackageFileUpload");
-const LOG_COLUMNS = [TEXT_TYPE, TEXT_MESSAGE, TEXT_DATE, TEXT_TIME];
-const NOTE = 0;
-const WARNING = 1;
-const ERROR = 2;
-const FATAL_ERROR = 3;
+const logTypes = [TEXT_NOTE, TEXT_WARNING, TEXT_ERROR, TEXT_FATAL_ERROR];
+const logTable = new StandardTable(document.getElementById("logTableContainer"), {
+    title: TEXT_LOGS_FROM_MASTER,
+    columns: [
+        { key: "type", title: TEXT_TYPE, render: renderLogType },
+        { key: "log", title: TEXT_MESSAGE, render: renderLogMessage },
+        { key: "date", title: TEXT_DATE },
+        { key: "time", title: TEXT_TIME }
+    ],
+    rows: logs,
+    emptyMessage: TEXT_NO_LOGS_FOUND
+}).mount();
 
 const progress = new LoadingBannerManager(document.querySelector('[data-ref="firmware-progress"]')).mount();
 const overlay = new Overlay(document.querySelector('[data-ref="firmware-overlay"]'), {
     fullPage: true
 }).mount();
 
-components.push(progress, overlay);
+components.push(progress, overlay, logTable);
 document.getElementById("currentLedstripFirmwareVersionField").textContent = version;
 document.getElementById("modulesTitle").textContent = TEXT_API_KEYS;
 mountModuleSettings(document, { http, signal, banners }, settings);
@@ -73,7 +79,9 @@ for (const [field, next] of [
 document.getElementById("resetToFactoryConfigurationBtn")
     .addEventListener("click", resetSettings, { signal });
 otaPackageFileUploadElem.addEventListener("change", uploadFirmware, { signal });
-generateLogTable();
+markLogsBtnElem.textContent = TEXT_MARK_LOGS_READ;
+markLogsBtnElem.hidden = logs.length === 0;
+markLogsBtnElem.addEventListener("click", markLogsRead, { signal });
 if (new URLSearchParams(location.search).has("show_welcome_message")) {
     banners.show({
         title: TEXT_WELCOME,
@@ -118,8 +126,8 @@ async function resetSettings() {
 async function markLogsRead() {
     try {
         await submitForm(http, API_URL_MARK_LOGS_READ, {}, signal);
-        logs = [];
-        generateLogTable();
+        logTable.update({ rows: [] });
+        markLogsBtnElem.hidden = true;
     } catch (error) {
         reportError(error);
     }
@@ -209,158 +217,34 @@ async function uploadFirmware() {
 
 /****************************************************************************/
 /*!
- * @brief   Builds the log table header and its current rows.
+ * @brief   Displays the localized severity with its log color.
+ * @param   value                   Numeric controller log severity.
  */
 /****************************************************************************/
-function generateLogTable() {
-    logTableHeaderElem.innerHTML = "";
-    logTableElem.innerHTML = "";
-
-    generateLogTableHead();
-    generateLogTableBody();
+function renderLogType(value) {
+    const label = document.createElement("span");
+    const severity = ["success", "warning", "error", "error"][value];
+    if (severity) label.classList.add(severity);
+    label.textContent = logTypes[value] ?? "";
+    return label;
 }
 
 /****************************************************************************/
 /*!
- * @brief   Builds the log table column headings and sorting controls.
+ * @brief   Highlights bracketed values without interpreting log messages as HTML.
+ * @param   message                 Controller log text.
  */
 /****************************************************************************/
-function generateLogTableHead() {
-    let row;
-    let th;
-    let cellContent;
-    let icon;
-
-    /* Row 1 */
-    let tHead = logTableHeaderElem.createTHead();
-
-    row = tHead.insertRow();
-
-    th = document.createElement("th");
-    th.colSpan = LOG_COLUMNS.length - 1;
-
-    /* Header title */
-    cellContent = document.createTextNode(TEXT_LOGS_FROM_MASTER);
-    th.appendChild(cellContent);
-    row.appendChild(th);
-
-    /* Options */
-    /* Mark logs as read */
-    th = document.createElement("th");
-    th.style.textAlign = "right";
-
-    icon = document.createElement("i");
-    icon.className = "fa-solid fa-check clickable";
-
-    /****************************************************************************/
-    /*!
-     * @brief   Runs the action bound to the selected control.
-     * @returns Calculated value or configured element.
-     */
-    /****************************************************************************/
-    icon.onclick = () => markLogsRead();
-    icon.title = TEXT_MARK_LOGS_READ;
-
-    if (logs.length > 0) {
-        th.appendChild(icon);
-    }
-    row.appendChild(th);
-
-    /* Row 2 */
-    row = tHead.insertRow();
-    row.style.backgroundColor = "var(--background5)";
-
-    for (let column of LOG_COLUMNS) {
-        let th = document.createElement("th");
-        let cellContent = document.createTextNode(column);
-
-        th.style.width = "10%";
-
-        if (column == TEXT_MESSAGE) {
-            th.style.width = "70%";
+function renderLogMessage(message) {
+    const fragment = document.createDocumentFragment();
+    for (const part of String(message).split(/(\[[^\]]*\])/)) {
+        if (part.startsWith("[") && part.endsWith("]")) {
+            const emphasis = document.createElement("strong");
+            emphasis.textContent = part.slice(1, -1);
+            fragment.append(emphasis);
+        } else {
+            fragment.append(part);
         }
-
-        th.appendChild(cellContent);
-        row.appendChild(th);
     }
-}
-
-/****************************************************************************/
-/*!
- * @brief   Renders the controller logs in the selected sort order.
- */
-/****************************************************************************/
-function generateLogTableBody() {
-    let row;
-    let cell;
-    let cellContent;
-
-    /* If no logs, alternative row */
-    if (logs.length == 0) {
-        row = logTableElem.insertRow();
-
-        cell = row.insertCell();
-        cell.colSpan = LOG_COLUMNS.length; //Span over all columns
-        cell.style.textAlign = "center";
-
-        cellContent = document.createTextNode(TEXT_NO_LOGS_FOUND);
-        cell.appendChild(cellContent);
-        row.appendChild(cell);
-
-        return;
-    }
-
-    for (let log of logs) {
-        row = logTableElem.insertRow();
-
-        let typeString = "";
-        let backgroundColor = "";
-
-        /* Give every type another color based on priority */
-        if (log.type == NOTE) {
-            typeString = TEXT_NOTE;
-            backgroundColor = "var(--row-green)";
-        } else if (log.type == WARNING) {
-            typeString = TEXT_WARNING;
-            backgroundColor = "var(--row-orange)";
-        } else if (log.type == ERROR) {
-            typeString = TEXT_ERROR;
-            backgroundColor = "var(--row-red)";
-        } else if (log.type == FATAL_ERROR) {
-            typeString = TEXT_FATAL_ERROR;
-            backgroundColor = "var(--row-red)";
-        }
-
-        row.style.backgroundColor = backgroundColor;
-
-        /* Log type */
-        cell = row.insertCell();
-        cell.style.width = "10%";
-        cellContent = document.createTextNode(typeString);
-        cell.appendChild(cellContent);
-
-        /* Log message */
-        cell = row.insertCell();
-        cell.style.width = "70%";
-
-        for (const part of String(log.log).split(/(\[[^\]]*\])/)) {
-            if (part.startsWith("[") && part.endsWith("]")) {
-                const bold = document.createElement("b");
-                bold.textContent = part.slice(1, -1);
-                cell.append(bold);
-            } else cell.append(document.createTextNode(part));
-        }
-
-        /* Log date */
-        cell = row.insertCell();
-        cell.style.width = "10%";
-        cellContent = document.createTextNode(log.date);
-        cell.appendChild(cellContent);
-
-        /* Log time */
-        cell = row.insertCell();
-        cell.style.width = "10%";
-        cellContent = document.createTextNode(log.time);
-        cell.appendChild(cellContent);
-    }
+    return fragment;
 }

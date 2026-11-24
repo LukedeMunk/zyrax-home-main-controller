@@ -791,3 +791,41 @@ a:active {
         animation-iteration-count: 1 !important;
     }
 }
+
+.confirmation-dialog {
+    width: min(92%, 480px);
+}
+
+.confirmation-dialog::backdrop {
+    background: rgb(0 0 0 / 48%);
+}
+
+button.button-info {
+    --action-background: #245da8;
+    --action-hover: #194982;
+}
+
+button.button-success {
+    --action-background: #18724e;
+    --action-hover: #11593d;
+}
+
+button.button-warning {
+    --action-background: #f59b32;
+    --action-hover: #f9af52;
+    --action-text: #271708;
+}
+
+button.button-error {
+    --action-background: #b53045;
+    --action-hover: #992338;
+}
+
+button:is(.button-info, .button-success, .button-warning, .button-error) {
+    background: var(--action-background);
+    color: var(--action-text, white);
+}
+
+button:is(.button-info, .button-success, .button-warning, .button-error):hover:not(:disabled) {
+    background: var(--action-hover);
+}

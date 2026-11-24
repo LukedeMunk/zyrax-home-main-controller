@@ -89,7 +89,7 @@ async function remove(id) {
     if (!(await editor.confirmation.confirm({
         title: TEXT_Q_ARE_YOU_SURE,
         message: TEXT_Q_DELETE_AUTOMATION,
-        type: "warning",
+        type: "error",
         confirmLabel: TEXT_DELETE,
         cancelLabel: TEXT_CANCEL
     }))) return;
@@ -130,7 +130,6 @@ function render() {
             title: item.name,
             size: TILE_SIZE_2X2,
             subtitle1: subtitle,
-            subtitle2: action?.type ?? TEXT_AUTOMATION_NOT_CONFIGURED,
             icons: [{ icon: getIconFromNormalizedTrigger(trigger), title: subtitle }, {
                 icon: getIconFromAction(action?.type),
                 title: action?.type ?? TEXT_AUTOMATION_NOT_CONFIGURED

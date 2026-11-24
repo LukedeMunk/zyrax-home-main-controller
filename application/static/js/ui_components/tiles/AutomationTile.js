@@ -31,7 +31,6 @@ export class AutomationTile extends Tile {
         super(root, configuration);
 
         this.subtitle1 = configuration.subtitle1;
-        this.subtitle2 = configuration.subtitle2;
         this.subtitleColor = "var(--success-text)";
 
         this.icons = configuration.icons;
@@ -44,7 +43,6 @@ export class AutomationTile extends Tile {
 
         this.checkboxElementId = this.id + "AutomationEnabledCb";
         this.subtitle1Id = this.id + "AutomationSubtitle1";
-        this.subtitle2Id = this.id + "AutomationSubtitle2";
     }
 
     /****************************************************************************/
@@ -180,18 +178,6 @@ export class AutomationTile extends Tile {
             subTitle1Elem.style.fontSize = "var(--font-size-extra-small)";
             subTitle1Elem.style.opacity = "0.6";
             titleContainer.appendChild(subTitle1Elem);
-        }
-
-        if (this.subtitle2 && this.size > TILE_SIZE_1X1) {
-            const subTitle2Elem = document.createElement("p");
-            subTitle2Elem.id = this.subtitle2Id;
-            subTitle2Elem.textContent = this.subtitle2;
-            if (this.subtitleColor) {
-                subTitle2Elem.style.color = this.subtitleColor;
-            }
-            subTitle2Elem.style.fontSize = "var(--font-size-extra-small)";
-            subTitle2Elem.style.opacity = "0.6";
-            titleContainer.appendChild(subTitle2Elem);
         }
 
         return titleContainer;

@@ -9,7 +9,6 @@
 #           https://github.com/LukedeMunk/zyrax-home-main-controller
 #
 ################################################################################
-import json
 
 from flask import Blueprint, request                                    #Import flask blueprints and requests
 from threading import Lock
@@ -33,7 +32,7 @@ bridge_event_lock = Lock()
 ################################################################################
 #
 #   @brief  Routes a firmware event to the registered device and automation bus.
-#   @param  payload             Normalized event from the Hub form endpoint
+#   @param  payload             Normalized event from the Hub JSON endpoint
 #   @return Response            Bridge queue acknowledgement
 #
 ################################################################################
@@ -206,20 +205,18 @@ def set_ota_state():
 
 ################################################################################
 #
-#   @brief  Receives a queued Hub signal through form fields.
+#   @brief  Receives a queued Hub signal as JSON.
 #   @return Response            Idempotent acknowledgement or event validation error
 #
 ################################################################################
 @system_bp.route(c.API_URL_HUB_SIGNAL_RECEIVED, methods=["POST"])
 def hub_signal_received():
-    try:
-        frame = json.loads(request.form.get("data", ""))
-    except (TypeError, ValueError):
+    event = request.get_json(silent=True)
+    if not isinstance(event, dict):
         return generate_json_http_response(c.HTTP_CODE_BAD_REQUEST, "Invalid Hub event data.", True)
-
-    payload = {
-        "event_id": request.form.get("event_id"),
-        "bridge_id": request.form.get("id"),
-        "data": frame
-    }
-    return receive_bridge_event(payload)
+        
+    return receive_bridge_event({
+        "event_id": event.get("event_id", request.headers.get("Idempotency-Key")),
+        "bridge_id": event.get("hub_id"),
+        "data": event.get("data")
+    })

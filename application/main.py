@@ -87,10 +87,10 @@ def before_http_requests():
     if request.path.startswith("/static"):
         return
     
-    if request.path.startswith("/add_account"):
+    if request.path.startswith(c.API_URL_ADD_ACCOUNT):
         return
     
-    if request.path.startswith("/get_default_profile_picture"):
+    if request.path.startswith(c.API_URL_GET_PROFILE_PICTURE):
         return
     
     return initial_setup()
@@ -110,6 +110,7 @@ if __name__ == "__main__":
     sm.check_microservices()
     sm.check_database()
     sm.register_blueprints()                                                    #Register the HTTP routes
+    
     if behind_nginx:
         sm.app.wsgi_app = ProxyFix(sm.app.wsgi_app, x_for=1, x_proto=1)
         sm.app.config["SESSION_COOKIE_SECURE"] = True

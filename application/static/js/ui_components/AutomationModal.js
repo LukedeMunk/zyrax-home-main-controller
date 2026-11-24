@@ -83,7 +83,7 @@ import { AUTOMATION_UI_ACTION_ADD_TRIGGER } from "../domain/automation_draft.js"
 import { Component } from "../../vendor/templates/js/core/component.js";
 import { AnimationController } from "../../vendor/templates/js/core/animation.js";
 import { PopupManager } from "../../vendor/templates/js/ui_components/index.js";
-import { catalogIcon } from "./catalog_view.js";
+import { decorateCatalogChoice } from "./catalog_view.js";
 import { SYMBOL_CRITICAL_RE } from "../domain/validation.js";
 
 export class AutomationModal extends Component {
@@ -1589,7 +1589,7 @@ export class AutomationModal extends Component {
         this.sourceOptions(item.target_type, true).filter(
             ([id]) => this.actionCompatible({ ...item, target_ids: [id] }, false)
         ).forEach(option => {
-            const label = this.element("label", "automation-target-option automation-choice-tile");
+            const label = this.element("label", "automation-target-option");
             const input = this.element("input");
 
             input.type = "checkbox";
@@ -2119,7 +2119,7 @@ export class AutomationModal extends Component {
 
         const grid = this.element("div", "catalog-choices");
         for (const [value, text] of options) {
-            const label = this.element("label", "automation-choice-tile");
+            const label = this.element("label");
             const input = this.element("input");
 
             input.type = "radio";
@@ -2178,9 +2178,7 @@ export class AutomationModal extends Component {
             icon = "fa-solid fa-hand-pointer";
         }
 
-        const check = this.element("i", "fa-solid fa-check automation-choice-check");
-        check.setAttribute("aria-hidden", "true");
-        label.append(input, catalogIcon(icon), this.element("strong", "", text), check);
+        decorateCatalogChoice(label, input, icon, text);
     }
 
     /****************************************************************************/

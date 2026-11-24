@@ -73,7 +73,10 @@ def add_device(config_dict):
             config_dict["id"] = device.id
 
             if config_dict.get("bridge_hostname"):
-                db.session.add(BridgeHost(device_id=device.id, hostname=config_dict["bridge_hostname"]))
+                db.session.add(BridgeHost(
+                    device_id=device.id, hostname=config_dict["bridge_hostname"],
+                    api_version=config_dict.get("api_version", c.DEFAULT_BRIDGE_API_VERSION)
+                ))
 
             if device.type == c.DEVICE_TYPE_LEDSTRIP:
                 _add_ledstrip(config_dict)
@@ -141,8 +144,8 @@ def update_device(id, config_dict):
                 {"name": device.name}, synchronize_session=False
             )
 
-        if "bridge_hostname" in config_dict:
-            db.session.merge(BridgeHost(device_id=id, hostname=config_dict["bridge_hostname"]))
+        if device.role == "bridge":
+            _update_bridge(id, config_dict)
 
         if device.type == c.DEVICE_TYPE_RF_DEVICE:
             device.parent_device_id = None
@@ -281,6 +284,8 @@ def get_devices(type=None):
         elif device["type"] == c.DEVICE_TYPE_IP_CAMERA:
             camera = _get_camera(id=device["id"])
             device.update(camera)
+        elif device["role"] == "bridge":
+            device.update(get_bridge(device["id"]))
         
         device_list.append(device)
 
@@ -307,9 +312,49 @@ def get_device(id):
     elif device["type"] == c.DEVICE_TYPE_IP_CAMERA:
         camera = _get_camera(id=device["id"])
         device.update(camera)
+    elif device["role"] == "bridge":
+        device.update(get_bridge(device["id"]))
         
     return device
 #endregion
+
+
+################################################################################
+#
+#   @brief  Returns saved bridge settings and API metadata for a device.
+#   @param  id                  Bridge device ID
+#   @return dict               Bridge fields, excluding the duplicate device ID
+#
+################################################################################
+def get_bridge(id):
+    with app.app_context():
+        bridge = db.session.get(BridgeHost, id)
+        if bridge is None:
+            return {}
+        configuration = core.row_to_dictionary(bridge)
+        configuration.pop("device_id", None)
+
+        return configuration
+
+
+################################################################################
+#
+#   @brief  Updates existing bridge settings without replacing saved metadata.
+#   @param  id                  Bridge device ID
+#   @param  config_dict         Changed device fields or reported metadata
+#
+################################################################################
+def _update_bridge(id, config_dict):
+    bridge = db.session.get(BridgeHost, id)
+    if bridge is None:
+        return
+
+    if "bridge_hostname" in config_dict:
+        bridge.hostname = config_dict["bridge_hostname"]
+    for field in ("api_version", "firmware_version", "ip_address", "port", "connection_status"):
+        if field in config_dict:
+            setattr(bridge, field, config_dict[field])
+
 
 #region Ledstrip functionality
 ################################################################################
@@ -325,6 +370,7 @@ def _add_ledstrip(config_dict):
         id=config_dict["id"],
         icon_low_state=config_dict["icon_low_state"],
         hostname=config_dict["hostname"],
+        api_version=config_dict.get("api_version", c.DEFAULT_LEDSTRIP_API_VERSION),
         has_sensor=config_dict["has_sensor"],
         number_of_leds=config_dict["number_of_leds"]
     ))
@@ -377,6 +423,9 @@ def _update_ledstrip(id, config_dict):
 
     if "firmware_version" in config_dict:
         ledstrip.firmware_version = config_dict["firmware_version"]
+
+    if "api_version" in config_dict:
+        ledstrip.api_version = config_dict["api_version"]
 
     if "sd_card_inserted" in config_dict:
         ledstrip.sd_card_inserted = config_dict["sd_card_inserted"]
@@ -819,9 +868,10 @@ def _get_camera(id):
     return core.row_to_dictionary(camera)
 #endregion
 
+
 ################################################################################
 #
-#   @brief  Validates a registration or a catalog edit.
+#   @brief  Validates device registrations, catalog edits and LED settings.
 #   @param  payload             Submitted device fields
 #   @param  device              Existing device, or None for registration
 #   @return dict                Validated device configuration
@@ -859,6 +909,16 @@ def validate_device(payload, device):
         if device.type == c.DEVICE_TYPE_LEDSTRIP and parent_id is not None:
             raise ValueError(c.TEXT_DEVICE_LEDSTRIP_DIRECT)
         config.update(_validate_catalog_icons(payload, device.type))
+
+        hardware_settings = {"hostname", "has_sensor", "sensor_inverted"}
+        if device.type == c.DEVICE_TYPE_LEDSTRIP and hardware_settings.intersection(payload):
+            settings = get_ledstrip(device.id)
+            settings.update(payload)
+            config.update(_validate_ledstrip_registration(settings))
+            if "sensor_inverted" in payload:
+                if type(payload["sensor_inverted"]) is not bool:
+                    raise ValueError(c.TEXT_DEVICE_CONTACT_INVALID)
+                config["sensor_inverted"] = payload["sensor_inverted"]
         return config
 
     if role == "bridge":

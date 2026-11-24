@@ -26,7 +26,7 @@ dashboard_bp = Blueprint("dashboard_blueprints", __name__)
 #   @brief  Adds a dashboard configuration to the database.
 #
 ################################################################################
-@dashboard_bp.route("/add_dashboard_configuration", methods=["POST"])
+@dashboard_bp.route(c.API_URL_ADD_DASHBOARD_CONFIGURATION, methods=["POST"])
 @minimum_role_required()
 def add_dashboard_configuration():
     config = {
@@ -50,7 +50,7 @@ def add_dashboard_configuration():
 #   @brief  Updates the specified dashboard configuration
 #
 ################################################################################
-@dashboard_bp.route("/update_dashboard_configuration", methods=["POST"])
+@dashboard_bp.route(c.API_URL_UPDATE_DASHBOARD_CONFIGURATION, methods=["POST"])
 @minimum_role_required()
 def update_dashboard_configuration():
     id = int(request.form.get("id"))
@@ -75,7 +75,7 @@ def update_dashboard_configuration():
 #   @brief  Deletes the specified dashboard configuration from the database.
 #
 ################################################################################
-@dashboard_bp.route("/delete_dashboard_configuration", methods=["POST"])
+@dashboard_bp.route(c.API_URL_DELETE_DASHBOARD_CONFIGURATION, methods=["POST"])
 @minimum_role_required()
 def delete_dashboard_configuration():
     id = int(request.form.get("id"))
@@ -91,7 +91,7 @@ def delete_dashboard_configuration():
 #   @brief  Adds a tile to the specified dashboard configuration.
 #
 ################################################################################
-@dashboard_bp.route("/add_dashboard_tile", methods=["POST"])
+@dashboard_bp.route(c.API_URL_ADD_DASHBOARD_TILE, methods=["POST"])
 @minimum_role_required()
 def add_dashboard_tile():
     config = {
@@ -127,7 +127,7 @@ def add_dashboard_tile():
 #   @brief  Updates the specified tile of the specified dashboard configuration.
 #
 ################################################################################
-@dashboard_bp.route("/update_dashboard_tile", methods=["POST"])
+@dashboard_bp.route(c.API_URL_UPDATE_DASHBOARD_TILE, methods=["POST"])
 @minimum_role_required()
 def update_dashboard_tile():
     id = int(request.form.get("id"))
@@ -155,7 +155,7 @@ def update_dashboard_tile():
 #           configuration.
 #
 ################################################################################
-@dashboard_bp.route("/delete_dashboard_tile", methods=["POST"])
+@dashboard_bp.route(c.API_URL_DELETE_DASHBOARD_TILE, methods=["POST"])
 @minimum_role_required()
 def delete_dashboard_tile():
     id = int(request.form.get("id"))
@@ -172,7 +172,7 @@ def delete_dashboard_tile():
 #           configuration.
 #
 ################################################################################
-@dashboard_bp.route("/reset_dashboard_tile_order", methods=["POST"])
+@dashboard_bp.route(c.API_URL_RESET_DASHBOARD_TILE_ORDER, methods=["POST"])
 @minimum_role_required()
 def reset_dashboard_tile_order():
     id = int(request.form.get("id"))

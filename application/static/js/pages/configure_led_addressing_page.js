@@ -12,6 +12,9 @@
 /****************************************************************************/
 
 import {
+    API_URL_UPDATE_LEDSTRIP_LEDS
+} from "../domain/endpoints.js";
+import {
     TEXT_ADDRESSING_CONFIGURATION_LOADED, TEXT_ASSIGN_ADDRESS, TEXT_CANCEL,
     TEXT_CHANGES_SAVED_SUCCESSFULLY, TEXT_CLEAR, TEXT_ERROR, TEXT_INACTIVE_SEGMENT,
     TEXT_INVALID_ADDRESSING_NO_ADDRESSES, TEXT_LED_SEGMENT, TEXT_MAXIMUM_NUMBER_OF_LEDS_REACHED,
@@ -241,7 +244,7 @@ async function save() {
     };
 
     try {
-        await saveDrawing(http, "/update_ledstrip_leds", data, signal);
+        await saveDrawing(http, API_URL_UPDATE_LEDSTRIP_LEDS, data, signal);
     } catch (error) {
         if (!signal.aborted) banners.show({
             title: TEXT_ERROR,

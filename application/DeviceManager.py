@@ -27,7 +27,7 @@ from automation import (AdapterRegistry, AutomationEngine,
                         AutomationRunService, Event, EventDispatcher, EventType)
 from automation.adapter_registry import AdapterRoutingError
 from automation.domain import Capability, Command
-from Bridge import BridgeCommandAdapter
+from Bridge import Bridge, BridgeCommandAdapter
 from automation.device_adapters import DeviceCommandAdapter, RfInputAdapter
 
 class DeviceManager:
@@ -417,17 +417,6 @@ class DeviceManager:
 
     ################################################################################
     #
-    #   @brief  Returns the color of the specified ledstrip.
-    #   @param  id                  Device ID
-    #   @return string              Color in HEX format
-    #
-    ################################################################################
-    def get_ledstrip_color(self, id):
-        parameter = db_util.get_ledstrip_mode_configuration(c.LEDSTRIP_MODE_ID_COLOR, id)["parameters"][0]
-        return parameter["value1"]
-
-    ################################################################################
-    #
     #   @brief  Sends the drawn LEDs in the UI to the specified ledstrip.
     #   @param  id                  Device ID
     #   @param  leds                List of colors for the ledstrip
@@ -499,6 +488,23 @@ class DeviceManager:
             db_util.get_group(id=group_id), Capability.MODE_CONFIGURE,
             {"mode": mode_id, "configuration": config_list}
         )
+
+    ################################################################################
+    #
+    #   @brief  Checks connectivity for a registered LED strip or bridge.
+    #   @param  id                  Device ID
+    #   @return bool                True when the supported device is reachable
+    #
+    ################################################################################
+    def check_device_connection_status(self, id):
+        if self._get_ledstrip(id) is not None:
+            return self.check_ledstrip_connection_status(id)
+
+        device = next((item for item in self.devices if item["id"] == id), None)
+        if device is not None and device.get("role") == "bridge":
+            return Bridge(db_util.get_device(id)).check_connection_status()
+
+        return False
 
     ################################################################################
     #
@@ -1083,22 +1089,7 @@ class DeviceManager:
     #
     ################################################################################
     def update_group(self, id, config_dict):
-        result = db_util.update_group(id, config_dict)
-        if "name" in config_dict:
-            config_dict.pop("name")
-        if "icon" in config_dict:
-            config_dict.pop("icon")
-
-        group = db_util.get_group(id)
-
-        for device_id in group["device_ids"]:
-            device = db_util.get_device(device_id)
-            if device["type"] == c.DEVICE_TYPE_LEDSTRIP:
-                self.update_ledstrip(device_id, config_dict)
-            elif device["type"] == c.DEVICE_TYPE_RF_DEVICE:
-                db_util.update_device(device_id, config_dict)
-
-        return result
+        return db_util.update_group(id, config_dict)
 
     ################################################################################
     #

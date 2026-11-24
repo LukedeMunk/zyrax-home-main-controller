@@ -9,6 +9,9 @@
 #           https://github.com/LukedeMunk/zyrax-home-main-controller
 #
 ################################################################################
+import json
+
+from werkzeug.exceptions import BadRequest
 from flask import Blueprint, request, session                                   #Import flask blueprints and requests
 import configuration as c                                                       #Import application configuration variables
 from DeviceManager import DeviceManager                                         #Import device manager
@@ -36,108 +39,15 @@ def handle_ledstrip_routing_error(error):
 #region Administrative ledstrip functionality
 ################################################################################
 #
-#   @brief  Adds a ledstrip to the database.
-#
-################################################################################
-@ledstrip_bp.route("/add_ledstrip", methods=["POST"])
-@minimum_role_required()
-def add_ledstrip():
-    config = {
-        "name" : request.form.get("name"),
-        "hostname" : request.form.get("hostname"),
-        "icon" : request.form.get("icon"),
-        "icon_low_state" : request.form.get("icon_low_state"),
-        "ip_address" : request.form.get("ip_address"),
-        "has_sensor" : int(request.form.get("has_sensor")),
-        "sensor_inverted" : int(request.form.get("sensor_inverted")),
-        "sensor_model" : c.LEDSTRIP_SENSOR_MODEL_CONTACT_SWITCH,
-        "number_of_leds" : 0,
-        "model_id" : int(request.form.get("model_id")),
-    }
-
-    if "sensor_model" in request.form.get("sensor_model"):
-        config["sensor_model"] = int(request.form.get("sensor_model"))
-
-    result = dm.add_ledstrip(config)
-    if not result[0]:
-        return generate_json_http_response(c.HTTP_CODE_BAD_REQUEST, result[1])
-
-    response = {
-        "id": result[1],
-        "devices": dm.get_devices_dict()
-    }
-    return generate_json_http_response(c.HTTP_CODE_OK, response)
-
-################################################################################
-#
-#   @brief  Updates the specified ledstrip.
-#
-################################################################################
-@ledstrip_bp.route("/update_ledstrip", methods=["POST"])
-@minimum_role_required()
-def update_ledstrip():
-    id = int(request.form.get("id"))
-    
-    config = {}
-    
-    if request.form.get("name") is not None:
-        config["name"] = request.form.get("name")
-    if request.form.get("hostname") is not None:
-        config["hostname"] = request.form.get("hostname")
-    if request.form.get("icon") is not None:
-        config["icon"] = request.form.get("icon")
-    if request.form.get("icon_low_state") is not None:
-        config["icon_low_state"] = request.form.get("icon_low_state")
-    if request.form.get("ip_address") is not None:
-        config["ip_address"] = request.form.get("ip_address")
-    if request.form.get("model_id") is not None:
-        config["model_id"] = int(request.form.get("model_id"))
-
-    if request.form.get("has_sensor") is not None:
-        config["has_sensor"] = int(request.form.get("has_sensor"))
-    if request.form.get("sensor_inverted") is not None:
-        config["sensor_inverted"] = int(request.form.get("sensor_inverted"))
-    if request.form.get("sensor_model") is not None:
-        config["sensor_model"] = int(request.form.get("sensor_model"))
-
-    result = dm.update_ledstrip(id, config)
-    if not result[0]:
-        return generate_json_http_response(c.HTTP_CODE_BAD_REQUEST, result[1])
-
-    response = {
-        "devices": dm.get_devices_dict()
-    }
-    return generate_json_http_response(c.HTTP_CODE_OK, response)
-
-################################################################################
-#
 #   @brief  Updates the LED addressing of the specified ledstrip.
 #
 ################################################################################
-@ledstrip_bp.route("/update_ledstrip_leds", methods=["POST"])
+@ledstrip_bp.route(c.API_URL_UPDATE_LEDSTRIP_LEDS, methods=["POST"])
 @minimum_role_required()
 def update_ledstrip_leds():
-    request_data = request.json
-
-    id = int(request_data.get("id"))
-    config = {}
-    
-    config["leds"] = request_data.get("leds")
-    config["segments"] = request_data.get("segments")
-    
+    id, _ = _get_ledstrip_target(allow_group=False)
+    config = {"leds": _read_ledstrip_array("leds"), "segments": _read_ledstrip_array("segments")}
     dm.update_ledstrip_led_addressing(id, config)
-    return generate_json_http_response(c.HTTP_CODE_OK)
-
-################################################################################
-#
-#   @brief  Deletes the specified ledstrip from the database.
-#
-################################################################################
-@ledstrip_bp.route("/delete_ledstrip", methods=["POST"])
-@minimum_role_required()
-def delete_ledstrip():
-    id = int(request.form.get("id"))
-    dm.delete_device(id)
 
     return generate_json_http_response(c.HTTP_CODE_OK)
 
@@ -146,11 +56,11 @@ def delete_ledstrip():
 #   @brief  Resends the configuration to the specified ledstrip.
 #
 ################################################################################
-@ledstrip_bp.route("/reboot_ledstrip", methods=["POST"])
+@ledstrip_bp.route(c.API_URL_REBOOT_DEVICE, methods=["POST"])
 @minimum_role_required()
 def reboot_ledstrip():
     id = int(request.form.get("id"))
-    dm.reboot_ledstrip(id)
+    dm.reboot_ledstrip(id)#todo to device
 
     return generate_json_http_response(c.HTTP_CODE_OK)
 #endregion
@@ -161,178 +71,135 @@ def reboot_ledstrip():
 #   @brief  Endpoint used to draw LEDs in real-time.
 #
 ################################################################################
-@ledstrip_bp.route("/draw_realtime_leds", methods=["POST"])
+@ledstrip_bp.route(c.API_URL_DRAW_REALTIME_LEDS, methods=["POST"])
 @minimum_role_required()
 def draw_realtime_leds():
-    request_data = request.json
-
-    id = int(request_data.get("id"))
-    leds = request_data.get("leds")
+    id, _ = _get_ledstrip_target(allow_group=False)
+    leds = _read_ledstrip_array("leds")
     dm.realtime_ledstrip_coloring(id, leds)
-        
+
     return generate_json_http_response(c.HTTP_CODE_OK)
 
 ################################################################################
 #
-#   @brief  Updates the color of the specified ledstrip.
+#   @brief  Updates the brightness of a strip or group selected by target_type.
 #
 ################################################################################
-@ledstrip_bp.route("/set_ledstrip_color", methods=["POST"])
-@minimum_role_required()
-def set_ledstrip_color():
-    id = int(request.form.get("id"))
-    dm.set_ledstrip_color(id, request.form.get("color"))
-        
-    return generate_json_http_response(c.HTTP_CODE_OK)
-
-################################################################################
-#
-#   @brief  Updates the color of the specified ledstrip group.
-#
-################################################################################
-@ledstrip_bp.route("/set_ledstrip_group_color", methods=["POST"])
-@minimum_role_required()
-def set_ledstrip_group_color():
-    id = int(request.form.get("id"))
-    dm.set_ledstrip_group_color(id, request.form.get("color"))
-        
-    return generate_json_http_response(c.HTTP_CODE_OK)
-
-################################################################################
-#
-#   @brief  Updates the brightness of the specified ledstrip.
-#
-################################################################################
-@ledstrip_bp.route("/set_ledstrip_brightness", methods=["POST"])
+@ledstrip_bp.route(c.API_URL_LEDSTRIP_SET_BRIGHTNESS, methods=["POST"])
 @minimum_role_required()
 def set_ledstrip_brightness():
-    id = int(request.form.get("id"))
-    brightness = int(request.form.get("brightness"))
-    dm.set_ledstrip_brightness(id, brightness)
+    id, is_group = _get_ledstrip_target()
+    try:
+        brightness = int(request.form.get("brightness"))
+    except (TypeError, ValueError) as error:
+        raise BadRequest("Provide an integer brightness.") from error
+
+    action = dm.set_ledstrip_group_brightness if is_group else dm.set_ledstrip_brightness
+    action(id, brightness)
 
     return generate_json_http_response(c.HTTP_CODE_OK)
 
 ################################################################################
 #
-#   @brief  Updates the brightness of the specified ledstrip group.
+#   @brief  Updates the mode of a strip or group selected by target_type.
 #
 ################################################################################
-@ledstrip_bp.route("/set_ledstrip_group_brightness", methods=["POST"])
-@minimum_role_required()
-def set_ledstrip_group_brightness():
-    id = int(request.form.get("id"))
-    brightness = int(request.form.get("brightness"))
-    dm.set_ledstrip_group_brightness(id, brightness)
-
-    return generate_json_http_response(c.HTTP_CODE_OK)
-
-################################################################################
-#
-#   @brief  Updates the mode of the specified ledstrip.
-#
-################################################################################
-@ledstrip_bp.route("/set_ledstrip_mode", methods=["POST"])
+@ledstrip_bp.route(c.API_URL_LEDSTRIP_SET_MODE, methods=["POST"])
 @minimum_role_required()
 def set_ledstrip_mode():
-    id = int(request.form.get("id"))
-    mode = int(request.form.get("mode_id"))
-    dm.set_ledstrip_mode(id, mode)
+    id, is_group = _get_ledstrip_target()
+    try:
+        mode = int(request.form.get("mode_id"))
+    except (TypeError, ValueError) as error:
+        raise BadRequest("Provide an integer mode_id.") from error
+
+    action = dm.set_ledstrip_group_mode if is_group else dm.set_ledstrip_mode
+    action(id, mode)
 
     return generate_json_http_response(c.HTTP_CODE_OK)
 
 ################################################################################
 #
-#   @brief  Updates mode of the specified ledstrip group.
+#   @brief  Updates mode parameters for a strip or group selected by target_type.
 #
 ################################################################################
-@ledstrip_bp.route("/set_ledstrip_group_mode", methods=["POST"])
-@minimum_role_required()
-def set_ledstrip_group_mode():
-    id = int(request.form.get("id"))
-    mode = int(request.form.get("mode_id"))
-    dm.set_ledstrip_group_mode(id, mode)
-
-    return generate_json_http_response(c.HTTP_CODE_OK)
-
-################################################################################
-#
-#   @brief  Updates the configuration of the specified mode for the specified
-#           device.
-#
-################################################################################
-@ledstrip_bp.route("/configure_ledstrip_mode", methods=["POST"])
+@ledstrip_bp.route(c.API_URL_CONFIGURE_LEDSTRIP_MODE, methods=["POST"])
 @minimum_role_required()
 def configure_ledstrip_mode():
-    request_data = request.json
+    id, is_group = _get_ledstrip_target()
+    try:
+        mode_id = int(request.form.get("mode_id"))
+    except (TypeError, ValueError) as error:
+        raise BadRequest("Provide an integer mode_id.") from error
 
-    mode_id = int(request_data.get("mode_id"))
-    device_id = int(request_data.get("device_id"))
-    config_list = request_data["parameters"]
+    parameters = _read_ledstrip_array("parameters")
+    if is_group:
+        dm.configure_ledstrip_group_mode(mode_id, id, parameters)
+        return generate_json_http_response(c.HTTP_CODE_OK)
 
-    dm.configure_ledstrip_mode(mode_id, device_id, config_list)
-
-    return generate_json_http_response(c.HTTP_CODE_OK, {"mode_configurations": dm.get_ledstrip_mode_configurations(device_id)})
-
-################################################################################
-#
-#   @brief  Updates the configuration of the specified mode for the specified
-#           group.
-#
-################################################################################
-@ledstrip_bp.route("/config_group_mode", methods=["POST"])
-@minimum_role_required()
-def config_group_mode():
-    request_data = request.json
-
-    mode_id = int(request_data.get("mode_id"))
-    group_id = int(request_data.get("group_id"))
-    config_list = request_data["parameters"]
-
-    dm.configure_ledstrip_group_mode(mode_id, group_id, config_list)
-
-    return generate_json_http_response(c.HTTP_CODE_OK)
+    dm.configure_ledstrip_mode(mode_id, id, parameters)
+    return generate_json_http_response(
+        c.HTTP_CODE_OK, {"mode_configurations": dm.get_ledstrip_mode_configurations(id)}
+    )
 
 ################################################################################
 #
-#   @brief  Updates the power animation of the specified ledstrip.
+#   @brief  Updates the power animation of a strip or group selected by target_type.
 #
 ################################################################################
-@ledstrip_bp.route("/set_ledstrip_power_animation", methods=["POST"])
+@ledstrip_bp.route(c.API_URL_LEDSTRIP_SET_POWER_ANIMATION, methods=["POST"])
 @minimum_role_required()
 def set_ledstrip_power_animation():
-    id = int(request.form.get("id"))
-    power_animation = int(request.form.get("power_animation"))
-    dm.set_ledstrip_power_animation(id, power_animation)
+    id, is_group = _get_ledstrip_target()
+    try:
+        power_animation = int(request.form.get("power_animation"))
+    except (TypeError, ValueError) as error:
+        raise BadRequest("Provide an integer power_animation.") from error
+
+    action = dm.set_ledstrip_group_power_animation if is_group else dm.set_ledstrip_power_animation
+    action(id, power_animation)
 
     return generate_json_http_response(c.HTTP_CODE_OK)
-
-################################################################################
-#
-#   @brief  Updates the power animation of the specified ledstrip group.
-#
-################################################################################
-@ledstrip_bp.route("/set_ledstrip_group_power_animation", methods=["POST"])
-@minimum_role_required()
-def set_ledstrip_group_power_animation():
-    id = int(request.form.get("id"))
-    power_animation = int(request.form.get("power_animation"))
-    dm.set_ledstrip_group_power_animation(id, power_animation)
-
-    return generate_json_http_response(c.HTTP_CODE_OK)
-
-################################################################################
-#
-#   @brief  Checks and sends ledstrip connection status to the front-end.
-#
-################################################################################
-@ledstrip_bp.route("/check_ledstrip_connection_status", methods=["GET"])
-@minimum_role_required()
-def check_ledstrip_connection_status():
-    id = int(request.args.get("id"))
-    status = dm.check_ledstrip_connection_status(id)
-
-    return generate_json_http_response(c.HTTP_CODE_OK, {"connection_status" : status})
 #endregion
 
 #region Utilities
 #endregion
+
+
+################################################################################
+#
+#   @brief  Reads the form target and prevents ambiguous device/group dispatch.
+#   @param  allow_group          Whether this operation supports group targets
+#   @return tuple               Integer target ID and whether it is a group
+#
+################################################################################
+def _get_ledstrip_target(allow_group=True):
+    try:
+        id = int(request.form.get("id"))
+    except (TypeError, ValueError) as error:
+        raise BadRequest("Provide an integer id.") from error
+
+    target_type = request.form.get("target_type", "device")
+    allowed = ("device", "group") if allow_group else ("device",)
+    if target_type not in allowed:
+        raise BadRequest("Unsupported target_type.")
+
+    return id, target_type == "group"
+
+
+################################################################################
+#
+#   @brief  Decodes a structured LED field from form data.
+#   @param  name                 Name of the JSON-encoded form field
+#   @return list                Decoded LED data or mode parameters
+#
+################################################################################
+def _read_ledstrip_array(name):
+    try:
+        value = json.loads(request.form.get(name, ""))
+    except (TypeError, ValueError) as error:
+        raise BadRequest(f"Provide a JSON array in {name}.") from error
+    if not isinstance(value, list):
+        raise BadRequest(f"Provide a JSON array in {name}.")
+
+    return value

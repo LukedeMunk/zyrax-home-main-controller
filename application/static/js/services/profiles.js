@@ -12,6 +12,10 @@
  */
 /****************************************************************************/
 
+import {
+    API_URL_UPLOAD_PROFILE_PICTURE
+} from "../domain/endpoints.js";
+
 /****************************************************************************/
 /*!
  * @brief   Uploads a profile picture using the controller multipart fields.
@@ -25,7 +29,7 @@ export async function uploadProfilePicture(profileId, file, signal) {
     data.append("image", file);
     data.append("profile_id", profileId);
 
-    const response = await fetch("/upload_profile_picture", { method: "POST", body: data, signal });
+    const response = await fetch(API_URL_UPLOAD_PROFILE_PICTURE, { method: "POST", body: data, signal });
     const result = await response.json();
     if (!response.ok || result.status_code !== 200) {
         throw new Error(result.message || response.statusText);

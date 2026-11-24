@@ -11,6 +11,8 @@
  */
 /****************************************************************************/
 
+import { readDevices } from "./devices.js";
+
 /****************************************************************************/
 /*!
  * @brief   Reads an LED strip state with a bounded request timeout.
@@ -21,9 +23,7 @@
  */
 /****************************************************************************/
 export function readStrip(http, id, signal) {
-    return http.get("/get_ledstrips", { id }, {
-        signal: AbortSignal.any([signal, AbortSignal.timeout(4000)])
-    });
+    return readDevices(http, { id, type: "ledstrip" }, signal);
 }
 
 /****************************************************************************/
@@ -37,7 +37,8 @@ export function readStrip(http, id, signal) {
  */
 /****************************************************************************/
 export async function updateParameters(http, url, data, signal) {
-    const result = await http.post(url, data, { signal });
+    const fields = { ...data, parameters: JSON.stringify(data.parameters) };
+    const result = await http.post(url, fields, { formEncoded: true, signal });
     if (result.status_code !== 200) throw new Error(result.message);
 
     return result.message;

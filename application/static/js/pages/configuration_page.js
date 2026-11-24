@@ -12,6 +12,9 @@
 /****************************************************************************/
 
 import {
+    API_URL_GET_OTA_PROGRESS, API_URL_MARK_LOGS_READ, API_URL_RESET_CONFIGURATION
+} from "../domain/endpoints.js";
+import {
     TEXT_API_KEYS, TEXT_APPLICATION_CONFIGURATION_RESETTED_SUCCESSFULLY, TEXT_CANCEL, TEXT_CONTINUE,
     TEXT_DATE, TEXT_DELETE, TEXT_ERROR, TEXT_FATAL_ERROR, TEXT_FILES_INVALID,
     TEXT_FIRMWARE_FILENAME_INVALID, TEXT_FIRMWARE_FILE_NOT_SUPPORTED, TEXT_LOGS_FROM_MASTER,
@@ -94,7 +97,7 @@ async function resetSettings() {
     }))) return;
 
     try {
-        await submitForm(http, "/reset_configuration", {}, signal);
+        await submitForm(http, API_URL_RESET_CONFIGURATION, {}, signal);
         document.getElementById("weatherApiKeyTxt").value = "";
         document.getElementById("telegramBotTokenTxt").value = "";
         banners.show({
@@ -114,7 +117,7 @@ async function resetSettings() {
 /****************************************************************************/
 async function markLogsRead() {
     try {
-        await submitForm(http, "/mark_logs_read", {}, signal);
+        await submitForm(http, API_URL_MARK_LOGS_READ, {}, signal);
         logs = [];
         generateLogTable();
     } catch (error) {
@@ -183,7 +186,7 @@ async function uploadFirmware() {
         await uploadOtaFile(file, signal, value => progress.updateTask(task, { progress: value }));
         banners.show({ title: TEXT_SUCCESS, message: TEXT_UPLOAD_SUCCESSFULL, type: "success" });
         progress.close(task);
-        await progress.poll("/get_ledstrip_ota_progress", {
+        await progress.poll(API_URL_GET_OTA_PROGRESS, {
             message: TEXT_SYSTEM_UPDATING,
             progress: state => state.progress,
             isFinished: state => Number(state.progress) >= 100

@@ -11,8 +11,17 @@
  */
 /****************************************************************************/
 
+import {
+    API_URL_ADD_GROUP, API_URL_UPDATE_GROUP, API_URL_DELETE_GROUP,
+    API_URL_ADD_DEVICE, API_URL_CANCEL_HUB_LEARNING_SESSION, API_URL_DELETE_CUSTOM_CODE,
+    API_URL_DELETE_DEVICE, API_URL_GET_DEVICES, API_URL_GET_HUB_LEARNING_STATUS,
+    API_URL_GET_HUB_STATUS, API_URL_GET_UNCONFIGURED_DEVICES, API_URL_RENAME_CUSTOM_CODE,
+    API_URL_SAVE_HUB_LEARNING_RESULT, API_URL_START_HUB_LEARNING_SESSION, API_URL_TRANSMIT_CODE,
+    API_URL_UPDATE_DEVICE
+} from "../domain/endpoints.js";
 import { button } from "../../vendor/templates/js/core/dom.js";
 import {
+    TEXT_CATALOG_GROUPS, TEXT_CATALOG_ADD_GROUP, TEXT_CATALOG_EDIT_GROUP, TEXT_CATALOG_NO_GROUPS,
     TEXT_BRIDGE_CAPTURED, TEXT_BRIDGE_CODE_NAME, TEXT_BRIDGE_LEARN, TEXT_BRIDGE_MISSING,
     TEXT_BRIDGE_PENDING, TEXT_BRIDGE_RECEIVE, TEXT_BRIDGE_RENAME, TEXT_BRIDGE_RETRY,
     TEXT_BRIDGE_SENT, TEXT_BRIDGE_START, TEXT_BRIDGE_STORED, TEXT_BRIDGE_TRANSMIT,
@@ -51,7 +60,7 @@ import {
 import { mountPage, readPageData } from "../core/page.js";
 import { catalogService } from "../services/catalog.js";
 import {
-    catalogElement, catalogButton, catalogIcon, catalogCard, catalogField
+    catalogElement, catalogButton, catalogIcon, catalogCard, catalogField, decorateCatalogChoice
 } from "../ui_components/catalog_view.js";
 import { BannerManager } from "../../vendor/templates/js/ui_components/index.js";
 import { ModalStack } from "../../vendor/templates/js/core/modal-stack.js";
@@ -67,6 +76,7 @@ import { ICONS_M } from "../domain/icons.js";
 const { http, signal, components, banners } = mountPage("devices");
 const catalogRequest = catalogService(http, signal);
 const {
+    groups,
     CATALOG_MODELS,
     CATALOG_RF_TYPE,
     CATALOG_IR_TYPE,
@@ -78,6 +88,8 @@ const DEVICE_CATEGORY_POWER_OUTLET = 5;
 const MAX_NUMBER_OF_LEDS = 250;
 const catalogDevicesBtnElem = document.getElementById("catalogDevicesBtn");
 const catalogBridgesBtnElem = document.getElementById("catalogBridgesBtn");
+const catalogGroupsBtnElem = document.getElementById("catalogGroupsBtn");
+const addCatalogGroupBtnElem = document.getElementById("addCatalogGroupBtn");
 const catalogTitleElem = document.getElementById("catalogTitle");
 const catalogSubtitleFieldElem = document.getElementById("catalogSubtitleField");
 const catalogCountTitleElem = document.getElementById("catalogCountTitle");
@@ -130,6 +142,7 @@ picker.querySelectorAll("[data-dismiss]").forEach(button => {
     button.addEventListener("click", () => stack.close(picker), { signal });
 });
 
+let catalogGroups = groups;
 let catalogDevices = [];
 let catalogView = "devices";
 let catalogCategory = "";
@@ -137,6 +150,8 @@ let isCatalogOnline = false;
 
 catalogDevicesBtnElem.onclick = () => showCatalogView("devices");
 catalogBridgesBtnElem.onclick = () => showCatalogView("bridges");
+catalogGroupsBtnElem.onclick = () => showCatalogView("groups");
+addCatalogGroupBtnElem.onclick = () => editCatalogGroup();
 catalogSearchTxtElem.oninput = renderCatalogCards;
 catalogRoomSelectElem.onchange = renderCatalogCards;
 catalogConnectionSelectElem.onchange = renderCatalogCards;
@@ -150,6 +165,8 @@ initializeCatalog();
 /****************************************************************************/
 function initializeCatalog() {
     const labels = {
+        TEXT_CATALOG_GROUPS,
+        TEXT_CATALOG_ADD_GROUP,
         TEXT_CATALOG_DEVICE_MANAGEMENT,
         TEXT_CATALOG_DEVICES,
         TEXT_CATALOG_BRIDGES,
@@ -190,7 +207,7 @@ function initializeCatalog() {
 /****************************************************************************/
 async function refreshCatalog() {
     try {
-        catalogDevices = await catalogRequest("/api/devices");
+        catalogDevices = await catalogRequest(API_URL_GET_DEVICES);
         isCatalogOnline = true;
 
         for (const bridge of catalogDevices.filter(item => item.role === "bridge")) {
@@ -225,17 +242,25 @@ function showCatalogView(view) {
 /****************************************************************************/
 function renderCatalog() {
     const isDeviceView = catalogView === "devices";
-    const title = isDeviceView ? TEXT_CATALOG_DEVICES : TEXT_CATALOG_BRIDGES;
+    const isGroupView = catalogView === "groups";
+    const title = { devices: TEXT_CATALOG_DEVICES, bridges: TEXT_CATALOG_BRIDGES,
+        groups: TEXT_CATALOG_GROUPS }[catalogView];
+    catalogSearchTxtElem.parentElement.hidden = isGroupView;
+    addCatalogGroupBtnElem.disabled = !isCatalogOnline;
+    catalogGroupsBtnElem.setAttribute("aria-pressed", isGroupView);
     const devices = catalogDevices.filter(device => device.role === "device" === isDeviceView);
 
     catalogDevicesBtnElem.setAttribute("aria-pressed", isDeviceView);
-    catalogBridgesBtnElem.setAttribute("aria-pressed", !isDeviceView);
+    catalogBridgesBtnElem.setAttribute("aria-pressed", catalogView === "bridges");
     catalogTitleElem.textContent = title;
     catalogSubtitleFieldElem.textContent = isDeviceView
         ? TEXT_CATALOG_HOME_SUBTITLE
         : TEXT_CATALOG_BRIDGE_SUBTITLE;
+    catalogSubtitleFieldElem.hidden = isGroupView;
     catalogCountTitleElem.textContent = title;
     catalogCountFieldElem.textContent = isCatalogOnline ? devices.length : TEXT_CATALOG_EMPTY_VALUE;
+
+    if (isGroupView) catalogCountFieldElem.textContent = catalogGroups.length;
 
     const rooms =
         [...new Set(catalogDevices.map(device => device.location).filter(Boolean))].sort();
@@ -302,6 +327,20 @@ function catalogOptions(selectElem, label, values) {
  */
 /****************************************************************************/
 function renderCatalogCards() {
+    if (catalogView === "groups") {
+        deviceCatalogFieldElem.hidden = catalogGroups.length > 0;
+        deviceCatalogFieldElem.textContent = TEXT_CATALOG_NO_GROUPS;
+        catalogCardsContainerElem.replaceChildren(...catalogGroups.map(group => catalogCard({
+            title: group.name,
+            subtitle: catalogDevices.filter(device => group.device_ids.includes(device.id))
+                .map(device => device.name).join(TEXT_CATALOG_SEPARATOR),
+            icon: group.icon,
+            badge: String(group.device_ids.length)
+        }, () => editCatalogGroup(group))));
+        for (const cardElem of catalogCardsContainerElem.children) cardElem.disabled = !isCatalogOnline;
+        return;
+    }
+
     const query = catalogSearchTxtElem.value.trim().toLocaleLowerCase("en");
     const room = catalogRoomSelectElem.value;
     const connection = catalogConnectionSelectElem.value;
@@ -959,11 +998,8 @@ function configureCatalogDevice(draft, back) {
         let saved;
 
         try {
-            saved = await catalogRequest("/api/devices" + (device
-                ? "/" + device.id
-                : ""), device
-                ? "PATCH"
-                : "POST", payload);
+            saved = await catalogRequest(device ? API_URL_UPDATE_DEVICE : API_URL_ADD_DEVICE,
+                "POST", device ? { ...payload, id: device.id } : payload);
         } catch (error) {
             errorElem.textContent = error.message;
             saveBtnElem.disabled = false;
@@ -1052,7 +1088,7 @@ function addCatalogLanFields(formElem, draft) {
         resultsElem.replaceChildren();
 
         try {
-            const devices = await catalogRequest("/get_unconfigured_devices");
+            const devices = await catalogRequest(API_URL_GET_UNCONFIGURED_DEVICES);
 
             /****************************************************************************/
             /*!
@@ -1119,7 +1155,7 @@ async function deleteCatalogDevice(device, errorElem) {
     if (!window.confirm(TEXT_CATALOG_CONFIRM_DELETE.replace("{name}", () => device.name))) return;
 
     try {
-        await catalogRequest("/api/devices/" + device.id, "DELETE");
+        await catalogRequest(API_URL_DELETE_DEVICE, "POST", { id: device.id });
         catalogWizard.close();
         await refreshCatalog();
     } catch (error) {
@@ -1139,9 +1175,7 @@ async function deleteCatalogDevice(device, errorElem) {
 /****************************************************************************/
 function catalogBridgeCodeRow(device, code, isFreeButton, statusElem) {
     const bridge = catalogDevices.find(item => item.id === code.bridge_id);
-    const base = "/api/bridges/" + code.bridge_id;
-    const codeId = encodeURIComponent(code.id);
-    const endpoint = base + "/devices/" + device.id + "/codes/" + codeId;
+    const fields = { id: code.bridge_id, device_id: device.id, code_id: code.id };
     const rowElem = catalogElement("div", "catalog-code-row");
     const titleElem = catalogElement(
         "small", "", [code.name, bridge?.name].filter(Boolean).join(TEXT_CATALOG_SEPARATOR)
@@ -1177,7 +1211,7 @@ function catalogBridgeCodeRow(device, code, isFreeButton, statusElem) {
          */
         /****************************************************************************/
         actionsElem.append(catalogButton(TEXT_BRIDGE_TRANSMIT, () => runAction(async () => {
-            await catalogRequest(base + "/transmit/" + codeId, "POST");
+            await catalogRequest(API_URL_TRANSMIT_CODE, "POST", fields);
             statusElem.textContent = [TEXT_BRIDGE_SENT, bridge?.name].filter(Boolean).join(" ");
         })));
     }
@@ -1192,7 +1226,7 @@ function catalogBridgeCodeRow(device, code, isFreeButton, statusElem) {
             const name = window.prompt(TEXT_BRIDGE_CODE_NAME, code.name)?.trim();
             if (!name || name === code.name) return;
 
-            await catalogRequest(endpoint, "PATCH", { name });
+            await catalogRequest(API_URL_RENAME_CUSTOM_CODE, "POST", { ...fields, name });
             code.name = name;
             titleElem.textContent =
                 [name, bridge?.name].filter(Boolean)
@@ -1208,7 +1242,7 @@ function catalogBridgeCodeRow(device, code, isFreeButton, statusElem) {
             if (!window.confirm(TEXT_CATALOG_CONFIRM_DELETE.replace("{name}", () =>
                 code.name))) return;
 
-            await catalogRequest(endpoint, "DELETE");
+            await catalogRequest(API_URL_DELETE_CUSTOM_CODE, "POST", fields);
             device.bridge_codes = device.bridge_codes.filter(item => item !== code);
             rowElem.remove();
         }), "catalog-code-delete");
@@ -1272,7 +1306,7 @@ function learnOnCatalogBridge(device) {
 
     progressElem.hidden = true;
 
-    let url;
+    let learningTarget;
     let timer;
     let capture = 0;
     let isClosed = false;
@@ -1290,8 +1324,8 @@ function learnOnCatalogBridge(device) {
         cancelBtnElem.disabled = true;
 
         try {
-            await catalogRequest(url, "PUT");
-            url = undefined;
+            await catalogRequest(API_URL_SAVE_HUB_LEARNING_RESULT, "POST", learningTarget);
+            learningTarget = undefined;
             catalogWizardDialogElem.removeEventListener("close", onClose);
             catalogWizardDialogElem.removeEventListener("cancel", onCancel);
             if (isClosed) return;
@@ -1330,21 +1364,22 @@ function learnOnCatalogBridge(device) {
         cancelBtnElem.disabled = true;
 
         const selected = bridgeElem.lastElementChild.value;
-        const endpoint = "/api/bridges/" + selected + "/learn/" + device.id;
+        const target = { id: selected, device_id: device.id };
 
         try {
-            await catalogRequest(endpoint, "POST", {
+            await catalogRequest(API_URL_START_HUB_LEARNING_SESSION, "POST", {
+                ...target,
                 name: nameElem.lastElementChild.value,
-                receive: canChooseDirection && directionElem.lastElementChild.value === "receive",
-                transmit: isPowerDevice && directionElem.lastElementChild.value === "transmit",
+                receive: Number(canChooseDirection && directionElem.lastElementChild.value === "receive"),
+                transmit: Number(isPowerDevice && directionElem.lastElementChild.value === "transmit"),
                 slot: Number(slotsElem.lastElementChild.value)
             });
             if (isClosed) {
-                await catalogRequest(endpoint, "DELETE");
+                await catalogRequest(API_URL_CANCEL_HUB_LEARNING_SESSION, "POST", target);
 
                 return;
             }
-            url = endpoint;
+            learningTarget = target;
             retryBtnElem.disabled = false;
             await poll();
         } catch (error) {
@@ -1386,10 +1421,10 @@ function learnOnCatalogBridge(device) {
     async function cancelLearning() {
         clearTimeout(timer);
         capture++;
-        if (!url) return true;
+        if (!learningTarget) return true;
 
-        const endpoint = url;
-        url = undefined;
+        const target = learningTarget;
+        learningTarget = undefined;
 
         const wasReady = !saveBtnElem.disabled;
         saveBtnElem.disabled = true;
@@ -1397,7 +1432,7 @@ function learnOnCatalogBridge(device) {
         cancelBtnElem.disabled = true;
 
         try {
-            await catalogRequest(endpoint, "DELETE");
+            await catalogRequest(API_URL_CANCEL_HUB_LEARNING_SESSION, "POST", target);
             progressElem.hidden = true;
             detailsElem.textContent = "";
             statusElem.textContent = "";
@@ -1405,7 +1440,7 @@ function learnOnCatalogBridge(device) {
 
             return true;
         } catch (error) {
-            url = endpoint;
+            learningTarget = target;
             statusElem.textContent = error.message;
             retryBtnElem.disabled = false;
             saveBtnElem.disabled = !wasReady;
@@ -1422,12 +1457,12 @@ function learnOnCatalogBridge(device) {
      */
     /****************************************************************************/
     async function poll() {
-        const endpoint = url;
+        const target = learningTarget;
         const currentCapture = capture;
-        if (!endpoint) return;
+        if (!target) return;
 
         try {
-            const result = await catalogRequest(endpoint);
+            const result = await catalogRequest(API_URL_GET_HUB_LEARNING_STATUS, "GET", target);
             if (isClosed || capture !== currentCapture) return;
 
             statusElem.textContent = result.message || result.state;
@@ -1498,14 +1533,14 @@ function learnOnCatalogBridge(device) {
     function onClose() {
         isClosed = true;
         clearTimeout(timer);
-        if (url && !isSaving)
+        if (learningTarget && !isSaving)
 
             /****************************************************************************/
             /*!
              * @brief   Leaves learning cancellation failures without additional UI feedback.
              */
             /****************************************************************************/
-            catalogRequest(url, "DELETE").catch(() => {});
+            catalogRequest(API_URL_CANCEL_HUB_LEARNING_SESSION, "POST", learningTarget).catch(() => {});
         catalogWizardDialogElem.removeEventListener("cancel", onCancel);
     }
 
@@ -1548,11 +1583,93 @@ function learnOnCatalogBridge(device) {
 /****************************************************************************/
 async function refreshCatalogBridgeStatus(bridge) {
     try {
-        const status = await catalogRequest("/api/bridges/" + bridge.id + "/status");
+        const status = await catalogRequest(API_URL_GET_HUB_STATUS, "GET", { id: bridge.id });
         bridge.connection_status = status.online;
     } catch {
         bridge.connection_status = false;
     }
 
     if (catalogDevices.includes(bridge) && catalogView === "bridges") renderCatalogCards();
+}
+
+/****************************************************************************/
+/*!
+ * @brief   Opens the group editor with icon and device choices.
+ * @param   group                   Existing group, or null when creating one.
+ */
+/****************************************************************************/
+function editCatalogGroup(group = null) {
+    const icons = { icon: group?.icon ?? "fa-solid fa-layer-group" };
+    const members = new Set(group?.device_ids);
+    const nameElem = catalogField("catalogGroupNameTxt", TEXT_CATALOG_NAME, "text", group?.name);
+    const inputElem = nameElem.lastElementChild;
+    const membersElem = catalogElement("fieldset", "automation-choice-field");
+    const choicesElem = catalogElement("div", "catalog-choices");
+    membersElem.append(catalogElement("legend", "", TEXT_CATALOG_DEVICES), choicesElem);
+    const errorElem = catalogElement("p");
+    const actions = [];
+    inputElem.required = true;
+    inputElem.maxLength = 50;
+    errorElem.setAttribute("role", "alert");
+
+    for (const device of catalogDevices.filter(item => item.role === "device")) {
+        const tileElem = catalogElement("label");
+        const checkElem = catalogElement("input");
+        checkElem.type = "checkbox";
+        checkElem.checked = members.has(device.id);
+        checkElem.onchange = () => {
+            if (checkElem.checked) members.add(device.id);
+            else members.delete(device.id);
+        };
+        decorateCatalogChoice(tileElem, checkElem, catalogDeviceIcon(device), device.name);
+        choicesElem.append(tileElem);
+    }
+
+    /****************************************************************************/
+    /*!
+     * @brief   Persists the requested group operation and refreshes its overview.
+     * @param   deleting                Whether to delete the current group.
+     */
+    /****************************************************************************/
+    async function submitGroup(deleting) {
+        inputElem.value = inputElem.value.trim();
+        if (!deleting && !inputElem.reportValidity()) return;
+        if (deleting && !window.confirm(TEXT_CATALOG_CONFIRM_DELETE.replace("{name}", group.name))) {
+            return;
+        }
+
+        for (const action of actions) action.disabled = true;
+        try {
+            if (deleting) {
+                await catalogRequest(API_URL_DELETE_GROUP, "POST", { id: group.id });
+                catalogGroups = catalogGroups.filter(item => item.id !== group.id);
+            } else {
+                const payload = { name: inputElem.value, icon: icons.icon, device_ids: [...members] };
+                if (group) payload.id = group.id;
+                else payload.type = 0;
+                const path = group ? API_URL_UPDATE_GROUP : API_URL_ADD_GROUP;
+                const result = await catalogRequest(path, "POST", payload);
+                catalogGroups = result.groups;
+            }
+            if (catalogWizardDialogElem.open && errorElem.isConnected) {
+                catalogWizard.close();
+                showCatalogView("groups");
+            } else {
+                renderCatalog();
+            }
+        } catch (error) {
+            errorElem.textContent = error.message;
+        } finally {
+            for (const action of actions) action.disabled = false;
+        }
+    }
+
+    if (group) actions.push(catalogButton(TEXT_CATALOG_DELETE, () => submitGroup(true)));
+    actions.push(catalogButton(TEXT_CATALOG_SAVE, () => submitGroup(false), "catalog-primary"));
+    catalogWizard.show(TEXT_CATALOG_GROUPS, group ? TEXT_CATALOG_EDIT_GROUP : TEXT_CATALOG_ADD_GROUP,
+        bodyElem => {
+            bodyElem.append(nameElem, catalogIconFields(icons, null, icons),
+                membersElem, errorElem);
+            if (!choicesElem.childElementCount) choicesElem.textContent = TEXT_CATALOG_NO_DEVICES_FOUND;
+        }, actions);
 }

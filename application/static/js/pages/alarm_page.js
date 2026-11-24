@@ -12,6 +12,10 @@
 /****************************************************************************/
 
 import {
+    API_URL_ADD_ALARM_TRIGGER_DEVICE, API_URL_ADD_DEACTIVATION_DEVICE,
+    API_URL_DELETE_ALARM_TRIGGER_DEVICE, API_URL_UPDATE_DEACTIVATION_DEVICE
+} from "../domain/endpoints.js";
+import {
     TEXT_ALARM_NOT_TRIGGERED_YET, TEXT_BACK_ONLINE, TEXT_CHANGES_SAVED_SUCCESSFULLY, TEXT_DATE,
     TEXT_DISCONNECTED_CONNECTING, TEXT_EDIT_DEACTIVATION_DEVICE, TEXT_ERROR, TEXT_FIELD_INVALID_IP,
     TEXT_FIELD_REQUIRED, TEXT_FIELD_UNIQUE, TEXT_ITEM_ADDED_SUCCESSFULLY,
@@ -466,8 +470,8 @@ async function toggleTriggerDeviceSelection(id) {
 
     try {
         await submitForm(http, selected
-            ? "/delete_alarm_trigger_device"
-            : "/add_alarm_trigger_device", { id }, signal);
+            ? API_URL_DELETE_ALARM_TRIGGER_DEVICE
+            : API_URL_ADD_ALARM_TRIGGER_DEVICE, { id }, signal);
         alarm.trigger_device_ids = selected
             ? alarm.trigger_device_ids.filter(key => key != id)
             : [...alarm.trigger_device_ids, id];
@@ -653,8 +657,8 @@ async function saveDeactivationDevice(id, manual) {
     try {
         const adding = id === -1;
         const result = await submitForm(http, adding
-            ? "/add_deactivation_device"
-            : "/update_deactivation_device", lastDeactivationDeviceData, signal);
+            ? API_URL_ADD_DEACTIVATION_DEVICE
+            : API_URL_UPDATE_DEACTIVATION_DEVICE, lastDeactivationDeviceData, signal);
         if (adding) alarm.deactivation_devices.push({
             ...lastDeactivationDeviceData,
             id: result.id

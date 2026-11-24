@@ -20,7 +20,8 @@ import json                                                                     
 class Ledstrip:
     ################################################################################
     #
-    #   @brief  Initializes class.
+    #   @brief  Loads LED state and the saved API version.
+    #   @param  init_dict               Saved device and LED-strip configuration
     #
     ################################################################################
     def __init__(self, init_dict):
@@ -30,6 +31,7 @@ class Ledstrip:
         self.ip_address = init_dict["ip_address"]
         self.port = init_dict["port"]
         self.firmware_version = init_dict["firmware_version"]
+        self.api_version = init_dict.get("api_version", c.DEFAULT_LEDSTRIP_API_VERSION)
         self.sd_card_inserted = init_dict["sd_card_inserted"]
         self.power = init_dict["power"]
         self.brightness = init_dict["brightness"]
@@ -101,7 +103,7 @@ class Ledstrip:
     #
     ################################################################################
     def send_post_command(self, command, parameters_dict={}):
-        url = "http://" + self.hostname + ".home/" + command
+        url = "http://" + self.hostname + ".home/api/" + self.api_version + "/" + command
         
         try:
             response = requests.post(url=url, data=parameters_dict, timeout=10)
@@ -148,7 +150,7 @@ class Ledstrip:
 
         config_dict["id"] = self.id
 
-        result = self.send_post_command(c.CMD_SET_CONFIGURATION, config_dict)
+        result = self.send_post_command(c.LED_COMMAND_SET_CONFIGURATION, config_dict)
 
         if result[0]:
             logi(c.VAR_TEXT_UPDATED_DEVICE.format(self.name))
@@ -166,7 +168,7 @@ class Ledstrip:
     #
     ################################################################################
     def download_states(self):
-        result = self.send_command(c.CMD_GET_STATES)
+        result = self.send_command(c.LED_COMMAND_GET_STATES)
         
         if not result[0]:
             loge(c.TEXT_CANNOT_GET_STATES)
@@ -195,7 +197,7 @@ class Ledstrip:
     #
     ################################################################################
     def download_mode_configurations(self):
-        result = self.send_command(c.CMD_GET_MODE_CONFIGURATIONS)
+        result = self.send_command(c.LED_COMMAND_GET_MODE_CONFIGURATIONS)
 
         if not result[0]:
             loge(c.TEXT_CANNOT_GET_MODE_CONFIGURATIONS)
@@ -204,16 +206,22 @@ class Ledstrip:
     
     ################################################################################
     #
-    #   @brief  Downloads the configuration from the ledstrip.
+    #   @brief  Downloads configuration and stores the reported API version.
     #   @return tuple               (False, [reason]) on error and (True,
     #                               [response]) on success
     #
     ################################################################################
     def download_configuration(self):
-        result = self.send_command(c.CMD_GET_CONFIGURATION)
-        
+        result = self.send_command(c.LED_COMMAND_GET_CONFIGURATION)
+
         if not result[0]:
             loge(c.TEXT_CANNOT_GET_MODE_CONFIGURATIONS)
+            return result
+
+        api_version = result[1].get("api_version", self.api_version)
+        if api_version != self.api_version:
+            db_util.update_device(self.id, {"api_version": api_version})
+            self.api_version = api_version
 
         return result
 
@@ -224,7 +232,7 @@ class Ledstrip:
     #
     ################################################################################
     #def download_sensor_triggers(self):
-    #    result = self.send_command(c.CMD_GET_CONFIGURATION)
+    #    result = self.send_command(c.LED_COMMAND_GET_CONFIGURATION)
     #    
     #    if not result[0]:
     #        loge("Cannot get sensor triggers")
@@ -241,7 +249,7 @@ class Ledstrip:
     ################################################################################
     def set_id(self, id):
         self.id = id
-        result = self.send_post_command(c.CMD_SET_CONFIGURATION, {"id" : id})
+        result = self.send_post_command(c.LED_COMMAND_SET_CONFIGURATION, {"id" : id})
         
         return result[0]
     
@@ -263,7 +271,7 @@ class Ledstrip:
         for led in db_ledstrip["leds"]:
             leds.append(led["address"])
 
-        return self.send_post_command(c.CMD_SET_CONFIGURATION, {"led_addresses" : "[" + ", ".join(str(address) for address in leds) + "]", "number_of_leds": len(leds)})
+        return self.send_post_command(c.LED_COMMAND_SET_CONFIGURATION, {"led_addresses" : "[" + ", ".join(str(address) for address in leds) + "]", "number_of_leds": len(leds)})
 
     ################################################################################
     #
@@ -307,7 +315,7 @@ class Ledstrip:
     #
     ################################################################################
     def reboot(self):
-        result = self.send_post_command(c.CMD_REBOOT)
+        result = self.send_post_command(c.LED_COMMAND_REBOOT)
         return result[0]
 
     ################################################################################
@@ -321,7 +329,7 @@ class Ledstrip:
         self.firmware_version = version
         self.ota_state = c.OTA_STATE_DOWNLOADING_FIRMWARE
 
-        result = self.send_post_command(c.CMD_UPDATE_FIRMWARE, {"version" : version})
+        result = self.send_post_command(c.LED_COMMAND_UPDATE_FIRMWARE, {"version" : version})
         return result[0]
 
     ################################################################################
@@ -335,7 +343,7 @@ class Ledstrip:
     def set_power(self, power, by_sensor_automation=False):
         self.power = power
         self.power_setted_by_sensor = by_sensor_automation
-        result = self.send_post_command(c.CMD_SET_POWER, {"power" : power})
+        result = self.send_post_command(c.LED_COMMAND_SET_POWER, {"power" : power})
         return result[0]
 
     ################################################################################
@@ -347,7 +355,7 @@ class Ledstrip:
     ################################################################################
     def set_brightness(self, brightness):            
         self.brightness = int(brightness)
-        result = self.send_post_command(c.CMD_SET_BRIGHTNESS, {"brightness" : self.brightness})
+        result = self.send_post_command(c.LED_COMMAND_SET_BRIGHTNESS, {"brightness" : self.brightness})
         return result[0]
 
     ################################################################################
@@ -359,7 +367,7 @@ class Ledstrip:
     ################################################################################
     def set_mode(self, mode):
         self.mode = int(mode)
-        result = self.send_post_command(c.CMD_SET_MODE, {"mode" : self.mode})
+        result = self.send_post_command(c.LED_COMMAND_SET_MODE, {"mode" : self.mode})
         return result[0]
 
     ################################################################################
@@ -371,7 +379,7 @@ class Ledstrip:
     ################################################################################
     def set_model(self, model_id):
         self.model_id = int(model_id)
-        result = self.send_post_command(c.CMD_SET_CONFIGURATION, {"model_id" : self.model_id})
+        result = self.send_post_command(c.LED_COMMAND_SET_CONFIGURATION, {"model_id" : self.model_id})
         return result[0]
 
     ################################################################################
@@ -383,7 +391,7 @@ class Ledstrip:
     #
     ################################################################################
     def realtime_ledstrip_coloring(self, leds):
-        result = self.send_post_command(c.CMD_DRAW_LEDS, {"leds" : "['" + "', '".join(str(color)[1:] for color in leds) + "']"})
+        result = self.send_post_command(c.LED_COMMAND_DRAW_LEDS, {"leds" : "['" + "', '".join(str(color)[1:] for color in leds) + "']"})
         return result[0]
 
     ################################################################################
@@ -445,7 +453,7 @@ class Ledstrip:
             self.mode = int(mode_id)
             parameters["start_mode"] = 1
 
-        result = self.send_post_command(c.CMD_CONFIG_MODE, parameters)
+        result = self.send_post_command(c.LED_COMMAND_CONFIG_MODE, parameters)
         return result[0]
         
     ################################################################################
@@ -461,7 +469,7 @@ class Ledstrip:
 
         self.power_animation = power_animation
 
-        result = self.send_post_command(c.CMD_SET_CONFIGURATION, {"power_animation" : power_animation})
+        result = self.send_post_command(c.LED_COMMAND_SET_CONFIGURATION, {"power_animation" : power_animation})
         return result[0]
         
     ################################################################################
@@ -488,5 +496,5 @@ class Ledstrip:
         if config_dict == {}:
             return True
 
-        result = self.send_post_command(c.CMD_SET_CONFIGURATION, config_dict)
+        result = self.send_post_command(c.LED_COMMAND_SET_CONFIGURATION, config_dict)
         return result[0]

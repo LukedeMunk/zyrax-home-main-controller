@@ -189,7 +189,7 @@ def realtime_led_coloring_page():
 @minimum_role_required()
 def devices_page():
     return render_template(
-        "devices.html", title=c.TEXT_DEVICE_CATALOG_TITLE,
+        "devices.html", title=c.TEXT_DEVICE_CATALOG_TITLE, groups=db_util.get_groups(),
         CURRENT_APPLICATION_VERSION=c.CURRENT_APPLICATION_VERSION,
         RF_RECEIVER_PRESENT=c.RF_RECEIVER_PRESENT,
         RF_TRANSMITTER_PRESENT=c.RF_TRANSMITTER_PRESENT,
@@ -270,7 +270,6 @@ def control_rf_devices_page():
 def control_leds_page():
     id = int(request.args.get("id"))
     ledstrip = dm.get_device_dict(id=id, update_states=True)
-    ledstrip["color"] = dm.get_ledstrip_color(id)
     title = "Control " + ledstrip["name"]
 
     print(ledstrip)

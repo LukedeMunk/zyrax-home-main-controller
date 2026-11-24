@@ -8,7 +8,7 @@
 {% block page_title %}{% endblock %}
 
 {% block content %}
-<script id="pageData" type="application/json">{{ dict(CATALOG_MODELS=DEVICE_MODELS, CATALOG_RF_TYPE=DEVICE_TYPE_RF_DEVICE, CATALOG_IR_TYPE=DEVICE_TYPE_IR_DEVICE, CATALOG_RF_TAP_MODEL=RF_SWITCH_MODEL_ID_TAP, CATALOG_LEDSTRIP_TYPE=DEVICE_TYPE_LEDSTRIP) | tojson }}</script>
+<script id="pageData" type="application/json">{{ dict(groups=groups, CATALOG_MODELS=DEVICE_MODELS, CATALOG_RF_TYPE=DEVICE_TYPE_RF_DEVICE, CATALOG_IR_TYPE=DEVICE_TYPE_IR_DEVICE, CATALOG_RF_TAP_MODEL=RF_SWITCH_MODEL_ID_TAP, CATALOG_LEDSTRIP_TYPE=DEVICE_TYPE_LEDSTRIP) | tojson }}</script>
 <div id="deviceCatalogContainer" class="device-catalog" lang="en">
     <aside class="catalog-sidebar">
         <div class="catalog-brand"><i class="fa-solid fa-bolt"></i> ZyraX
@@ -22,6 +22,10 @@
             <button id="catalogBridgesBtn" type="button">
                 <i class="fa-solid fa-network-wired"></i> <span data-catalog-text="TEXT_CATALOG_BRIDGES"></span>
             </button>
+            <button id="catalogGroupsBtn" type="button">
+                <i class="fa-solid fa-layer-group" aria-hidden="true"></i>
+                <span data-catalog-text="TEXT_CATALOG_GROUPS"></span>
+            </button>
         </nav>
         <div class="catalog-home">
             <strong><span data-catalog-text="TEXT_CATALOG_MY_HOME"></span></strong><br>
@@ -33,9 +37,16 @@
         <header class="catalog-row catalog-heading">
             <div><h1 id="catalogTitle"><span data-catalog-text="TEXT_CATALOG_DEVICES"></span></h1>
                 <small id="catalogSubtitleField"></small></div>
-            <button id="addCatalogDeviceBtn" class="catalog-primary" type="button">
-                <i class="fa-solid fa-plus"></i> <span data-catalog-text="TEXT_CATALOG_ADD_DEVICE"></span>
-            </button>
+            <div class="catalog-actions">
+                <button id="addCatalogDeviceBtn" class="catalog-primary" type="button">
+                    <i class="fa-solid fa-plus" aria-hidden="true"></i>
+                    <span data-catalog-text="TEXT_CATALOG_ADD_DEVICE"></span>
+                </button>
+                <button id="addCatalogGroupBtn" class="catalog-primary" type="button" disabled>
+                    <i class="fa-solid fa-plus" aria-hidden="true"></i>
+                    <span data-catalog-text="TEXT_CATALOG_ADD_GROUP"></span>
+                </button>
+            </div>
         </header>
         
         <div class="catalog-summary">

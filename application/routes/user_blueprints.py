@@ -9,7 +9,7 @@
 #           https://github.com/LukedeMunk/zyrax-home-main-controller
 #
 ################################################################################
-from flask import Blueprint, request, session                                   #Import flask blueprints and requests
+from flask import Blueprint, redirect, request, session                         #Import flask blueprints and requests
 import configuration as c                                                       #Import application configuration variables
 from logger import logi, logw, loge                                             #Import logging functions
 
@@ -17,7 +17,6 @@ import os                                                                       
 import database_utility as db_util                                              #Import utility for database functionality
 from werkzeug.utils import secure_filename
 import uuid
-from routes.template_blueprints import login_get
 from utilities.authentication import minimum_role_required
 from utilities.response import generate_json_http_response
 
@@ -29,7 +28,7 @@ user_bp = Blueprint("user_blueprints", __name__)
 #   @brief  Endpoint to add an account.
 #
 ################################################################################
-@user_bp.route("/add_account", methods=["POST"])
+@user_bp.route(c.API_URL_ADD_ACCOUNT, methods=["POST"])
 def add_account():
     first_account = False
     if len(db_util.get_accounts()) == 0:
@@ -68,7 +67,7 @@ def add_account():
 #   @brief  Endpoint to update the specified account.
 #
 ################################################################################
-@user_bp.route("/update_account", methods=["POST"])
+@user_bp.route(c.API_URL_UPDATE_ACCOUNT, methods=["POST"])
 @minimum_role_required()
 def update_account():    
     id = int(request.form.get("id"))
@@ -96,7 +95,7 @@ def update_account():
 #   @brief  Endpoint to delete the specified account.
 #
 ################################################################################
-@user_bp.route("/delete_account", methods=["POST"])
+@user_bp.route(c.API_URL_DELETE_ACCOUNT, methods=["POST"])
 @minimum_role_required()
 def delete_account():    
     id = int(request.form.get("id"))
@@ -120,7 +119,7 @@ def delete_account():
 #   @brief  Endpoint to update the account password.
 #
 ################################################################################
-@user_bp.route("/update_password", methods=["POST"])
+@user_bp.route(c.API_URL_UPDATE_PASSWORD, methods=["POST"])
 @minimum_role_required()
 def update_password():    
     current_password = request.form.get("current_password")                     #Get current password from arguments
@@ -147,7 +146,7 @@ def update_password():
 #           account. NOT IMPLEMENTED_YET
 #
 ################################################################################
-@user_bp.route("/reset_account_password", methods=["POST"])
+@user_bp.route(c.API_URL_RESET_PASSWORD, methods=["POST"])
 @minimum_role_required()
 def reset_account_password():    
     #id = int(request.form.get("id"))
@@ -169,7 +168,7 @@ def reset_account_password():
 #   @brief  Endpoint to add a profile.
 #
 ################################################################################
-@user_bp.route("/add_profile", methods=["POST"])
+@user_bp.route(c.API_URL_ADD_PROFILE, methods=["POST"])
 def add_profile():
     if "account_id" not in session and len(db_util.get_accounts()) > 0:
         return generate_json_http_response(c.HTTP_CODE_UNAUTHORIZED)
@@ -207,7 +206,7 @@ def add_profile():
 #   @brief  Endpoint to upload a profile picture.
 #
 ################################################################################
-@user_bp.route("/upload_profile_picture", methods=["POST"])
+@user_bp.route(c.API_URL_UPLOAD_PROFILE_PICTURE, methods=["POST"])
 @minimum_role_required()
 def upload_profile_picture():
     profile_id = int(request.form.get("profile_id"))
@@ -249,7 +248,7 @@ def upload_profile_picture():
 #   @brief  Endpoint to update the specified profile.
 #
 ################################################################################
-@user_bp.route("/update_profile", methods=["POST"])
+@user_bp.route(c.API_URL_UPDATE_PROFILE, methods=["POST"])
 @minimum_role_required()
 def update_profile():
     id = int(request.form.get("id"))
@@ -279,7 +278,7 @@ def update_profile():
 #   @brief  Endpoint to delete the specified profile.
 #
 ################################################################################
-@user_bp.route("/delete_profile", methods=["POST"])
+@user_bp.route(c.API_URL_DELETE_PROFILE, methods=["POST"])
 @minimum_role_required()
 def delete_profile():
     id = int(request.form.get("id"))
@@ -310,7 +309,7 @@ def delete_profile():
 #   @brief  Handles POST request of the login page, checks credentials.
 #
 ################################################################################
-@user_bp.route("/login", methods=["POST"])
+@user_bp.route(c.API_URL_LOGIN, methods=["POST"])
 def login_post():
     email = request.form.get("email").lower()                                   #To lowercase to avoid user typos
     password = request.form.get("password")
@@ -336,24 +335,25 @@ def login_post():
 
 ################################################################################
 #
-#   @brief  Logs out a user.
+#   @brief  Clears the session and redirects to the login UI.
+#   @return Response           Redirect to /login
 #
 ################################################################################
-@user_bp.route("/logout", methods=["GET"])
+@user_bp.route(c.API_URL_LOGOUT, methods=["GET"])
 def logout():
     if "account_id" in session:
         logi(c.VAR_TEXT_USER_LOGGED_OUT.format(session["account_id"]))
 
     session.clear()                                                             #Clear all session variables
     
-    return login_get()
+    return redirect("/login")
 
 ################################################################################
 #
 #   @brief  Selects the profile ID.
 #
 ################################################################################
-@user_bp.route("/pick_profile", methods=["POST"])
+@user_bp.route(c.API_URL_PICK_PROFILE, methods=["POST"])
 @minimum_role_required()
 def pick_profile():    
     profile_id = int(request.form.get("id"))

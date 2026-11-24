@@ -71,6 +71,9 @@ def update_group(id, config_dict):
     with app.app_context():
         group = Group.query.filter_by(id=id).first()
 
+        if group is None:
+            return (False, "Group not found")
+
         #Look for included variables
         if "name" in config_dict:
             group.name = config_dict["name"]
@@ -113,7 +116,7 @@ def delete_group(id):
 
         if group == None:
             logw("Could not find group with ID [" + str(id) + "]")
-            return
+            return (False, "Group not found")
         
         GroupHasDevice.query.filter_by(group_id=id).delete()
         DashboardHasTile.query.filter_by(group_id=id).delete()
@@ -126,7 +129,7 @@ def delete_group(id):
         
         logi("Deleted group [" + group.name + "]")
     
-    return (True)
+    return (True, "")
 
 ################################################################################
 #

@@ -12,6 +12,9 @@
 /****************************************************************************/
 
 import {
+    API_URL_ADD_ACCOUNT, API_URL_ADD_PROFILE, API_URL_GET_PROFILE_PICTURE
+} from "../domain/endpoints.js";
+import {
     TEXT_FIELD_NO_SYMBOLS, TEXT_FIELD_REQUIRED, TEXT_FIELD_UNIQUE, TEXT_INVALID_EMAIL,
     TEXT_PASSWORDS_DONT_MATCH, TEXT_PASSWORD_NOT_STRONG
 } from "../domain/language_pack_english.js";
@@ -244,6 +247,7 @@ initialize();
  */
 /****************************************************************************/
 function initialize() {
+    profilePicturePreviewElem.src = API_URL_GET_PROFILE_PICTURE + "?default=1";
     history.scrollRestoration = "manual";
     window.scrollTo(0, 0);
     rotateText();
@@ -269,7 +273,7 @@ async function createAccount() {
     }
 
     try {
-        await submitForm(http, "/add_account", data, signal);
+        await submitForm(http, API_URL_ADD_ACCOUNT, data, signal);
     } catch (error) {
         if (signal.aborted) return;
 
@@ -296,7 +300,7 @@ async function createProfile() {
     let result;
 
     try {
-        result = await submitForm(http, "/add_profile", data, signal);
+        result = await submitForm(http, API_URL_ADD_PROFILE, data, signal);
     } catch (error) {
         if (signal.aborted) return;
 

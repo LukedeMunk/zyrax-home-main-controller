@@ -11,6 +11,11 @@
  */
 /****************************************************************************/
 
+import {
+    API_URL_CONFIGURE_LEDSTRIP_MODE, API_URL_LEDSTRIP_SET_BRIGHTNESS, API_URL_LEDSTRIP_SET_MODE,
+    API_URL_LEDSTRIP_SET_POWER_ANIMATION, API_URL_REBOOT_DEVICE, API_URL_SET_DEVICE_POWER,
+    API_URL_SET_GROUP_POWER, API_URL_UPDATE_DEVICE
+} from "../domain/endpoints.js";
 import { button } from "../../vendor/templates/js/core/dom.js";
 import {
     TEXT_BACK_ONLINE, TEXT_BASICS, TEXT_BRIGHTNESS, TEXT_CHANGES_SAVED_SUCCESSFULLY, TEXT_COLOR,
@@ -85,6 +90,7 @@ const UPDATE_INTERVAL = 300;
 let refreshAfter = 0;
 let task = null;
 let colorUpdateInterval = null;
+let isColorUpdating = false;
 
 let modeModalObjects = [];
 let settingsModal = null;
@@ -109,11 +115,7 @@ function initialize() {
 
     if (groupSelected) {
         const device = devices.find(item => item.id == stripOrGroup.device_ids[0]);
-        const modeConfiguration = modeConfigurations.find(item => item.id == MODE_COLOR);
-
         if (device) {
-            const parameter = modeConfiguration?.parameters?.[0];
-            stripOrGroup.color = parameter?.value1 ?? parameter?.value ?? device.color;
             stripOrGroup.power = device.power;
             stripOrGroup.brightness = device.brightness;
             stripOrGroup.mode = device.mode;
@@ -163,42 +165,32 @@ function initialize() {
 //#region Update functionality
 /****************************************************************************/
 /*!
- * @brief   Sets the color of the full ledstrip.
+ * @brief   Saves the standalone picker color as a fixed color mode parameter.
  */
 /****************************************************************************/
 async function setColor() {
-    /* If color is same, return */
-    if (colorColorElem.value == stripOrGroup.color) {
-        return;
-    }
+    const color = colorColorElem.value;
+    if (isColorUpdating || color === getModeColor()) return;
 
-    let url;
-
-    if (groupSelected) {
-        url = "/set_ledstrip_group_color";
-    } else {
-        url = "/set_ledstrip_color";
-    }
-
-    let data = { id: stripOrGroup.id, color: colorColorElem.value };
-
+    const parameters = [{ id: PARAMETER_ID_COLOR1, value1: color, value2: "False" }];
+    const data = {
+        id: stripOrGroup.id, target_type: groupSelected ? "group" : "device",
+        mode_id: MODE_COLOR, parameters
+    };
+    isColorUpdating = true;
     pauseRefreshes();
 
     try {
-        await submitForm(http, url, data, signal);
+        const result = await updateParameters(http, API_URL_CONFIGURE_LEDSTRIP_MODE, data, signal);
+        storeModeConfiguration(MODE_COLOR, parameters, result);
+        await setMode(MODE_COLOR);
     } catch (error) {
         if (!signal.aborted) banners.show({
-            title: TEXT_ERROR,
-            message: error.message,
-            type: "error"
+            title: TEXT_ERROR, message: error.message, type: "error"
         });
-
-        return;
+    } finally {
+        isColorUpdating = false;
     }
-
-    stripOrGroup.mode = MODE_COLOR;
-    stripOrGroup.color = colorColorElem.value;
-    updateModeButtons();
 }
 
 /****************************************************************************/
@@ -210,9 +202,9 @@ async function setPower() {
     let url;
 
     if (groupSelected) {
-        url = "/set_group_power";
+        url = API_URL_SET_GROUP_POWER;
     } else {
-        url = "/set_device_power";
+        url = API_URL_SET_DEVICE_POWER;
     }
 
     let data = { id: stripOrGroup.id, power: +powerCbElem.checked };
@@ -240,15 +232,12 @@ async function setPower() {
  */
 /****************************************************************************/
 async function setBrightness() {
-    let url;
+    const url = API_URL_LEDSTRIP_SET_BRIGHTNESS;
 
-    if (groupSelected) {
-        url = "/set_ledstrip_group_brightness";
-    } else {
-        url = "/set_ledstrip_brightness";
-    }
-
-    let data = { id: stripOrGroup.id, brightness: parseInt(brightnessRangeElem.value) };
+    let data = {
+        id: stripOrGroup.id, target_type: groupSelected ? "group" : "device",
+        brightness: parseInt(brightnessRangeElem.value)
+    };
 
     pauseRefreshes();
 
@@ -270,7 +259,7 @@ async function setBrightness() {
 /****************************************************************************/
 /*!
  * @brief   Sets the mode of the ledstrip.
- * @param   mode                    Mode to send
+ * @param   modeId                  Mode to send
  */
 /****************************************************************************/
 async function setMode(modeId) {
@@ -287,15 +276,12 @@ async function setMode(modeId) {
         return;
     }
 
-    let url;
+    const url = API_URL_LEDSTRIP_SET_MODE;
 
-    if (groupSelected) {
-        url = "/set_ledstrip_group_mode";
-    } else {
-        url = "/set_ledstrip_mode";
-    }
-
-    let data = { id: stripOrGroup.id, mode_id: stripOrGroup.mode };
+    let data = {
+        id: stripOrGroup.id, target_type: groupSelected ? "group" : "device",
+        mode_id: stripOrGroup.mode
+    };
 
     pauseRefreshes();
 
@@ -325,15 +311,12 @@ async function setPowerAnimation(powerAnimation) {
         return;
     }
 
-    let url;
+    const url = API_URL_LEDSTRIP_SET_POWER_ANIMATION;
 
-    if (groupSelected) {
-        url = "/set_ledstrip_group_power_animation";
-    } else {
-        url = "/set_ledstrip_power_animation";
-    }
-
-    let data = { id: stripOrGroup.id, power_animation: powerAnimation };
+    let data = {
+        id: stripOrGroup.id, target_type: groupSelected ? "group" : "device",
+        power_animation: powerAnimation
+    };
 
     pauseRefreshes();
 
@@ -501,8 +484,8 @@ async function saveDeviceSettings(event) {
         id: stripOrGroup.id,
         name: values.name.trim(),
         hostname: values.hostname.trim(),
-        has_sensor: Number(values.has_sensor),
-        sensor_inverted: Number(values.sensor_inverted)
+        has_sensor: Boolean(values.has_sensor),
+        sensor_inverted: Boolean(values.sensor_inverted)
     };
     const submitElem = settingsModal.dialog.querySelector('[type="submit"]');
 
@@ -510,7 +493,8 @@ async function saveDeviceSettings(event) {
     pauseRefreshes();
 
     try {
-        await submitForm(http, "/update_ledstrip", data, signal);
+        const result = await http.post(API_URL_UPDATE_DEVICE, data, { signal });
+        if (result.status_code !== 200) throw new Error(result.message);
         Object.assign(stripOrGroup, data);
         settingsModal.close();
         banners.show({
@@ -538,7 +522,7 @@ async function rebootDevice() {
     pauseRefreshes();
 
     try {
-        await submitForm(http, "/reboot_ledstrip", { id: stripOrGroup.id }, signal);
+        await submitForm(http, API_URL_REBOOT_DEVICE, { id: stripOrGroup.id }, signal);
         banners.show({ title: TEXT_SUCCESS, message: TEXT_REBOOT_REQUESTED, type: "success" });
     } catch (error) {
         if (!signal.aborted) banners.show({
@@ -725,7 +709,7 @@ function loadModeConfigurationModal(id) {
 /****************************************************************************/
 function loadStates() {
     powerCbElem.checked = stripOrGroup.power;
-    colorColorElem.value = stripOrGroup.color;
+    colorColorElem.value = getModeColor();
     brightness.setValue(stripOrGroup.brightness);
 
     updateModeButtons();
@@ -750,6 +734,7 @@ async function fetchStates() {
             const state = await readStrip(http, stripOrGroup.id, signal);
             if (started >= refreshAfter) {
                 stripOrGroup = state;
+                modeConfigurations = state.mode_configurations ?? modeConfigurations;
                 loadStates();
             }
             if (task !== null) {
@@ -797,13 +782,10 @@ async function updateModeConfiguration(modeId) {
 
     const values = modal.getValues();
 
-    let data = { mode_id: modeId, parameters: [] };
-
-    if (groupSelected) {
-        data.group_id = stripOrGroup.id;
-    } else {
-        data.device_id = ledstripOrGroupId;
-    }
+    let data = {
+        id: stripOrGroup.id, target_type: groupSelected ? "group" : "device",
+        mode_id: modeId, parameters: []
+    };
 
     const color1Index =
         mode.parameters.findIndex(parameter => parameter.id === PARAMETER_ID_COLOR1);
@@ -834,16 +816,12 @@ async function updateModeConfiguration(modeId) {
         index++;
     }
 
-    let url;
-    if (groupSelected) {
-        url = "/config_group_mode";
-    } else {
-        url = "/configure_ledstrip_mode";
-    }
+    const url = API_URL_CONFIGURE_LEDSTRIP_MODE;
 
     try {
         const result = await updateParameters(http, url, data, signal);
-        modeConfigurations = result.mode_configurations;
+        storeModeConfiguration(modeId, data.parameters, result);
+        if (modeId === MODE_COLOR) colorColorElem.value = getModeColor();
     } catch (error) {
         if (!signal.aborted) banners.show({
             title: TEXT_ERROR,
@@ -893,4 +871,45 @@ function getPaletteSelectOptions() {
     }
 
     return options;
+}
+
+/****************************************************************************/
+/*!
+ * @brief   Reads the standalone picker color from the color mode configuration.
+ * @returns Fixed color parameter or the configured mode default.
+ */
+/****************************************************************************/
+function getModeColor() {
+    const configuration = modeConfigurations.find(item => item.id === MODE_COLOR);
+    const parameter = configuration?.parameters?.find(item => item.id === PARAMETER_ID_COLOR1);
+    const mode = LEDSTRIP_MODES.find(item => item.id === MODE_COLOR);
+    const fallback = mode?.parameters?.find(item => item.id === PARAMETER_ID_COLOR1);
+
+    return parameter?.value1 ?? fallback?.default1 ?? "#ffffff";
+}
+
+/****************************************************************************/
+/*!
+ * @brief   Stores saved mode parameters when updating a strip or a group.
+ * @param   modeId                  Mode whose parameters were saved.
+ * @param   parameters              Saved mode parameters.
+ * @param   result                  Controller response with optional configurations.
+ */
+/****************************************************************************/
+function storeModeConfiguration(modeId, parameters, result) {
+    if (Array.isArray(result?.mode_configurations)) {
+        modeConfigurations = result.mode_configurations;
+        return;
+    }
+
+    const configuration = modeConfigurations.find(item => item.id === modeId);
+    if (configuration) {
+        for (const parameter of parameters) {
+            const current = configuration.parameters.find(item => item.id === parameter.id);
+            if (current) Object.assign(current, parameter);
+            else configuration.parameters.push(parameter);
+        }
+    } else {
+        modeConfigurations.push({ id: modeId, parameters });
+    }
 }

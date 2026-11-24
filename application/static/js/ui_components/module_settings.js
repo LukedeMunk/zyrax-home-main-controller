@@ -12,6 +12,9 @@
 /****************************************************************************/
 
 import {
+    API_URL_UPDATE_TELEGRAM_CONFIGURATION, API_URL_UPDATE_WEATHER_CONFIGURATION
+} from "../domain/endpoints.js";
+import {
     TEXT_CHANGES_SAVED_SUCCESSFULLY, TEXT_KEY_NOT_VALID, TEXT_SUCCESS
 } from "../domain/language_pack_english.js";
 import { submitForm } from "../services/forms.js";
@@ -122,7 +125,7 @@ export function mountModuleSettings(root, { http, signal, banners }, settings) {
         };
 
         try {
-            await submitForm(http, "/update_weather_configuration", data, signal);
+            await submitForm(http, API_URL_UPDATE_WEATHER_CONFIGURATION, data, signal);
         } catch (error) {
             if (signal.aborted) return;
 
@@ -155,7 +158,7 @@ export function mountModuleSettings(root, { http, signal, banners }, settings) {
         };
 
         try {
-            await submitForm(http, "/update_telegram_configuration", data, signal);
+            await submitForm(http, API_URL_UPDATE_TELEGRAM_CONFIGURATION, data, signal);
         } catch (error) {
             if (signal.aborted) return;
 

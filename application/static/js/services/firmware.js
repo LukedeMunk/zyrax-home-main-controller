@@ -12,6 +12,9 @@
  */
 /****************************************************************************/
 
+import {
+    API_URL_UPLOAD_FIRMWARE_FILE
+} from "../domain/endpoints.js";
 import { TEXT_NETWORK_ERROR } from "../domain/language_pack_english.js";
 
 /****************************************************************************/
@@ -115,7 +118,7 @@ function sendFile(file, signal, onProgress) {
                     new Error(result?.message ?? TEXT_NETWORK_ERROR)
                 );
         };
-        request.open("POST", "/upload_ota_file");
+        request.open("POST", API_URL_UPLOAD_FIRMWARE_FILE);
         request.responseType = "json";
 
         /****************************************************************************/

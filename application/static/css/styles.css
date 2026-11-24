@@ -525,7 +525,7 @@ label.profile-picture-upload-button:hover::after {
     width: 28px;
     height: 28px;
     border-radius: 50%;
-    background: center / cover url("/get_profile_picture");
+    background: center / cover var(--profile-picture-url);
 }
 
 #dashboardEditor [data-icon] {

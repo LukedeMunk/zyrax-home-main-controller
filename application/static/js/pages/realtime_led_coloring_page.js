@@ -12,6 +12,9 @@
 /****************************************************************************/
 
 import {
+    API_URL_DRAW_REALTIME_LEDS
+} from "../domain/endpoints.js";
+import {
     TEXT_CLEAR, TEXT_COLOR, TEXT_COLOR_ALL, TEXT_COLOR_SEGMENT, TEXT_DRAWING_TOOLS, TEXT_ERROR,
     TEXT_USE_GRADIENT
 } from "../domain/language_pack_english.js";
@@ -324,7 +327,7 @@ async function sendLedColors(forceSend = false) {
     let data = { id: strip.id, leds: ledColors };
 
     try {
-        await saveDrawing(http, "/draw_realtime_leds", data, signal);
+        await saveDrawing(http, API_URL_DRAW_REALTIME_LEDS, data, signal);
     } catch (error) {
         if (!signal.aborted) banners.show({
             title: TEXT_ERROR,

@@ -897,7 +897,12 @@ def validate_device(payload, device):
     parent_id = _validate_catalog_parent(payload, device, role, device_type)
     config = {"name": name.strip(), "parent_device_id": parent_id}
 
-    if "location" in payload:
+    if "location_id" in payload:
+        room_id = payload["location_id"]
+        if room_id is not None and (type(room_id) is not int or db.session.get(Location, room_id) is None):
+            raise ValueError("Location not found.")
+        config["location_id"] = room_id
+    elif "location" in payload:
         location = payload["location"]
         if not isinstance(location, str) or len(location.strip()) > 50:
             raise ValueError(c.TEXT_DEVICE_LOCATION_LENGTH)

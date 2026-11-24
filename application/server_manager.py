@@ -500,6 +500,7 @@ def register_blueprints():
     from routes.data_blueprints import data_bp
     from routes.device_blueprints import device_bp
     from routes.hub_blueprints import hub_bp
+    from routes.location_blueprints import location_bp
     from routes.group_blueprints import group_bp
     from routes.ledstrip_blueprints import ledstrip_bp
     from routes.logs_blueprints import logs_bp
@@ -517,6 +518,7 @@ def register_blueprints():
     app.register_blueprint(device_bp)
     app.register_blueprint(hub_bp)
     app.register_blueprint(group_bp)
+    app.register_blueprint(location_bp)
     app.register_blueprint(ledstrip_bp)
     app.register_blueprint(logs_bp)
     app.register_blueprint(ota_bp)

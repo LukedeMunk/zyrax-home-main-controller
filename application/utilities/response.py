@@ -45,7 +45,6 @@ def render_login_page(message, user_profiles=[]):
     return render_template("login.html", title="",
                             CURRENT_APPLICATION_VERSION=c.CURRENT_APPLICATION_VERSION,
                             HUB_RF_RECEIVER_AVAILABLE=c.HUB_RF_RECEIVER_AVAILABLE,
-                            RF_TRANSMITTER_PRESENT=c.RF_TRANSMITTER_PRESENT,
                             alarm_activated="1",#TODO make cache itemdb_util.get_alarm()["activated"],
                             user_profiles=user_profiles,
                             message=message)

@@ -17,6 +17,7 @@ export const API_URL_ACCOUNT_PREFIX = "/account";
 export const API_URL_DEVICE_PREFIX = "/device";
 export const API_URL_HUB_PREFIX = API_URL_DEVICE_PREFIX + "/hub";
 export const API_URL_LEDSTRIP_PREFIX = API_URL_DEVICE_PREFIX + "/ledstrip";
+export const API_URL_LOCATION_PREFIX = "/location";
 export const API_URL_GROUP_PREFIX = "/group";
 export const API_URL_AUTOMATION_PREFIX = "/automation";
 export const API_URL_DASHBOARD_PREFIX = "/dashboard";
@@ -80,6 +81,10 @@ export const API_URL_CONFIGURE_LEDSTRIP_MODE = API_URL_PREFIX + API_URL_LEDSTRIP
 export const API_URL_SET_LEDSTRIP_SENSOR_STATE = API_URL_PREFIX + API_URL_LEDSTRIP_PREFIX + "/set_sensor_state";
 
 //Groups
+export const API_URL_LOCATIONS = API_URL_PREFIX + "/locations";
+export const API_URL_ADD_LOCATION = API_URL_PREFIX + API_URL_LOCATION_PREFIX + "/add";
+export const API_URL_UPDATE_LOCATION = API_URL_PREFIX + API_URL_LOCATION_PREFIX + "/update";
+export const API_URL_DELETE_LOCATION = API_URL_PREFIX + API_URL_LOCATION_PREFIX + "/delete";
 export const API_URL_ADD_GROUP = API_URL_PREFIX + API_URL_GROUP_PREFIX + "/add";
 export const API_URL_UPDATE_GROUP = API_URL_PREFIX + API_URL_GROUP_PREFIX + "/update";
 export const API_URL_DELETE_GROUP = API_URL_PREFIX + API_URL_GROUP_PREFIX + "/delete";

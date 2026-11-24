@@ -12,7 +12,8 @@
 /****************************************************************************/
 
 import {
-    API_URL_ADD_GROUP, API_URL_UPDATE_GROUP, API_URL_DELETE_GROUP,
+    API_URL_ADD_LOCATION, API_URL_UPDATE_LOCATION, API_URL_DELETE_LOCATION,
+    API_URL_LOCATIONS, API_URL_ADD_GROUP, API_URL_UPDATE_GROUP, API_URL_DELETE_GROUP,
     API_URL_ADD_DEVICE, API_URL_CANCEL_HUB_LEARNING_SESSION, API_URL_DELETE_CUSTOM_CODE,
     API_URL_DELETE_DEVICE, API_URL_GET_DEVICES, API_URL_GET_HUB_LEARNING_STATUS,
     API_URL_GET_HUB_STATUS, API_URL_GET_UNCONFIGURED_DEVICES, API_URL_RENAME_CUSTOM_CODE,
@@ -21,7 +22,8 @@ import {
 } from "../domain/endpoints.js";
 import { button } from "../../vendor/templates/js/core/dom.js";
 import {
-    TEXT_CATALOG_GROUPS, TEXT_CATALOG_ADD_GROUP, TEXT_CATALOG_EDIT_GROUP, TEXT_CATALOG_NO_GROUPS,
+    TEXT_CATALOG_LOCATIONS, TEXT_CATALOG_ADD_LOCATION, TEXT_CATALOG_EDIT_LOCATION,
+    TEXT_CATALOG_NO_LOCATIONS, TEXT_CATALOG_NO_ROOM, TEXT_CATALOG_GROUPS, TEXT_CATALOG_ADD_GROUP, TEXT_CATALOG_EDIT_GROUP, TEXT_CATALOG_NO_GROUPS,
     TEXT_HUB_CAPTURED, TEXT_HUB_CODE_NAME, TEXT_HUB_LEARN, TEXT_HUB_MISSING,
     TEXT_HUB_PENDING, TEXT_HUB_RECEIVE, TEXT_HUB_RENAME, TEXT_HUB_RETRY,
     TEXT_HUB_SENT, TEXT_HUB_START, TEXT_HUB_STORED, TEXT_HUB_TRANSMIT,
@@ -88,6 +90,8 @@ const DEVICE_CATEGORY_POWER_OUTLET = 5;
 const MAX_NUMBER_OF_LEDS = 250;
 const catalogDevicesBtnElem = document.getElementById("catalogDevicesBtn");
 const catalogHubsBtnElem = document.getElementById("catalogHubsBtn");
+const catalogLocationsBtnElem = document.getElementById("catalogLocationsBtn");
+const addCatalogLocationBtnElem = document.getElementById("addCatalogLocationBtn");
 const catalogGroupsBtnElem = document.getElementById("catalogGroupsBtn");
 const addCatalogGroupBtnElem = document.getElementById("addCatalogGroupBtn");
 const catalogTitleElem = document.getElementById("catalogTitle");
@@ -142,6 +146,7 @@ picker.querySelectorAll("[data-dismiss]").forEach(button => {
     button.addEventListener("click", () => stack.close(picker), { signal });
 });
 
+let catalogLocations = [];
 let catalogGroups = groups;
 let catalogDevices = [];
 let catalogView = "devices";
@@ -150,6 +155,8 @@ let isCatalogOnline = false;
 
 catalogDevicesBtnElem.onclick = () => showCatalogView("devices");
 catalogHubsBtnElem.onclick = () => showCatalogView("hubs");
+catalogLocationsBtnElem.onclick = () => showCatalogView("locations");
+addCatalogLocationBtnElem.onclick = () => editCatalogLocation();
 catalogGroupsBtnElem.onclick = () => showCatalogView("groups");
 addCatalogGroupBtnElem.onclick = () => editCatalogGroup();
 catalogSearchTxtElem.oninput = renderCatalogCards;
@@ -165,6 +172,8 @@ initializeCatalog();
 /****************************************************************************/
 function initializeCatalog() {
     const labels = {
+        TEXT_CATALOG_LOCATIONS,
+        TEXT_CATALOG_ADD_LOCATION,
         TEXT_CATALOG_GROUPS,
         TEXT_CATALOG_ADD_GROUP,
         TEXT_CATALOG_DEVICE_MANAGEMENT,
@@ -207,7 +216,9 @@ function initializeCatalog() {
 /****************************************************************************/
 async function refreshCatalog() {
     try {
-        catalogDevices = await catalogRequest(API_URL_GET_DEVICES);
+        [catalogDevices, catalogLocations] = await Promise.all([
+            catalogRequest(API_URL_GET_DEVICES), catalogRequest(API_URL_LOCATIONS)
+        ]);
         isCatalogOnline = true;
 
         for (const hub of catalogDevices.filter(item => item.role === "hub")) {
@@ -243,9 +254,12 @@ function showCatalogView(view) {
 function renderCatalog() {
     const isDeviceView = catalogView === "devices";
     const isGroupView = catalogView === "groups";
+    const isLocationView = catalogView === "locations";
     const title = { devices: TEXT_CATALOG_DEVICES, hubs: TEXT_CATALOG_HUBS,
-        groups: TEXT_CATALOG_GROUPS }[catalogView];
-    catalogSearchTxtElem.parentElement.hidden = isGroupView;
+        groups: TEXT_CATALOG_GROUPS, locations: TEXT_CATALOG_LOCATIONS }[catalogView];
+    catalogSearchTxtElem.parentElement.hidden = isGroupView || isLocationView;
+    catalogLocationsBtnElem.setAttribute("aria-pressed", isLocationView);
+    addCatalogLocationBtnElem.disabled = !isCatalogOnline;
     addCatalogGroupBtnElem.disabled = !isCatalogOnline;
     catalogGroupsBtnElem.setAttribute("aria-pressed", isGroupView);
     const devices = catalogDevices.filter(device => device.role === "device" === isDeviceView);
@@ -256,14 +270,15 @@ function renderCatalog() {
     catalogSubtitleFieldElem.textContent = isDeviceView
         ? TEXT_CATALOG_HOME_SUBTITLE
         : TEXT_CATALOG_HUB_SUBTITLE;
-    catalogSubtitleFieldElem.hidden = isGroupView;
+    catalogSubtitleFieldElem.hidden = isGroupView || isLocationView;
     catalogCountTitleElem.textContent = title;
     catalogCountFieldElem.textContent = isCatalogOnline ? devices.length : TEXT_CATALOG_EMPTY_VALUE;
 
     if (isGroupView) catalogCountFieldElem.textContent = catalogGroups.length;
 
-    const rooms =
-        [...new Set(catalogDevices.map(device => device.location).filter(Boolean))].sort();
+    if (isLocationView) catalogCountFieldElem.textContent = catalogLocations.length;
+
+    const rooms = catalogLocations.map(room => room.name);
     catalogRoomsFieldElem.textContent = isCatalogOnline ? rooms.length : TEXT_CATALOG_EMPTY_VALUE;
     catalogStatusFieldElem.textContent = isCatalogOnline
         ? TEXT_CATALOG_ONLINE
@@ -327,6 +342,16 @@ function catalogOptions(selectElem, label, values) {
  */
 /****************************************************************************/
 function renderCatalogCards() {
+    if (catalogView === "locations") {
+        deviceCatalogFieldElem.hidden = isCatalogOnline && catalogLocations.length > 0;
+        deviceCatalogFieldElem.textContent = isCatalogOnline
+            ? TEXT_CATALOG_NO_LOCATIONS : TEXT_CATALOG_DEVICE_LOAD_FAILED;
+        catalogCardsContainerElem.replaceChildren(...catalogLocations.map(room => catalogCard({
+            title: room.name, icon: room.icon,
+            badge: String(catalogDevices.filter(device => device.location_id === room.id).length)
+        }, () => editCatalogLocation(room))));
+        return;
+    }
     if (catalogView === "groups") {
         deviceCatalogFieldElem.hidden = catalogGroups.length > 0;
         deviceCatalogFieldElem.textContent = TEXT_CATALOG_NO_GROUPS;
@@ -742,20 +767,13 @@ function configureCatalogDevice(draft, back) {
     nameElem.lastElementChild.maxLength = 50;
 
     const roomElem = catalogField(
-        "catalogRoomTxt", TEXT_CATALOG_ROOM, "text", draft.location ?? device?.location ?? ""
+        "catalogDeviceRoomSelect", TEXT_CATALOG_ROOM, "select", draft.locationId ?? device?.location_id ?? "",
+        [["", TEXT_CATALOG_NO_ROOM], ...catalogLocations.map(room => [room.id, room.name])]
     );
-    roomElem.lastElementChild.maxLength = 50;
-
-    const roomsElem = catalogElement("datalist");
-    roomsElem.id = "catalogRoomOptions";
-
-    const rooms = [...new Set(catalogDevices.map(item => item.location).filter(Boolean))];
-    roomsElem.append(...rooms.map(room => new Option(room)));
-    roomElem.lastElementChild.setAttribute("list", roomsElem.id);
 
     const detailsElem = catalogElement("div", "catalog-split");
     detailsElem.append(nameElem, roomElem);
-    formElem.append(detailsElem, roomsElem);
+    formElem.append(detailsElem);
     if (device) formElem.append(catalogIconFields(device, model, icons));
     if (device && role === "device"
         && ![CATALOG_LEDSTRIP_TYPE, CATALOG_RF_TYPE, CATALOG_IR_TYPE].includes(device.type)) {
@@ -855,7 +873,7 @@ function configureCatalogDevice(draft, back) {
         const values = new FormData(formElem);
         const payload = {
             name: values.get("catalogNameTxt").trim(),
-            location: values.get("catalogRoomTxt").trim(),
+            location_id: Number(values.get("catalogDeviceRoomSelect")) || null,
             ...icons
         };
 
@@ -877,7 +895,7 @@ function configureCatalogDevice(draft, back) {
             has_sensor: values.has("catalogContactCb")
         });
 
-        Object.assign(draft, { name: payload.name, location: payload.location });
+        Object.assign(draft, { name: payload.name, locationId: payload.location_id });
         saveBtnElem.disabled = true;
         saveBtnElem.textContent = TEXT_CATALOG_SAVING;
         errorElem.textContent = "";
@@ -1559,4 +1577,64 @@ function editCatalogGroup(group = null) {
                 membersElem, errorElem);
             if (!choicesElem.childElementCount) choicesElem.textContent = TEXT_CATALOG_NO_DEVICES_FOUND;
         }, actions);
+}
+
+/****************************************************************************/
+/*!
+ * @brief   Edits a catalog location using the shared icon picker.
+ * @param   room                    Existing location, or null for a new room.
+ */
+/****************************************************************************/
+function editCatalogLocation(room = null) {
+    const icons = { icon: room?.icon ?? "fa-solid fa-location-dot" };
+    const nameElem = catalogField("catalogLocationNameTxt", TEXT_CATALOG_NAME, "text", room?.name);
+    const inputElem = nameElem.lastElementChild;
+    const errorElem = catalogElement("p", "catalog-error");
+    const actions = [];
+    inputElem.required = true;
+    inputElem.maxLength = 50;
+    errorElem.setAttribute("role", "alert");
+
+    /****************************************************************************/
+    /*!
+     * @brief   Saves the selected operation and reloads current room assignments.
+     * @param   action                  Location operation to perform.
+     */
+    /****************************************************************************/
+    async function submitLocation(action) {
+        inputElem.value = inputElem.value.trim();
+        if (action !== "delete" && !inputElem.reportValidity()) return;
+        if (action === "delete" &&
+            !window.confirm(TEXT_CATALOG_CONFIRM_DELETE.replace("{name}", room.name))) return;
+
+        for (const buttonElem of actions) buttonElem.disabled = true;
+        try {
+            if (action === "delete") {
+                await catalogRequest(API_URL_DELETE_LOCATION, "POST", { id: room.id });
+            } else {
+                const payload = { name: inputElem.value, icon: icons.icon };
+                if (room) payload.id = room.id;
+                const path = room ? API_URL_UPDATE_LOCATION : API_URL_ADD_LOCATION;
+                await catalogRequest(path, "POST", payload);
+            }
+            await refreshCatalog();
+            if (catalogWizardDialogElem.open && errorElem.isConnected) {
+                catalogWizard.close();
+                showCatalogView("locations");
+            }
+        } catch (error) {
+            errorElem.textContent = error.message;
+        } finally {
+            for (const buttonElem of actions) buttonElem.disabled = false;
+        }
+    }
+
+    if (room) actions.push(catalogButton(TEXT_CATALOG_DELETE, () => submitLocation("delete")));
+    actions.push(catalogButton(TEXT_CATALOG_SAVE, () => submitLocation(room ? "update" : "add"),
+        "catalog-primary"));
+
+    const title = room ? TEXT_CATALOG_EDIT_LOCATION : TEXT_CATALOG_ADD_LOCATION;
+    catalogWizard.show(TEXT_CATALOG_LOCATIONS, title, bodyElem => {
+        bodyElem.append(nameElem, catalogIconFields(icons, null, icons), errorElem);
+    }, actions);
 }

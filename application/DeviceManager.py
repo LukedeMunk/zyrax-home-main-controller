@@ -1103,6 +1103,44 @@ class DeviceManager:
         return db_util.delete_group(id)
 #endregion
 
+#region Location database functionality
+    ################################################################################
+    #
+    #   @brief  Returns all locations in name order.
+    #
+    ################################################################################
+    def get_locations(self):
+        return db_util.get_locations()
+
+    ################################################################################
+    #
+    #   @brief  Adds a location and returns its ID.
+    #   @param  config_dict         Location name and icon fields
+    #
+    ################################################################################
+    def add_location(self, config_dict):
+        return db_util.add_location(config_dict)
+
+    ################################################################################
+    #
+    #   @brief  Updates the supplied location fields.
+    #   @param  location_id         Location ID
+    #   @param  config_dict         Location name and icon fields
+    #
+    ################################################################################
+    def update_location(self, location_id, config_dict):
+        return db_util.update_location(location_id, config_dict)
+
+    ################################################################################
+    #
+    #   @brief  Deletes a location and releases its device assignments.
+    #   @param  location_id         Location ID
+    #
+    ################################################################################
+    def delete_location(self, location_id):
+        return db_util.delete_location(location_id)
+#endregion
+
 #region Automation database functionality
     ################################################################################
     #

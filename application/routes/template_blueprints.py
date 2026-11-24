@@ -189,7 +189,7 @@ def realtime_led_coloring_page():
 @minimum_role_required()
 def devices_page():
     return render_template(
-        "devices.html", title=c.TEXT_DEVICE_CATALOG_TITLE,
+        "devices.html", title=c.TEXT_DEVICE_CATALOG_TITLE, groups=db_util.get_groups(),
         CURRENT_APPLICATION_VERSION=c.CURRENT_APPLICATION_VERSION,
         RF_RECEIVER_PRESENT=c.RF_RECEIVER_PRESENT,
         RF_TRANSMITTER_PRESENT=c.RF_TRANSMITTER_PRESENT,

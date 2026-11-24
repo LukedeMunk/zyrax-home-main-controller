@@ -1089,22 +1089,7 @@ class DeviceManager:
     #
     ################################################################################
     def update_group(self, id, config_dict):
-        result = db_util.update_group(id, config_dict)
-        if "name" in config_dict:
-            config_dict.pop("name")
-        if "icon" in config_dict:
-            config_dict.pop("icon")
-
-        group = db_util.get_group(id)
-
-        for device_id in group["device_ids"]:
-            device = db_util.get_device(device_id)
-            if device["type"] == c.DEVICE_TYPE_LEDSTRIP:
-                self.update_ledstrip(device_id, config_dict)
-            elif device["type"] == c.DEVICE_TYPE_RF_DEVICE:
-                db_util.update_device(device_id, config_dict)
-
-        return result
+        return db_util.update_group(id, config_dict)
 
     ################################################################################
     #

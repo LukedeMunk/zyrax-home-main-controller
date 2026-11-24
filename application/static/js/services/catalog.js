@@ -12,7 +12,7 @@
 /****************************************************************************/
 
 import {
-    API_URL_ADD_DEVICE, API_URL_PREFIX, API_URL_UPDATE_DEVICE
+    API_URL_ADD_GROUP, API_URL_UPDATE_GROUP, API_URL_ADD_DEVICE, API_URL_PREFIX, API_URL_UPDATE_DEVICE
 } from "../domain/endpoints.js";
 import { TEXT_CATALOG_INVALID_CONTROLLER_RESPONSE } from "../domain/language_pack_english.js";
 
@@ -36,7 +36,9 @@ export function catalogService(http, signal) {
     /****************************************************************************/
     return async function request(path, method = "GET", payload) {
         const isGet = method === "GET";
-        const formEncoded = !isGet && path !== API_URL_ADD_DEVICE && path !== API_URL_UPDATE_DEVICE;
+        const jsonPaths = [API_URL_ADD_DEVICE, API_URL_UPDATE_DEVICE, API_URL_ADD_GROUP,
+            API_URL_UPDATE_GROUP];
+        const formEncoded = !isGet && !jsonPaths.includes(path);
         const result = await http.request(path, {
             method, signal, formEncoded,
             query: isGet ? payload : undefined,

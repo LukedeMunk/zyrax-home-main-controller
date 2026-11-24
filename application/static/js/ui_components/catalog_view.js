@@ -119,3 +119,19 @@ export function catalogField(id, label, type, value = "", options = []) {
 
     return labelElem;
 }
+
+/****************************************************************************/
+/*!
+ * @brief   Adds a native selection control, icon, name and checkmark to a tile.
+ * @param   labelElem               Label wrapping the selection control.
+ * @param   inputElem               Checkbox or radio input.
+ * @param   icon                    Icon class.
+ * @param   name                    Visible option name.
+ */
+/****************************************************************************/
+export function decorateCatalogChoice(labelElem, inputElem, icon, name) {
+    labelElem.classList.add("automation-choice-tile");
+    const checkElem = catalogElement("i", "fa-solid fa-check automation-choice-check");
+    checkElem.setAttribute("aria-hidden", "true");
+    labelElem.append(inputElem, catalogIcon(icon), catalogElement("strong", "", name), checkElem);
+}

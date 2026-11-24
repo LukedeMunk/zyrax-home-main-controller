@@ -27,7 +27,7 @@ from automation import (AdapterRegistry, AutomationEngine,
                         AutomationRunService, Event, EventDispatcher, EventType)
 from automation.adapter_registry import AdapterRoutingError
 from automation.domain import Capability, Command
-from Bridge import Bridge, BridgeCommandAdapter
+from Hub import Hub, HubCommandAdapter
 from automation.device_adapters import DeviceCommandAdapter, RfInputAdapter
 
 class DeviceManager:
@@ -83,7 +83,7 @@ class DeviceManager:
             self.device_command_adapter
         )
         self.adapter_registry.register("rf_input", self.rf_input_adapter)
-        self.adapter_registry.register("bridge", BridgeCommandAdapter())
+        self.adapter_registry.register("hub", HubCommandAdapter())
 
     ################################################################################
     #
@@ -491,7 +491,7 @@ class DeviceManager:
 
     ################################################################################
     #
-    #   @brief  Checks connectivity for a registered LED strip or bridge.
+    #   @brief  Checks connectivity for a registered LED strip or hub.
     #   @param  id                  Device ID
     #   @return bool                True when the supported device is reachable
     #
@@ -501,8 +501,8 @@ class DeviceManager:
             return self.check_ledstrip_connection_status(id)
 
         device = next((item for item in self.devices if item["id"] == id), None)
-        if device is not None and device.get("role") == "bridge":
-            return Bridge(db_util.get_device(id)).check_connection_status()
+        if device is not None and device.get("role") == "hub":
+            return Hub(db_util.get_device(id)).check_connection_status()
 
         return False
 
@@ -832,15 +832,15 @@ class DeviceManager:
 
         adapter_name = target["integration_type"]
         capabilities = target["capabilities"]
-        if target["is_configured_bridge"] and command.target_type == "device":
-            adapter_name = "bridge"
+        if target["is_configured_hub"] and command.target_type == "device":
+            adapter_name = "hub"
             capabilities.update((Capability.RF_SEND, Capability.IR_SEND))
         medium = {Capability.RF_SEND: "rf", Capability.IR_SEND: "ir"}.get(command.capability)
-        if medium in target["bridge_transmit_media"]:
-            adapter_name = "bridge"
+        if medium in target["hub_transmit_media"]:
+            adapter_name = "hub"
             capabilities.add(command.capability)
-        if command.capability == Capability.POWER_SET and target["has_bridge_power"]:
-            adapter_name = "bridge"
+        if command.capability == Capability.POWER_SET and target["has_hub_power"]:
+            adapter_name = "hub"
             capabilities.add(command.capability)
         # Existing LED controller records predate the complete capability list.
         is_builtin_ledstrip = (
@@ -1235,10 +1235,10 @@ class DeviceManager:
         self.cameras = []                                                           #Reset list
 
         # The temporary receiver connected directly to the Raspberry Pi is
-        # configured independently from an RF/IR bridge. Recalculate both
-        # capability flags on every reload so removing a bridge cannot leave
+        # configured independently from an RF/IR hub. Recalculate both
+        # capability flags on every reload so removing a hub cannot leave
         # stale True values behind.
-        rf_bridge_present = False
+        rf_hub_present = False
         
         #Create a list of sensor objects
         for device in self.devices:
@@ -1246,13 +1246,13 @@ class DeviceManager:
                 self.ledstrips.append(Ledstrip(device))
             if device["type"] == c.DEVICE_TYPE_IP_CAMERA:
                 self.cameras.append(IpCamera(device))
-            if device["type"] == c.DEVICE_TYPE_RF_BRIDGE:
-                rf_bridge_present = True
+            if device["type"] == c.DEVICE_TYPE_RF_HUB:
+                rf_hub_present = True
 
         c.RF_RECEIVER_PRESENT = (
-            bool(c.dynamic_config.rpi_rf_enabled) or rf_bridge_present
+            bool(c.dynamic_config.rpi_rf_enabled) or rf_hub_present
         )
-        c.RF_TRANSMITTER_PRESENT = rf_bridge_present
+        c.RF_TRANSMITTER_PRESENT = rf_hub_present
 
         if hasattr(self, "rf_input_adapter"):
             self.rf_input_adapter.refresh()

@@ -22,14 +22,14 @@ import {
 import { button } from "../../vendor/templates/js/core/dom.js";
 import {
     TEXT_CATALOG_GROUPS, TEXT_CATALOG_ADD_GROUP, TEXT_CATALOG_EDIT_GROUP, TEXT_CATALOG_NO_GROUPS,
-    TEXT_BRIDGE_CAPTURED, TEXT_BRIDGE_CODE_NAME, TEXT_BRIDGE_LEARN, TEXT_BRIDGE_MISSING,
-    TEXT_BRIDGE_PENDING, TEXT_BRIDGE_RECEIVE, TEXT_BRIDGE_RENAME, TEXT_BRIDGE_RETRY,
-    TEXT_BRIDGE_SENT, TEXT_BRIDGE_START, TEXT_BRIDGE_STORED, TEXT_BRIDGE_TRANSMIT,
+    TEXT_HUB_CAPTURED, TEXT_HUB_CODE_NAME, TEXT_HUB_LEARN, TEXT_HUB_MISSING,
+    TEXT_HUB_PENDING, TEXT_HUB_RECEIVE, TEXT_HUB_RENAME, TEXT_HUB_RETRY,
+    TEXT_HUB_SENT, TEXT_HUB_START, TEXT_HUB_STORED, TEXT_HUB_TRANSMIT,
     TEXT_CATALOG_ADDED_SUFFIX, TEXT_CATALOG_ADD_ANOTHER, TEXT_CATALOG_ADD_CATEGORY,
     TEXT_CATALOG_ADD_DEVICE, TEXT_CATALOG_ALL, TEXT_CATALOG_ALL_CONNECTIONS, TEXT_CATALOG_ALL_ROOMS,
     TEXT_CATALOG_BACK, TEXT_CATALOG_BACK_TO_OVERVIEW, TEXT_CATALOG_BATTERY,
-    TEXT_CATALOG_BLUETOOTH_DISCOVERY_UNAVAILABLE, TEXT_CATALOG_BRIDGE, TEXT_CATALOG_BRIDGES,
-    TEXT_CATALOG_BRIDGE_SUBTITLE, TEXT_CATALOG_BUTTON, TEXT_CATALOG_CAMERA, TEXT_CATALOG_CANCEL,
+    TEXT_CATALOG_BLUETOOTH_DISCOVERY_UNAVAILABLE, TEXT_CATALOG_HUB, TEXT_CATALOG_HUBS,
+    TEXT_CATALOG_HUB_SUBTITLE, TEXT_CATALOG_BUTTON, TEXT_CATALOG_CAMERA, TEXT_CATALOG_CANCEL,
     TEXT_CATALOG_CAPABILITIES_AND_ENTITIES, TEXT_CATALOG_CATEGORIES,
     TEXT_CATALOG_CHOOSE_DEVICE_CONNECTION, TEXT_CATALOG_CHOOSE_DEVICE_LOCATION,
     TEXT_CATALOG_CHOOSE_MODEL, TEXT_CATALOG_CHOOSE_RECEIVED_SIGNAL, TEXT_CATALOG_CLOSE,
@@ -87,7 +87,7 @@ const DEVICE_CATEGORY_SWITCH = 3;
 const DEVICE_CATEGORY_POWER_OUTLET = 5;
 const MAX_NUMBER_OF_LEDS = 250;
 const catalogDevicesBtnElem = document.getElementById("catalogDevicesBtn");
-const catalogBridgesBtnElem = document.getElementById("catalogBridgesBtn");
+const catalogHubsBtnElem = document.getElementById("catalogHubsBtn");
 const catalogGroupsBtnElem = document.getElementById("catalogGroupsBtn");
 const addCatalogGroupBtnElem = document.getElementById("addCatalogGroupBtn");
 const catalogTitleElem = document.getElementById("catalogTitle");
@@ -149,7 +149,7 @@ let catalogCategory = "";
 let isCatalogOnline = false;
 
 catalogDevicesBtnElem.onclick = () => showCatalogView("devices");
-catalogBridgesBtnElem.onclick = () => showCatalogView("bridges");
+catalogHubsBtnElem.onclick = () => showCatalogView("hubs");
 catalogGroupsBtnElem.onclick = () => showCatalogView("groups");
 addCatalogGroupBtnElem.onclick = () => editCatalogGroup();
 catalogSearchTxtElem.oninput = renderCatalogCards;
@@ -169,7 +169,7 @@ function initializeCatalog() {
         TEXT_CATALOG_ADD_GROUP,
         TEXT_CATALOG_DEVICE_MANAGEMENT,
         TEXT_CATALOG_DEVICES,
-        TEXT_CATALOG_BRIDGES,
+        TEXT_CATALOG_HUBS,
         TEXT_CATALOG_MY_HOME,
         TEXT_CATALOG_ADD_DEVICE,
         TEXT_CATALOG_ROOMS,
@@ -210,8 +210,8 @@ async function refreshCatalog() {
         catalogDevices = await catalogRequest(API_URL_GET_DEVICES);
         isCatalogOnline = true;
 
-        for (const bridge of catalogDevices.filter(item => item.role === "bridge")) {
-            refreshCatalogBridgeStatus(bridge);
+        for (const hub of catalogDevices.filter(item => item.role === "hub")) {
+            refreshCatalogHubStatus(hub);
         }
     } catch {
         isCatalogOnline = false;
@@ -243,7 +243,7 @@ function showCatalogView(view) {
 function renderCatalog() {
     const isDeviceView = catalogView === "devices";
     const isGroupView = catalogView === "groups";
-    const title = { devices: TEXT_CATALOG_DEVICES, bridges: TEXT_CATALOG_BRIDGES,
+    const title = { devices: TEXT_CATALOG_DEVICES, hubs: TEXT_CATALOG_HUBS,
         groups: TEXT_CATALOG_GROUPS }[catalogView];
     catalogSearchTxtElem.parentElement.hidden = isGroupView;
     addCatalogGroupBtnElem.disabled = !isCatalogOnline;
@@ -251,11 +251,11 @@ function renderCatalog() {
     const devices = catalogDevices.filter(device => device.role === "device" === isDeviceView);
 
     catalogDevicesBtnElem.setAttribute("aria-pressed", isDeviceView);
-    catalogBridgesBtnElem.setAttribute("aria-pressed", catalogView === "bridges");
+    catalogHubsBtnElem.setAttribute("aria-pressed", catalogView === "hubs");
     catalogTitleElem.textContent = title;
     catalogSubtitleFieldElem.textContent = isDeviceView
         ? TEXT_CATALOG_HOME_SUBTITLE
-        : TEXT_CATALOG_BRIDGE_SUBTITLE;
+        : TEXT_CATALOG_HUB_SUBTITLE;
     catalogSubtitleFieldElem.hidden = isGroupView;
     catalogCountTitleElem.textContent = title;
     catalogCountFieldElem.textContent = isCatalogOnline ? devices.length : TEXT_CATALOG_EMPTY_VALUE;
@@ -370,7 +370,7 @@ function renderCatalogCards() {
         const status = catalogDeviceStatus(device);
         const connection = catalogConnection(device);
         const isOnline =
-            device.role === "bridge" || connection === "LAN" ? device.connection_status : null;
+            device.role === "hub" || connection === "LAN" ? device.connection_status : null;
 
         return catalogCard({
             title: device.name,
@@ -411,8 +411,8 @@ function catalogDeviceIcon(device) {
  */
 /****************************************************************************/
 function catalogDeviceCategory(device) {
-    return (device.role === "bridge"
-        ? TEXT_CATALOG_BRIDGE
+    return (device.role === "hub"
+        ? TEXT_CATALOG_HUB
         : null)
         ?? CATALOG_GROUPS.find(group => group[2].includes(device.category))?.[0]
         ?? CATALOG_MODELS_BY_ID.get(device.model_id)?.categoryName
@@ -442,7 +442,7 @@ function catalogConnection(device) {
  */
 /****************************************************************************/
 function catalogDeviceStatus(device) {
-    if (device.role === "bridge") {
+    if (device.role === "hub") {
         if (device.connection_status == null && device.hostname) return TEXT_CATALOG_CONNECTING;
 
         return device.connection_status ? TEXT_CATALOG_ONLINE : TEXT_CATALOG_OFFLINE;
@@ -524,8 +524,8 @@ function startCatalogWizard() {
         doorbellBtnElem.disabled = true;
         doorbellBtnElem.title = TEXT_CATALOG_NO_DOORBELL_MODELS;
         choicesElem.append(doorbellBtnElem);
-        choicesElem.append(catalogChoice(TEXT_CATALOG_BRIDGE, "fa-solid fa-network-wired", () =>
-            configureCatalogDevice({ role: "bridge" }, startCatalogWizard)));
+        choicesElem.append(catalogChoice(TEXT_CATALOG_HUB, "fa-solid fa-network-wired", () =>
+            configureCatalogDevice({ role: "hub" }, startCatalogWizard)));
         bodyElem.append(choicesElem);
     }, [catalogButton(TEXT_CATALOG_CANCEL, () => catalogWizard.close())]);
 }
@@ -628,12 +628,12 @@ function chooseCatalogModel(models, back) {
 /****************************************************************************/
 /*!
  * @brief   Lists link targets, including direct controller reception.
- * @returns Bridge options including direct connection
+ * @returns Hub options including direct connection
  */
 /****************************************************************************/
 function catalogParents() {
     return [["", TEXT_CATALOG_DIRECT_VIA_CONTROLLER], ...catalogDevices.filter(device =>
-        device.role === "bridge").map(device =>
+        device.role === "hub").map(device =>
         [device.id, device.name])];
 }
 
@@ -714,7 +714,7 @@ function learnCatalogSignals(draft, back) {
 
     /****************************************************************************/
     /*!
-     * @brief   Builds the RF signal learning form and its bridge fallback action.
+     * @brief   Builds the RF signal learning form and its hub fallback action.
      * @param   bodyElem                Wizard body receiving the generated controls.
      */
     /****************************************************************************/
@@ -725,14 +725,14 @@ function learnCatalogSignals(draft, back) {
             orbElem, catalogElement("p", "", TEXT_CATALOG_SELECT_OR_ENTER_RF_CODE), refreshBtnElem,
             recentElem, formElem, errorElem
         );
-        if (catalogDevices.some(item => item.role === "bridge" && item.hostname)) {
+        if (catalogDevices.some(item => item.role === "hub" && item.hostname)) {
             /****************************************************************************/
             /*!
-             * @brief   Continues configuration with learning delegated to a bridge.
+             * @brief   Continues configuration with learning delegated to a hub.
              */
             /****************************************************************************/
-            bodyElem.append(catalogButton(TEXT_BRIDGE_LEARN, () => {
-                draft.learnOnBridge = true;
+            bodyElem.append(catalogButton(TEXT_HUB_LEARN, () => {
+                draft.learnOnHub = true;
                 configureCatalogDevice(draft, () => learnCatalogSignals(draft, back));
             }));
         }
@@ -744,7 +744,7 @@ function learnCatalogSignals(draft, back) {
 
             return;
         }
-        draft.learnOnBridge = false;
+        draft.learnOnHub = false;
         draft.rfCodes = codes;
         configureCatalogDevice(draft, () => learnCatalogSignals(draft, back));
     }, "catalog-primary")]);
@@ -883,9 +883,9 @@ function configureCatalogDevice(draft, back) {
             openLedAddressing(device.id)));
     }
 
-    if (role === "bridge") {
+    if (role === "hub") {
         const hostnameElem = catalogField(
-            "catalogBridgeHostnameTxt", TEXT_CATALOG_HOSTNAME, "text", device?.hostname ?? ""
+            "catalogHubHostnameTxt", TEXT_CATALOG_HOSTNAME, "text", device?.hostname ?? ""
         );
         hostnameElem.lastElementChild.required = true;
         hostnameElem.lastElementChild.maxLength = 253;
@@ -893,17 +893,17 @@ function configureCatalogDevice(draft, back) {
     }
 
     if (device && [CATALOG_RF_TYPE, CATALOG_IR_TYPE].includes(device.type)) {
-        formElem.append(catalogButton(TEXT_BRIDGE_LEARN, () => learnOnCatalogBridge(device)));
+        formElem.append(catalogButton(TEXT_HUB_LEARN, () => learnOnCatalogHub(device)));
 
-        for (const code of device.bridge_codes ?? []) {
+        for (const code of device.hub_codes ?? []) {
             if (device.model_id === CATALOG_RF_TAP_MODEL
                 && !code.can_transmit
-                && device.bridge_codes.some(item =>
-                item.bridge_id === code.bridge_id && item.can_transmit)) {
+                && device.hub_codes.some(item =>
+                item.hub_id === code.hub_id && item.can_transmit)) {
                 continue;
             }
 
-            formElem.append(catalogBridgeCodeRow(device, code, model?.buttons != null, errorElem));
+            formElem.append(catalogHubCodeRow(device, code, model?.buttons != null, errorElem));
         }
     }
 
@@ -982,8 +982,8 @@ function configureCatalogDevice(draft, back) {
             rf_codes: draft.rfCodes
         });
 
-        if (role === "bridge") payload.hostname = values.get("catalogBridgeHostnameTxt");
-        if (draft.learnOnBridge) payload.learn_on_bridge = true;
+        if (role === "hub") payload.hostname = values.get("catalogHubHostnameTxt");
+        if (draft.learnOnHub) payload.learn_on_hub = true;
         if (isNewLedstrip) Object.assign(payload, {
             hostname: values.get("catalogHostnameTxt").trim(),
             number_of_leds: Number(values.get("catalogLedCountTxt")),
@@ -1013,16 +1013,16 @@ function configureCatalogDevice(draft, back) {
         }
 
         await refreshCatalog();
-        showCatalogView(role === "device" ? "devices" : "bridges");
+        showCatalogView(role === "device" ? "devices" : "hubs");
         if (device) {
             catalogWizard.close();
             banners.show({ title: TEXT_CATALOG_SAVED, message: payload.name, type: "success" });
         } else {
             const created = catalogDevices.find(item => item.id === saved.id);
-            if (created && (draft.learnOnBridge || model?.type === CATALOG_IR_TYPE
+            if (created && (draft.learnOnHub || model?.type === CATALOG_IR_TYPE
                 || model?.type === CATALOG_RF_TYPE && !model.rf_code_types?.length)
-                && catalogDevices.some(item => item.role === "bridge" && item.hostname)) {
-                learnOnCatalogBridge(created);
+                && catalogDevices.some(item => item.role === "hub" && item.hostname)) {
+                learnOnCatalogHub(created);
             } else {
                 finishCatalogWizard(payload.name, isNewLedstrip ? saved.id : null);
             }
@@ -1167,18 +1167,18 @@ async function deleteCatalogDevice(device, errorElem) {
 /*!
  * @brief   Displays one learned code and its available actions.
  * @param   device                  Device that owns the code
- * @param   code                    Learned bridge code
+ * @param   code                    Learned hub code
  * @param   isFreeButton            Whether the code may be edited
  * @param   statusElem              Element for action feedback
  * @returns Code row
  */
 /****************************************************************************/
-function catalogBridgeCodeRow(device, code, isFreeButton, statusElem) {
-    const bridge = catalogDevices.find(item => item.id === code.bridge_id);
-    const fields = { id: code.bridge_id, device_id: device.id, code_id: code.id };
+function catalogHubCodeRow(device, code, isFreeButton, statusElem) {
+    const hub = catalogDevices.find(item => item.id === code.hub_id);
+    const fields = { id: code.hub_id, device_id: device.id, code_id: code.id };
     const rowElem = catalogElement("div", "catalog-code-row");
     const titleElem = catalogElement(
-        "small", "", [code.name, bridge?.name].filter(Boolean).join(TEXT_CATALOG_SEPARATOR)
+        "small", "", [code.name, hub?.name].filter(Boolean).join(TEXT_CATALOG_SEPARATOR)
     );
     const actionsElem = catalogElement("div", "catalog-code-actions");
 
@@ -1187,7 +1187,7 @@ function catalogBridgeCodeRow(device, code, isFreeButton, statusElem) {
     /****************************************************************************/
     /*!
      * @brief   Executes an action while preventing concurrent edits to the row.
-     * @param   action                  Async bridge code action
+     * @param   action                  Async hub code action
      */
     /****************************************************************************/
     async function runAction(action) {
@@ -1207,35 +1207,35 @@ function catalogBridgeCodeRow(device, code, isFreeButton, statusElem) {
     if (code.can_transmit) {
         /****************************************************************************/
         /*!
-         * @brief   Transmits a learned bridge code and reports the bridge used.
+         * @brief   Transmits a learned hub code and reports the hub used.
          */
         /****************************************************************************/
-        actionsElem.append(catalogButton(TEXT_BRIDGE_TRANSMIT, () => runAction(async () => {
+        actionsElem.append(catalogButton(TEXT_HUB_TRANSMIT, () => runAction(async () => {
             await catalogRequest(API_URL_TRANSMIT_CODE, "POST", fields);
-            statusElem.textContent = [TEXT_BRIDGE_SENT, bridge?.name].filter(Boolean).join(" ");
+            statusElem.textContent = [TEXT_HUB_SENT, hub?.name].filter(Boolean).join(" ");
         })));
     }
 
     if (isFreeButton) {
         /****************************************************************************/
         /*!
-         * @brief   Renames a learned bridge code and updates the device details.
+         * @brief   Renames a learned hub code and updates the device details.
          */
         /****************************************************************************/
-        const renameBtnElem = catalogButton(TEXT_BRIDGE_RENAME, () => runAction(async () => {
-            const name = window.prompt(TEXT_BRIDGE_CODE_NAME, code.name)?.trim();
+        const renameBtnElem = catalogButton(TEXT_HUB_RENAME, () => runAction(async () => {
+            const name = window.prompt(TEXT_HUB_CODE_NAME, code.name)?.trim();
             if (!name || name === code.name) return;
 
             await catalogRequest(API_URL_RENAME_CUSTOM_CODE, "POST", { ...fields, name });
             code.name = name;
             titleElem.textContent =
-                [name, bridge?.name].filter(Boolean)
+                [name, hub?.name].filter(Boolean)
                 .join(TEXT_CATALOG_SEPARATOR);
         }));
 
         /****************************************************************************/
         /*!
-         * @brief   Confirms and deletes a learned bridge code.
+         * @brief   Confirms and deletes a learned hub code.
          */
         /****************************************************************************/
         const deleteBtnElem = catalogButton("", () => runAction(async () => {
@@ -1243,7 +1243,7 @@ function catalogBridgeCodeRow(device, code, isFreeButton, statusElem) {
                 code.name))) return;
 
             await catalogRequest(API_URL_DELETE_CUSTOM_CODE, "POST", fields);
-            device.bridge_codes = device.bridge_codes.filter(item => item !== code);
+            device.hub_codes = device.hub_codes.filter(item => item !== code);
             rowElem.remove();
         }), "catalog-code-delete");
 
@@ -1265,15 +1265,15 @@ function catalogBridgeCodeRow(device, code, isFreeButton, statusElem) {
  * @param   device                  Registered RF or IR device
  */
 /****************************************************************************/
-function learnOnCatalogBridge(device) {
-    const bridges = catalogDevices.filter(item => item.role === "bridge" && item.hostname);
-    const options = bridges.map(item => [item.id, item.name + " (" + item.hostname + ")"]);
-    const bridgeElem = catalogField(
-        "catalogLearningBridgeSelect", TEXT_CATALOG_BRIDGE, "select", options[0]?.[0] ?? "",
+function learnOnCatalogHub(device) {
+    const hubs = catalogDevices.filter(item => item.role === "hub" && item.hostname);
+    const options = hubs.map(item => [item.id, item.name + " (" + item.hostname + ")"]);
+    const hubElem = catalogField(
+        "catalogLearningHubSelect", TEXT_CATALOG_HUB, "select", options[0]?.[0] ?? "",
         options
     );
 
-    bridgeElem.hidden = bridges.length < 2;
+    hubElem.hidden = hubs.length < 2;
 
     const model = CATALOG_MODELS_BY_ID.get(device.model_id);
     const isRf = device.type === CATALOG_RF_TYPE;
@@ -1290,7 +1290,7 @@ function learnOnCatalogBridge(device) {
     const directionElem = catalogField(
         "catalogLearningDirectionSelect", TEXT_CATALOG_CONNECTION, "select",
         isPowerDevice ? "receive" : "transmit",
-        [["transmit", TEXT_BRIDGE_TRANSMIT], ["receive", TEXT_BRIDGE_RECEIVE]]
+        [["transmit", TEXT_HUB_TRANSMIT], ["receive", TEXT_HUB_RECEIVE]]
     );
 
     directionElem.hidden = !canChooseDirection;
@@ -1298,7 +1298,7 @@ function learnOnCatalogBridge(device) {
     const nameElem = catalogField("catalogCodeNameTxt", TEXT_CATALOG_NAME, "text");
     nameElem.lastElementChild.maxLength = 50;
 
-    const statusElem = catalogElement("p", "", bridges.length ? "" : TEXT_BRIDGE_MISSING);
+    const statusElem = catalogElement("p", "", hubs.length ? "" : TEXT_HUB_MISSING);
     statusElem.setAttribute("role", "status");
 
     const detailsElem = catalogElement("p");
@@ -1314,7 +1314,7 @@ function learnOnCatalogBridge(device) {
 
     /****************************************************************************/
     /*!
-     * @brief   Saves the learned bridge code while disabling concurrent learning actions.
+     * @brief   Saves the learned hub code while disabling concurrent learning actions.
      */
     /****************************************************************************/
     const saveBtnElem = catalogButton(TEXT_CATALOG_SAVE, async () => {
@@ -1354,7 +1354,7 @@ function learnOnCatalogBridge(device) {
     /****************************************************************************/
     async function startLearning() {
         if (!signals.length && !nameElem.lastElementChild.value.trim()) {
-            statusElem.textContent = TEXT_BRIDGE_CODE_NAME;
+            statusElem.textContent = TEXT_HUB_CODE_NAME;
             nameElem.lastElementChild.focus();
 
             return;
@@ -1363,7 +1363,7 @@ function learnOnCatalogBridge(device) {
         retryBtnElem.disabled = true;
         cancelBtnElem.disabled = true;
 
-        const selected = bridgeElem.lastElementChild.value;
+        const selected = hubElem.lastElementChild.value;
         const target = { id: selected, device_id: device.id };
 
         try {
@@ -1390,15 +1390,15 @@ function learnOnCatalogBridge(device) {
         }
     }
 
-    const startBtnElem = catalogButton(TEXT_BRIDGE_START, startLearning);
-    startBtnElem.disabled = !bridges.length;
+    const startBtnElem = catalogButton(TEXT_HUB_START, startLearning);
+    startBtnElem.disabled = !hubs.length;
 
     /****************************************************************************/
     /*!
      * @brief   Cancels the current learning session before starting another attempt.
      */
     /****************************************************************************/
-    const retryBtnElem = catalogButton(TEXT_BRIDGE_RETRY, async () => {
+    const retryBtnElem = catalogButton(TEXT_HUB_RETRY, async () => {
         if (await cancelLearning()) await startLearning();
     });
     retryBtnElem.disabled = true;
@@ -1453,7 +1453,7 @@ function learnOnCatalogBridge(device) {
 
     /****************************************************************************/
     /*!
-     * @brief   Updates sample count and capture details from the bridge.
+     * @brief   Updates sample count and capture details from the hub.
      */
     /****************************************************************************/
     async function poll() {
@@ -1495,7 +1495,7 @@ function learnOnCatalogBridge(device) {
      */
     /****************************************************************************/
     function renderSignals(captured = []) {
-        const bridgeId = Number(bridgeElem.lastElementChild.value);
+        const hubId = Number(hubElem.lastElementChild.value);
         const isTransmit = isPowerDevice && directionElem.lastElementChild.value === "transmit";
 
         slotsElem.hidden = !signals.length || isRf && !isTransmit;
@@ -1509,13 +1509,13 @@ function learnOnCatalogBridge(device) {
          */
         /****************************************************************************/
         signalListElem.replaceChildren(...signals.map(signal => {
-            const saved = (device.bridge_codes ?? []).some(code =>
-                code.bridge_id === bridgeId && (isTransmit
+            const saved = (device.hub_codes ?? []).some(code =>
+                code.hub_id === hubId && (isTransmit
                 ? code.id.startsWith("p" + signal.type)
                 : code.type === signal.type));
             const ready = captured.some(code => code.type === signal.type && code.captured);
             const status =
-                ready ? TEXT_BRIDGE_CAPTURED : saved ? TEXT_BRIDGE_STORED : TEXT_BRIDGE_PENDING;
+                ready ? TEXT_HUB_CAPTURED : saved ? TEXT_HUB_STORED : TEXT_HUB_PENDING;
 
             return catalogElement("li", "", signal.name + TEXT_CATALOG_SEPARATOR + status);
         }));
@@ -1523,7 +1523,7 @@ function learnOnCatalogBridge(device) {
 
     renderSignals();
     directionElem.lastElementChild.onchange = () => renderSignals();
-    bridgeElem.lastElementChild.onchange = () => renderSignals();
+    hubElem.lastElementChild.onchange = () => renderSignals();
 
     /****************************************************************************/
     /*!
@@ -1561,14 +1561,14 @@ function learnOnCatalogBridge(device) {
 
     /****************************************************************************/
     /*!
-     * @brief   Builds the bridge signal learning controls and progress display.
+     * @brief   Builds the hub signal learning controls and progress display.
      * @param   bodyElem                Wizard body receiving the generated controls.
      */
     /****************************************************************************/
-    catalogWizard.show(TEXT_BRIDGE_LEARN, device.name, bodyElem => {
+    catalogWizard.show(TEXT_HUB_LEARN, device.name, bodyElem => {
         const fieldsElem = catalogElement("div", "catalog-fields");
         fieldsElem.append(
-            bridgeElem, directionElem, slotsElem, nameElem, signalListElem, startBtnElem,
+            hubElem, directionElem, slotsElem, nameElem, signalListElem, startBtnElem,
             progressElem, statusElem, detailsElem
         );
         bodyElem.append(fieldsElem);
@@ -1577,19 +1577,19 @@ function learnOnCatalogBridge(device) {
 
 /****************************************************************************/
 /*!
- * @brief   Updates an individual bridge card when the status probe completes.
- * @param   bridge                  Device entry in the current catalog
+ * @brief   Updates an individual hub card when the status probe completes.
+ * @param   hub                  Device entry in the current catalog
  */
 /****************************************************************************/
-async function refreshCatalogBridgeStatus(bridge) {
+async function refreshCatalogHubStatus(hub) {
     try {
-        const status = await catalogRequest(API_URL_GET_HUB_STATUS, "GET", { id: bridge.id });
-        bridge.connection_status = status.online;
+        const status = await catalogRequest(API_URL_GET_HUB_STATUS, "GET", { id: hub.id });
+        hub.connection_status = status.online;
     } catch {
-        bridge.connection_status = false;
+        hub.connection_status = false;
     }
 
-    if (catalogDevices.includes(bridge) && catalogView === "bridges") renderCatalogCards();
+    if (catalogDevices.includes(hub) && catalogView === "hubs") renderCatalogCards();
 }
 
 /****************************************************************************/

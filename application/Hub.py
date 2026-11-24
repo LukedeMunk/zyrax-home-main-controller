@@ -1,10 +1,10 @@
 ################################################################################
 #
-# File:     Bridge.py
+# File:     Hub.py
 # Version:  0.9.0
 # Author:   Luke de Munk
 #
-# Brief:    Client and command adapter for the ZyraX bridge HTTP protocol.
+# Brief:    Client and command adapter for the ZyraX hub HTTP protocol.
 #
 ################################################################################
 import requests
@@ -13,14 +13,14 @@ import configuration as c
 import database_utility as db_util
 from automation.domain import Capability
 from logger import logi, logw, loge
-from server_manager import app, db, BridgeCode, BridgeHost
+from server_manager import app, db, HubCode, HubHost
 
 
-class Bridge:
+class Hub:
     ############################################################################
     #
-    #   @brief  Loads bridge identity, connection state and saved API metadata.
-    #   @param  init_dict           Saved device and bridge configuration
+    #   @brief  Loads hub identity, connection state and saved API metadata.
+    #   @param  init_dict           Saved device and hub configuration
     #
     ############################################################################
     def __init__(self, init_dict):
@@ -29,7 +29,7 @@ class Bridge:
         self.hostname = init_dict["hostname"]
         self.ip_address = init_dict.get("ip_address", c.DEFAULT_IP_ADDRESS)
         self.port = init_dict.get("port", 80)
-        self.api_version = init_dict.get("api_version", c.DEFAULT_BRIDGE_API_VERSION)
+        self.api_version = init_dict.get("api_version", c.DEFAULT_HUB_API_VERSION)
         self.firmware_version = init_dict.get("firmware_version", c.DEFAULT_FIRMWARE_VERSION)
         self.connection_status = init_dict.get("connection_status", False)
         self.ota_state = c.OTA_STATE_FINISHED
@@ -37,7 +37,7 @@ class Bridge:
 
     ############################################################################
     #
-    #   @brief  Sends a GET command using the bridge API version.
+    #   @brief  Sends a GET command using the hub API version.
     #   @param  command             Firmware endpoint relative to the API version
     #   @param  parameters_dict     Optional query parameters
     #   @return tuple              Success flag and decoded data or error
@@ -59,7 +59,7 @@ class Bridge:
 
     ############################################################################
     #
-    #   @brief  Updates local device fields and sends supported bridge settings.
+    #   @brief  Updates local device fields and sends supported hub settings.
     #   @param  config_dict         Device fields and optional id, hostname or date_time
     #   @return tuple              Success flag and firmware response or error
     #
@@ -67,11 +67,11 @@ class Bridge:
     def configure(self, config_dict):
         configuration = dict(config_dict)
         if "hostname" in configuration:
-            configuration["bridge_hostname"] = configuration.pop("hostname")
+            configuration["hub_hostname"] = configuration.pop("hostname")
 
         fields = {key: configuration[key] for key in ("id", "date_time") if key in configuration}
-        if "bridge_hostname" in configuration:
-            fields["hostname"] = configuration["bridge_hostname"]
+        if "hub_hostname" in configuration:
+            fields["hostname"] = configuration["hub_hostname"]
 
         response = ""
         if fields:
@@ -82,8 +82,8 @@ class Bridge:
         result = db_util.update_device(self.id, configuration)
         if not result[0]:
             return result
-        if "bridge_hostname" in configuration:
-            self.hostname = configuration["bridge_hostname"]
+        if "hub_hostname" in configuration:
+            self.hostname = configuration["hub_hostname"]
         if "name" in configuration:
             self.name = configuration["name"]
 
@@ -118,9 +118,9 @@ class Bridge:
         if not result[0]:
             return result
         if not isinstance(result[1], dict):
-            return False, "Invalid bridge configuration."
+            return False, "Invalid hub configuration."
         if not self._store_metadata(result[1]):
-            return False, "Could not save bridge configuration."
+            return False, "Could not save hub configuration."
 
         return result
 
@@ -165,7 +165,7 @@ class Bridge:
 
     ############################################################################
     #
-    #   @brief  Calls a bridge endpoint using the firmware form and JSON formats.
+    #   @brief  Calls a hub endpoint using the firmware form and JSON formats.
     #   @param  method              HTTP method
     #   @param  path                Fixed firmware endpoint
     #   @param  fields              Optional form data
@@ -175,7 +175,7 @@ class Bridge:
     def request(self, method, path, fields=None):
         success, result = self._send_request(method, path, fields)
         if not success:
-            raise RuntimeError(f"Bridge {self.hostname}: {result}")
+            raise RuntimeError(f"Hub {self.hostname}: {result}")
 
         return result
 
@@ -191,7 +191,7 @@ class Bridge:
     def _send_request(self, method, command, fields=None):
         methods = {"GET": requests.get, "POST": requests.post, "DELETE": requests.delete}
         if method not in methods:
-            return False, "Unsupported bridge HTTP method."
+            return False, "Unsupported hub HTTP method."
 
         hostname = self.hostname
         if "." not in hostname:
@@ -223,7 +223,7 @@ class Bridge:
             return False, response.text
 
         if not isinstance(result, dict):
-            return False, "Invalid bridge JSON response."
+            return False, "Invalid hub JSON response."
         if not 200 <= response.status_code < 300 or result.get("ok") is False:
             error = result.get("error")
             detail = error.get("message") if isinstance(error, dict) else error
@@ -258,10 +258,10 @@ class Bridge:
         return True
 
 
-class BridgeCommandAdapter:
+class HubCommandAdapter:
     ############################################################################
     #
-    #   @brief  Lists transmission capabilities routed to configured bridges.
+    #   @brief  Lists transmission capabilities routed to configured hubs.
     #   @return tuple               Supported command capabilities
     #
     ############################################################################
@@ -270,8 +270,8 @@ class BridgeCommandAdapter:
 
     ############################################################################
     #
-    #   @brief  Transmits a saved code on the selected bridge.
-    #   @param  command             Bridge device command with its learned code
+    #   @brief  Transmits a saved code on the selected hub.
+    #   @param  command             Hub device command with its learned code
     #   @return dict                Firmware acknowledgement
     #
     ############################################################################
@@ -279,7 +279,7 @@ class BridgeCommandAdapter:
         code_id = command.parameters.get("code_id")
         with app.app_context():
             target_id = int(command.target_id)
-            host = db.session.get(BridgeHost, target_id) if command.target_type == "device" else None
+            host = db.session.get(HubHost, target_id) if command.target_type == "device" else None
 
             if host is None:
                 target = db_util.get_command_target(command.target_type, target_id)
@@ -288,7 +288,7 @@ class BridgeCommandAdapter:
                     raise ValueError("The transmission target is no longer configured.")
                 
                 medium = "ir" if command.capability == Capability.IR_SEND else "rf"
-                codes = BridgeCode.query.filter_by(
+                codes = HubCode.query.filter_by(
                     device_id=target["device_id"], medium=medium, code_type=None
                 )
 
@@ -298,17 +298,17 @@ class BridgeCommandAdapter:
                 if command.capability == Capability.POWER_SET:
                     power = int(command.parameters["power"])
                     prefix = "p0" if power == 1 else "p1"
-                    codes = codes.filter(BridgeCode.code_id.startswith(prefix))
-                    codes = codes.order_by(BridgeCode.bridge_id)
+                    codes = codes.filter(HubCode.code_id.startswith(prefix))
+                    codes = codes.order_by(HubCode.hub_id)
 
                 matches = codes.limit(1 if command.capability == Capability.POWER_SET else 2).all()
 
                 if len(matches) != 1:
-                    raise ValueError("Select one learned code and its transmitting bridge.")
+                    raise ValueError("Select one learned code and its transmitting hub.")
                 
                 code_id = matches[0].code_id
-                host = db.session.get(BridgeHost, matches[0].bridge_id)
+                host = db.session.get(HubHost, matches[0].hub_id)
 
-            client = Bridge(db_util.get_device(host.device_id))
+            client = Hub(db_util.get_device(host.device_id))
 
         return client.request("POST", c.HUB_COMMAND_TRANSMIT_CODE, {"code_id": code_id})

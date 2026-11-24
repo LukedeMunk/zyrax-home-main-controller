@@ -15,7 +15,7 @@ import json
 import configuration as c
 from automation.domain import Capability
 from server_manager import (
-    app, db, BridgeCode, BridgeHost, Device, Entity, EntityHasCapability, Integration
+    app, db, HubCode, HubHost, Device, Entity, EntityHasCapability, Integration
 )
 
 from . import database_core as core
@@ -52,15 +52,15 @@ def get_command_target(target_type, target_id):
 
         transmit_codes = []
         if device.type in (c.DEVICE_TYPE_RF_DEVICE, c.DEVICE_TYPE_IR_DEVICE):
-            transmit_codes = BridgeCode.query.filter_by(device_id=device.id, code_type=None).all()
+            transmit_codes = HubCode.query.filter_by(device_id=device.id, code_type=None).all()
         return {
             "device_id": device.id,
             "device_type": device.type,
-            "is_configured_bridge": device.role == "bridge" and db.session.get(
-                BridgeHost, device.id
+            "is_configured_hub": device.role == "hub" and db.session.get(
+                HubHost, device.id
             ) is not None,
-            "bridge_transmit_media": {code.medium for code in transmit_codes},
-            "has_bridge_power": device.category in (
+            "hub_transmit_media": {code.medium for code in transmit_codes},
+            "has_hub_power": device.category in (
                 c.DEVICE_CATEGORY_SWITCH, c.DEVICE_CATEGORY_POWER_OUTLET
             ) and {"p0", "p1"} <= {code.code_id[:2] for code in transmit_codes},
             "is_main_entity": entity is not None and entity.external_id == "main",
@@ -72,7 +72,7 @@ def get_command_target(target_type, target_id):
 
 ################################################################################
 #
-#   @brief  Adds an integration such as an RF, IR or Zigbee bridge.
+#   @brief  Adds an integration such as an RF, IR or Zigbee hub.
 #   @param  configuration       Integration configuration
 #   @return tuple               Success flag and integration ID or error
 #
@@ -191,10 +191,10 @@ def get_entities(device_id=None):
 def add_device_options(devices):
     with app.app_context():
         learned = {}
-        for code in BridgeCode.query.order_by(BridgeCode.bridge_id, BridgeCode.code_id):
+        for code in HubCode.query.order_by(HubCode.hub_id, HubCode.code_id):
             learned.setdefault(code.device_id, []).append({
                 "id": code.code_id, "name": code.name, "medium": code.medium,
-                "type": code.code_type, "bridge_id": code.bridge_id,
+                "type": code.code_type, "hub_id": code.hub_id,
                 "can_transmit": code.code_type is None
             })
         capabilities = {}
@@ -219,5 +219,5 @@ def add_device_options(devices):
                     supported.add(Capability.POWER_SET)
 
             device["capabilities"] = sorted(supported)
-            device["bridge_codes"] = codes
+            device["hub_codes"] = codes
         return devices

@@ -72,10 +72,10 @@ def add_device(config_dict):
             db.session.flush()
             config_dict["id"] = device.id
 
-            if config_dict.get("bridge_hostname"):
-                db.session.add(BridgeHost(
-                    device_id=device.id, hostname=config_dict["bridge_hostname"],
-                    api_version=config_dict.get("api_version", c.DEFAULT_BRIDGE_API_VERSION)
+            if config_dict.get("hub_hostname"):
+                db.session.add(HubHost(
+                    device_id=device.id, hostname=config_dict["hub_hostname"],
+                    api_version=config_dict.get("api_version", c.DEFAULT_HUB_API_VERSION)
                 ))
 
             if device.type == c.DEVICE_TYPE_LEDSTRIP:
@@ -144,8 +144,8 @@ def update_device(id, config_dict):
                 {"name": device.name}, synchronize_session=False
             )
 
-        if device.role == "bridge":
-            _update_bridge(id, config_dict)
+        if device.role == "hub":
+            _update_hub(id, config_dict)
 
         if device.type == c.DEVICE_TYPE_RF_DEVICE:
             device.parent_device_id = None
@@ -284,8 +284,8 @@ def get_devices(type=None):
         elif device["type"] == c.DEVICE_TYPE_IP_CAMERA:
             camera = _get_camera(id=device["id"])
             device.update(camera)
-        elif device["role"] == "bridge":
-            device.update(get_bridge(device["id"]))
+        elif device["role"] == "hub":
+            device.update(get_hub(device["id"]))
         
         device_list.append(device)
 
@@ -312,8 +312,8 @@ def get_device(id):
     elif device["type"] == c.DEVICE_TYPE_IP_CAMERA:
         camera = _get_camera(id=device["id"])
         device.update(camera)
-    elif device["role"] == "bridge":
-        device.update(get_bridge(device["id"]))
+    elif device["role"] == "hub":
+        device.update(get_hub(device["id"]))
         
     return device
 #endregion
@@ -321,17 +321,17 @@ def get_device(id):
 
 ################################################################################
 #
-#   @brief  Returns saved bridge settings and API metadata for a device.
-#   @param  id                  Bridge device ID
-#   @return dict               Bridge fields, excluding the duplicate device ID
+#   @brief  Returns saved hub settings and API metadata for a device.
+#   @param  id                  Hub device ID
+#   @return dict               Hub fields, excluding the duplicate device ID
 #
 ################################################################################
-def get_bridge(id):
+def get_hub(id):
     with app.app_context():
-        bridge = db.session.get(BridgeHost, id)
-        if bridge is None:
+        hub = db.session.get(HubHost, id)
+        if hub is None:
             return {}
-        configuration = core.row_to_dictionary(bridge)
+        configuration = core.row_to_dictionary(hub)
         configuration.pop("device_id", None)
 
         return configuration
@@ -339,21 +339,21 @@ def get_bridge(id):
 
 ################################################################################
 #
-#   @brief  Updates existing bridge settings without replacing saved metadata.
-#   @param  id                  Bridge device ID
+#   @brief  Updates existing hub settings without replacing saved metadata.
+#   @param  id                  Hub device ID
 #   @param  config_dict         Changed device fields or reported metadata
 #
 ################################################################################
-def _update_bridge(id, config_dict):
-    bridge = db.session.get(BridgeHost, id)
-    if bridge is None:
+def _update_hub(id, config_dict):
+    hub = db.session.get(HubHost, id)
+    if hub is None:
         return
 
-    if "bridge_hostname" in config_dict:
-        bridge.hostname = config_dict["bridge_hostname"]
+    if "hub_hostname" in config_dict:
+        hub.hostname = config_dict["hub_hostname"]
     for field in ("api_version", "firmware_version", "ip_address", "port", "connection_status"):
         if field in config_dict:
-            setattr(bridge, field, config_dict[field])
+            setattr(hub, field, config_dict[field])
 
 
 #region Ledstrip functionality
@@ -883,7 +883,7 @@ def validate_device(payload, device):
         raise ValueError(c.TEXT_DEVICE_NAME_LENGTH)
 
     role = device.role if device else payload.get("role")
-    if role not in ("device", "bridge"):
+    if role not in ("device", "hub"):
         raise ValueError(c.TEXT_DEVICE_ROLE_REQUIRED)
 
     model_id = device.model_id if device else payload.get("model_id")
@@ -902,8 +902,8 @@ def validate_device(payload, device):
         if not isinstance(location, str) or len(location.strip()) > 50:
             raise ValueError(c.TEXT_DEVICE_LOCATION_LENGTH)
         config["location"] = location.strip()
-    if role == "bridge" and ("hostname" in payload or device is None):
-        config["bridge_hostname"] = _validate_bridge_hostname(payload.get("hostname"))
+    if role == "hub" and ("hostname" in payload or device is None):
+        config["hub_hostname"] = _validate_hub_hostname(payload.get("hostname"))
 
     if device is not None:
         if device.type == c.DEVICE_TYPE_LEDSTRIP and parent_id is not None:
@@ -921,11 +921,11 @@ def validate_device(payload, device):
                 config["sensor_inverted"] = payload["sensor_inverted"]
         return config
 
-    if role == "bridge":
+    if role == "hub":
         config.update(
             role=role, model_id=-1,
-            type=c.DEVICE_TYPE_BRIDGE,
-            category=c.DEVICE_CATEGORY_BRIDGE,
+            type=c.DEVICE_TYPE_HUB,
+            category=c.DEVICE_CATEGORY_HUB,
             icon="fa-duotone fa-solid fa-network-wired"
         )
         return config
@@ -950,18 +950,18 @@ def validate_device(payload, device):
 
 ################################################################################
 #
-#   @brief  Validates the requested or existing bridge link.
+#   @brief  Validates the requested or existing hub link.
 #   @param  payload             Submitted device fields
 #   @param  device              Existing device, or None for registration
-#   @param  role                Device or bridge role
+#   @param  role                Device or hub role
 #   @param  device_type         Device type, if known
-#   @return                     Bridge ID or None for a direct connection
+#   @return                     Hub ID or None for a direct connection
 #
 ################################################################################
 def _validate_catalog_parent(payload, device, role, device_type):
     if role == "device" and device_type == c.DEVICE_TYPE_RF_DEVICE:
         if payload.get("parent_device_id") is not None:
-            raise ValueError(c.TEXT_DEVICE_RF_BRIDGE_UNSUPPORTED)
+            raise ValueError(c.TEXT_DEVICE_RF_HUB_UNSUPPORTED)
         return None
 
     existing_parent_id = device.parent_device_id if device else None
@@ -970,32 +970,32 @@ def _validate_catalog_parent(payload, device, role, device_type):
         return None
 
     if role != "device" or type(parent_id) is not int:
-        raise ValueError(c.TEXT_DEVICE_BRIDGE_LINK_DEVICE_ONLY)
+        raise ValueError(c.TEXT_DEVICE_HUB_LINK_DEVICE_ONLY)
     parent = db.session.get(Device, parent_id)
-    if parent is None or parent.role != "bridge":
-        raise ValueError(c.TEXT_DEVICE_BRIDGE_REQUIRED)
+    if parent is None or parent.role != "hub":
+        raise ValueError(c.TEXT_DEVICE_HUB_REQUIRED)
     return parent_id
 
 
 ################################################################################
 #
-#   @brief  Validates and normalizes a submitted bridge hostname.
+#   @brief  Validates and normalizes a submitted hub hostname.
 #   @param  hostname            Submitted hostname
 #   @return str                 Normalized hostname
 #
 ################################################################################
-def _validate_bridge_hostname(hostname):
+def _validate_hub_hostname(hostname):
     if not isinstance(hostname, str):
-        raise ValueError("Enter a bridge hostname.")
+        raise ValueError("Enter a hub hostname.")
 
     hostname = hostname.strip()
     if not 1 <= len(hostname) <= 253:
-        raise ValueError("Enter a bridge hostname.")
+        raise ValueError("Enter a hub hostname.")
 
     hostname = hostname.lower()
     label_pattern = r"[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?"
     if not all(re.fullmatch(label_pattern, label) for label in hostname.split(".")):
-        raise ValueError("Enter a valid bridge hostname.")
+        raise ValueError("Enter a valid hub hostname.")
     return hostname
 
 
@@ -1051,7 +1051,7 @@ def _validate_ledstrip_registration(payload):
 
 ################################################################################
 #
-#   @brief  Validates locally learned RF codes or defers learning to a bridge.
+#   @brief  Validates locally learned RF codes or defers learning to a hub.
 #   @param  payload             Submitted device fields
 #   @param  model               Device model with expected RF code types
 #   @return list                Validated RF code entries
@@ -1059,7 +1059,7 @@ def _validate_ledstrip_registration(payload):
 ################################################################################
 def _validate_catalog_rf_codes(payload, model):
     codes = payload.get("rf_codes", [])
-    if codes == [] and payload.get("learn_on_bridge") is True:
+    if codes == [] and payload.get("learn_on_hub") is True:
         return []
 
     expected_count = len(model["rf_code_types"] or [])

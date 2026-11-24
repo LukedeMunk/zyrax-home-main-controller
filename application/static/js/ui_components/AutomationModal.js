@@ -19,7 +19,7 @@ import {
     TEXT_AUTOMATION_ACTION_TYPE, TEXT_AUTOMATION_ADD_ACTION, TEXT_AUTOMATION_ADD_CONDITION,
     TEXT_AUTOMATION_ADD_TRIGGER, TEXT_AUTOMATION_ADVANCED_EXECUTION,
     TEXT_AUTOMATION_ALL_GROUP_MEMBERS, TEXT_AUTOMATION_ALREADY_RUNNING,
-    TEXT_AUTOMATION_ANY_GROUP_MEMBER, TEXT_AUTOMATION_BRIDGE_UNAVAILABLE,
+    TEXT_AUTOMATION_ANY_GROUP_MEMBER, TEXT_AUTOMATION_HUB_UNAVAILABLE,
     TEXT_AUTOMATION_BUTTON_MISSING, TEXT_AUTOMATION_BUTTON_PRESSED,
     TEXT_AUTOMATION_COMPLETE_CONDITION, TEXT_AUTOMATION_COMPLETE_TRIGGER, TEXT_AUTOMATION_CONDITION,
     TEXT_AUTOMATION_CONDITIONS, TEXT_AUTOMATION_CONDITIONS_DESCRIPTION,
@@ -369,7 +369,7 @@ export class AutomationModal extends Component {
             item.parameters[field.replace("parameter_", "")] = value;
             if (item.type === "send_button" && field === "parameter_code_id") {
                 const code = this.getDevices().find(device =>
-                    device.id == item.target_ids[0])?.bridge_codes?.find(entry =>
+                    device.id == item.target_ids[0])?.hub_codes?.find(entry =>
                     entry.id === value);
                 item.parameters.capability = code?.medium + ".send";
             }
@@ -384,7 +384,7 @@ export class AutomationModal extends Component {
         item[field] = value;
 
         if (field == "kind") {
-            item.source_type = value == "signal" ? "bridge" : "device";
+            item.source_type = value == "signal" ? "hub" : "device";
             item.source_id = "";
             item.state = "";
         }
@@ -571,7 +571,7 @@ export class AutomationModal extends Component {
             if (missingButton) this.errors["trigger-" + item.id] = TEXT_AUTOMATION_BUTTON_MISSING;
             if (invalidTime || invalidSource || item.kind == "signal") {
                 this.errors["trigger-" + item.id] = item.kind == "signal"
-                    ? TEXT_AUTOMATION_BRIDGE_UNAVAILABLE
+                    ? TEXT_AUTOMATION_HUB_UNAVAILABLE
                     : TEXT_AUTOMATION_COMPLETE_TRIGGER;
             }
         }
@@ -832,7 +832,7 @@ export class AutomationModal extends Component {
         if (item.kind == "manual") {
             fragment.appendChild(this.notice(TEXT_AUTOMATION_MANUAL_DESCRIPTION, "info"));
         } else if (item.kind == "signal") {
-            fragment.appendChild(this.notice(TEXT_AUTOMATION_BRIDGE_UNAVAILABLE, "warning"));
+            fragment.appendChild(this.notice(TEXT_AUTOMATION_HUB_UNAVAILABLE, "warning"));
         } else if (item.kind == "time") {
             fragment.append(this.input(
                 TEXT_TIME, "time", item.time, "time", "triggers", null, item.id
@@ -1108,7 +1108,7 @@ export class AutomationModal extends Component {
 
         if (this.isUnavailableAction(action.type)) {
             const unavailableNotice =
-                this.notice(TEXT_AUTOMATION_BRIDGE_UNAVAILABLE, NOTICE_TYPE_WARNING);
+                this.notice(TEXT_AUTOMATION_HUB_UNAVAILABLE, NOTICE_TYPE_WARNING);
 
             fragment.appendChild(unavailableNotice);
 
@@ -1827,7 +1827,7 @@ export class AutomationModal extends Component {
         }
 
         return this.getDevices().filter(device =>
-            device.role !== "bridge").map(device =>
+            device.role !== "hub").map(device =>
             [device.id, device.name]);
     }
 
@@ -2015,7 +2015,7 @@ export class AutomationModal extends Component {
     sourceExists(type, id) {
         const source = type == "group" ? this.getGroups() : this.getDevices();
 
-        return id !== "" && source.some(item => item.id == id && item.role !== "bridge");
+        return id !== "" && source.some(item => item.id == id && item.role !== "hub");
     }
 
     /****************************************************************************/
@@ -2060,7 +2060,7 @@ export class AutomationModal extends Component {
         return ids.length > 0 && ids.every(id => {
             const device = this.getDevices().find(item => item.id == id);
 
-            return device && device.role !== "bridge"
+            return device && device.role !== "hub"
                 && (device.capabilities?.includes(capability)
                 || definition?.device_types?.includes(device.type));
         });
@@ -2094,7 +2094,7 @@ export class AutomationModal extends Component {
     buttonOptions(deviceId, transmit = false) {
         const device = this.getDevices().find(entry => entry.id == deviceId);
 
-        return (device?.bridge_codes ?? []).filter(code =>
+        return (device?.hub_codes ?? []).filter(code =>
             transmit
             ? code.can_transmit
             : code.medium === "ir"

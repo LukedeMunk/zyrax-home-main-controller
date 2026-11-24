@@ -21,7 +21,7 @@ from automation.domain import Capability, Event, EventType
 from logger import logi, logw
 from server_manager import app
 
-RF_BRIDGE_DUPLICATE_WINDOW_SECONDS = 0.1
+RF_HUB_DUPLICATE_WINDOW_SECONDS = 0.1
 
 class DeviceCommandAdapter:
     ############################################################################
@@ -134,11 +134,11 @@ class RfInputAdapter:
         self.event_dispatcher = event_dispatcher
         self.code_lookup = {}
         self.recent_receptions = ExpiringDict(
-            max_len=1024, max_age_seconds=RF_BRIDGE_DUPLICATE_WINDOW_SECONDS
+            max_len=1024, max_age_seconds=RF_HUB_DUPLICATE_WINDOW_SECONDS
         )
         self.reception_lock = Lock()
         self.device_receptions = ExpiringDict(
-            max_len=1024, max_age_seconds=RF_BRIDGE_DUPLICATE_WINDOW_SECONDS
+            max_len=1024, max_age_seconds=RF_HUB_DUPLICATE_WINDOW_SECONDS
         )
         self.code_handlers = {
             c.RF_CODE_TYPE_ACTIVE: self._activate,
@@ -208,7 +208,7 @@ class RfInputAdapter:
 
         self.event_dispatcher.publish(Event(
             event_type=EventType.RF_CODE_RECEIVED,
-            source_type="rf_bridge",
+            source_type="rf_hub",
             source_id="local",
             payload={"rf_code": rf_code, "matched_devices": len(matches),
                      "receiver_id": source_id}

@@ -74,7 +74,7 @@ The controller software is cross-platform and can run on Windows and Linux syste
 The platform can integrate with other open-source components developed for the ZyraX Home ecosystem:
 
 - [ZyraX Home | RGBW LED strip controller](https://github.com/LukedeMunk/zyrax-home-rgbw-led-strip-controller/releases)
-- [ZyraX Home | RF & Zigbee bridge](https://github.com/LukedeMunk/zyrax-home-rf-zigbee-bridge/releases) (Unreleased, in development)
+- [ZyraX Home | RF & Zigbee hub](https://github.com/LukedeMunk/zyrax-home-rf-zigbee-bridge/releases) (Unreleased, in development)
 - [ZyraX Home | IP camera](https://github.com/LukedeMunk/zyrax-home-ip-camera/releases) (Unreleased, in development)
 - [ZyraX Home | ElectriControl]() (Unreleased, in development)
 - [ZyraX Home | iOS app](https://github.com/LukedeMunk/zyrax-home-ios-app/releases) (Unreleased, in development)
@@ -218,7 +218,7 @@ Below is a roadmap for the ZyraX Home main controller, highlighting the key vers
 |               |                       | Improved device pairing using bluetooth                                   |
 |               |                       | Improved device and automation architecture                               |
 |               |                       | Added support for IR devices                                              |
-|               |                       | [IR, RF & Zigbee bridge]() support                                        |
+|               |                       | [IR, RF & Zigbee hub]() support                                        |
 | v1.0.0        | 2027                  | Improved security                                                         |
 |               |                       | Improved LED strip addressing configuration UI                            |
 |               |                       | Improved LED strip addressing, real-time LED feedback                     |

@@ -13,7 +13,7 @@
 from flask import Blueprint, request                                    #Import flask blueprints and requests
 from threading import Lock
 from uuid import NAMESPACE_URL, uuid5
-from server_manager import db, BridgeCode, DomainEvent
+from server_manager import db, HubCode, DomainEvent
 import database_utility as db_util
 from automation.domain import Event, EventType
 import configuration as c                                                       #Import application configuration variables
@@ -26,29 +26,30 @@ from utilities.response import generate_json_http_response
 
 dm = DeviceManager()
 system_bp = Blueprint("system_blueprints", __name__)
-bridge_event_lock = Lock()
+hub_event_lock = Lock()
 
 
 ################################################################################
 #
 #   @brief  Routes a firmware event to the registered device and automation bus.
 #   @param  payload             Normalized event from the Hub JSON endpoint
-#   @return Response            Bridge queue acknowledgement
+#   @return Response            Hub queue acknowledgement
 #
 ################################################################################
-def receive_bridge_event(payload):
+def receive_hub_event(payload):
     frame = payload.get("data") if isinstance(payload, dict) else None
     if not isinstance(frame, dict):
-        return generate_json_http_response(c.HTTP_CODE_BAD_REQUEST, "Invalid bridge event.", True)
-    event_id, source = payload.get("event_id"), payload.get("bridge_id")
+        return generate_json_http_response(c.HTTP_CODE_BAD_REQUEST, "Invalid hub event.", True)
+    event_id, source = payload.get("event_id"), payload.get("hub_id")
     if not all(isinstance(value, str) and 1 <= len(value) <= 100 for value in (event_id, source)):
-        return generate_json_http_response(c.HTTP_CODE_BAD_REQUEST, "Invalid bridge event ID.", True)
+        return generate_json_http_response(c.HTTP_CODE_BAD_REQUEST, "Invalid hub event ID.", True)
     if request.headers.get("Idempotency-Key", event_id) != event_id:
         return generate_json_http_response(c.HTTP_CODE_BAD_REQUEST, "Invalid idempotency key.", True)
     medium = frame.get("medium")
 
-    identifier = str(uuid5(NAMESPACE_URL, f"zyrax-bridge/{source}/{event_id}"))
-    with bridge_event_lock:
+    # Keep the persisted UUID namespace stable across controller upgrades.
+    identifier = str(uuid5(NAMESPACE_URL, f"zyrax-hub/{source}/{event_id}"))
+    with hub_event_lock:
         if db.session.get(DomainEvent, identifier) is not None:
             return generate_json_http_response(c.HTTP_CODE_OK, "", True)
 
@@ -59,16 +60,16 @@ def receive_bridge_event(payload):
             if (isinstance(device_id, str) and device_id.isascii() and device_id.isdigit()
                     and len(device_id) <= 18 and type(code_type) is int
                     and isinstance(code_name, str)):
-                code = BridgeCode.query.filter_by(
+                code = HubCode.query.filter_by(
                     device_id=int(device_id), medium="rf", code_type=code_type,
                     name=code_name
                 ).first()
                 if code:
                     dm.rf_input_adapter.receive_device_code(
-                        code.device_id, code_type, "bridge:" + source
+                        code.device_id, code_type, "hub:" + source
                     )
             elif isinstance(device_id, str) and device_id.startswith("b_") and len(device_id) == 18:
-                code = BridgeCode.query.filter_by(
+                code = HubCode.query.filter_by(
                     code_id=device_id, medium="rf", code_type=c.RF_CODE_TYPE_TRIGGERED
                 ).first()
                 if code:
@@ -80,7 +81,7 @@ def receive_bridge_event(payload):
                     ))
         if medium == "ir" or (medium == "rf" and "device_id" not in frame):
             matched = set()
-            codes = BridgeCode.query.filter_by(medium=medium)
+            codes = HubCode.query.filter_by(medium=medium)
             if medium == "rf":
                 codes = codes.filter_by(code_type=None)
             for code in codes:
@@ -108,7 +109,7 @@ def receive_bridge_event(payload):
                     ))
 
         recorded, _ = db_util.add_domain_event(Event(
-            "bridge.signal_received", "bridge", source, {"medium": medium}, id=identifier
+            "hub.signal_received", "hub", source, {"medium": medium}, id=identifier
         ))
         if not recorded:
             return generate_json_http_response(c.HTTP_CODE_INTERNAL_SERVER_ERROR, "", True)
@@ -127,7 +128,7 @@ def check_connection():
     
 ################################################################################
 #
-#   @brief  Accepts LED and bridge startup connections or records unknown devices.
+#   @brief  Accepts LED and hub startup connections or records unknown devices.
 #   @return str | Response      Connection acknowledgement or validation error
 #
 ################################################################################
@@ -146,10 +147,10 @@ def device_request_connection():
         dm.synchronize_ledstrip(ledstrip.id)
         return generate_json_http_response(c.HTTP_CODE_OK)
 
-    for bridge in dm.get_devices_dict(type=c.DEVICE_TYPE_BRIDGE):
-        address = str(bridge.get("hostname", "")).lower()
+    for hub in dm.get_devices_dict(type=c.DEVICE_TYPE_HUB):
+        address = str(hub.get("hostname", "")).lower()
         if address in (hostname.lower(), hostname.lower() + ".home", request.remote_addr):
-            success, message = db_util.update_device(bridge["id"], {
+            success, message = db_util.update_device(hub["id"], {
                 "ip_address": request.remote_addr, "connection_status": True
             })
             if not success:
@@ -215,8 +216,8 @@ def hub_signal_received():
     if not isinstance(event, dict):
         return generate_json_http_response(c.HTTP_CODE_BAD_REQUEST, "Invalid Hub event data.", True)
         
-    return receive_bridge_event({
+    return receive_hub_event({
         "event_id": event.get("event_id", request.headers.get("Idempotency-Key")),
-        "bridge_id": event.get("hub_id"),
+        "hub_id": event.get("hub_id"),
         "data": event.get("data")
     })

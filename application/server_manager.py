@@ -15,6 +15,7 @@ from flask import Flask, session                                                
 from flask_sqlalchemy import SQLAlchemy                                         #Import Flask FlaskSQLAlchemy
 import os
 import sqlite3
+from hub_migration import migrate_hub_schema
 import configuration as c                                                       #Import application configuration variables
 from datetime import datetime, timedelta
 import json                                                                     #To generate JSON response strings
@@ -165,7 +166,7 @@ class Device(db.Model):
     )
     role = db.Column(db.String(10), nullable=False, default="device")
     __table_args__ = (
-        db.CheckConstraint("role IN ('device', 'bridge')"),
+        db.CheckConstraint("role IN ('device', 'hub')"),
         db.CheckConstraint("role = 'device' OR parent_device_id IS NULL"),
         db.CheckConstraint("id <> parent_device_id"),
         db.CheckConstraint(
@@ -178,20 +179,20 @@ class Device(db.Model):
     model_id = db.Column(db.Integer, nullable=False)##
     category = db.Column(db.Integer, nullable=False)##
 
-class BridgeHost(db.Model):
-    __tablename__ = "BridgeHost"
+class HubHost(db.Model):
+    __tablename__ = "HubHost"
     device_id = db.Column(db.Integer, db.ForeignKey("Device.id", ondelete="CASCADE"), primary_key=True)
     hostname = db.Column(db.String(253), nullable=False, unique=True)
     ip_address = db.Column(db.String(20), nullable=False, default=c.DEFAULT_IP_ADDRESS)
     port = db.Column(db.Integer, nullable=False, default=80)
-    api_version = db.Column(db.String(20), nullable=False, default=c.DEFAULT_BRIDGE_API_VERSION)
+    api_version = db.Column(db.String(20), nullable=False, default=c.DEFAULT_HUB_API_VERSION)
     firmware_version = db.Column(db.String(20), nullable=False, default=c.DEFAULT_FIRMWARE_VERSION)
     connection_status = db.Column(db.Boolean, nullable=False, default=False)
 
 
-class BridgeCode(db.Model):
-    __tablename__ = "BridgeCode"
-    bridge_id = db.Column(db.Integer, db.ForeignKey("BridgeHost.device_id", ondelete="CASCADE"), primary_key=True)
+class HubCode(db.Model):
+    __tablename__ = "HubCode"
+    hub_id = db.Column(db.Integer, db.ForeignKey("HubHost.device_id", ondelete="CASCADE"), primary_key=True)
     device_id = db.Column(db.Integer, db.ForeignKey("Device.id", ondelete="CASCADE"), primary_key=True)
     code_id = db.Column(db.String(20), primary_key=True)
     name = db.Column(db.String(50), nullable=False)
@@ -508,7 +509,7 @@ def register_blueprints():
     from routes.dashboard_blueprints import dashboard_bp
     from routes.data_blueprints import data_bp
     from routes.device_blueprints import device_bp
-    from routes.bridge_blueprints import bridge_bp
+    from routes.hub_blueprints import hub_bp
     from routes.group_blueprints import group_bp
     from routes.ledstrip_blueprints import ledstrip_bp
     from routes.logs_blueprints import logs_bp
@@ -524,7 +525,7 @@ def register_blueprints():
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(data_bp)
     app.register_blueprint(device_bp)
-    app.register_blueprint(bridge_bp)
+    app.register_blueprint(hub_bp)
     app.register_blueprint(group_bp)
     app.register_blueprint(ledstrip_bp)
     app.register_blueprint(logs_bp)
@@ -623,17 +624,20 @@ def check_database():
         with app.app_context():
             _create_database()    
             
+    migrate_hub_schema(c.DB_PATH)
     _check_database_state()
     with app.app_context():
-        BridgeHost.__table__.create(db.engine, checkfirst=True)
-        BridgeCode.__table__.create(db.engine, checkfirst=True)
+        HubHost.__table__.create(db.engine, checkfirst=True)
+        HubCode.__table__.create(db.engine, checkfirst=True)
         if "parent_device_id" in {
             column["name"] for column in inspect(db.engine).get_columns("Device")
         }:
-            converted = Device.query.filter_by(role="hub").update({
-                Device.role: "bridge",
-                Device.type: c.DEVICE_TYPE_BRIDGE,
-                Device.category: c.DEVICE_CATEGORY_BRIDGE
+            converted = Device.query.filter(
+                Device.role == "hub",
+                (Device.type != c.DEVICE_TYPE_HUB) | (Device.category != c.DEVICE_CATEGORY_HUB)
+            ).update({
+                Device.type: c.DEVICE_TYPE_HUB,
+                Device.category: c.DEVICE_CATEGORY_HUB
             })
             count = Device.query.filter(
                 Device.type == c.DEVICE_TYPE_RF_DEVICE,

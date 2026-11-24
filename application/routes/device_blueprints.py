@@ -13,7 +13,7 @@ from flask import Blueprint, request
 
 
 import database_utility as db_util
-from server_manager import app, db, BridgeHost, Device, Location
+from server_manager import app, db, HubHost, Device, Location
 import configuration as c                                                       #Import application configuration variables
 from DeviceManager import DeviceManager                                         #Import device manager
 from automation.adapter_registry import AdapterRoutingError
@@ -103,8 +103,8 @@ def list_devices(device_type=None):
         for device in devices:
             device["location"] = locations.get(device["location_id"])
 
-            if device["role"] == "bridge":
-                host = db.session.get(BridgeHost, device["id"])
+            if device["role"] == "hub":
+                host = db.session.get(HubHost, device["id"])
                 device["hostname"] = host.hostname if host else None
 
         if device_id is not None:
@@ -244,7 +244,7 @@ def delete_device():
 
 ################################################################################
 #
-#   @brief  Returns connection status for an LED strip or bridge.
+#   @brief  Returns connection status for an LED strip or hub.
 #   @return str                JSON envelope containing connection_status
 #
 ################################################################################
